@@ -1,0 +1,166 @@
+@import 'tailwindcss';
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
+/* Brand tokens (PRD 19.2). Values read from the logo; confirm against the vector. */
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-cyan: #00b8ff;
+  --color-blue: #1676fe;
+  --color-indigo: #4b2be8;
+  --color-ink: #0b1530;
+  --color-slate: #52607a;
+
+  /* Light surfaces (account and setup pages) */
+  --color-light-bg: #f5f8fc;
+  --color-light-card: #ffffff;
+  --color-light-border: #e3e8f0;
+  --color-light-border-strong: #d5dce7;
+
+  /* Dark surfaces (canvas, settings) */
+  --color-night: #070d1f;
+  --color-night-panel: #0e1730;
+  --color-night-raised: #121c38;
+  --color-night-border: #1c2848;
+  --color-night-border-strong: #26355c;
+  --color-night-text: #e8eef9;
+  --color-night-muted: #93a1be;
+  --color-night-faint: #7f8daa;
+
+  /* Status colours: always paired with an icon/dot and a text label */
+  --color-ok: #2bd49a;
+  --color-ok-ink: #0e7a54;
+  --color-warn: #f5b13d;
+  --color-err: #ff8a93;
+  --color-err-ink: #b42335;
+  --color-info: #5aa8ff;
+
+  --radius-card: 14px;
+}
+
+:root {
+  --nx-gradient: linear-gradient(100deg, #00b8ff 0%, #1676fe 50%, #4b2be8 100%);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-light-bg);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.bg-nx-gradient {
+  background-image: var(--nx-gradient);
+}
+
+/* Visible focus ring on every interactive element (WCAG AA) */
+:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes nx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes nx-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Semantic theme variables. Pages opt in with .theme-dark or .theme-light. */
+.theme-light {
+  --nx-bg: #f5f8fc;
+  --nx-panel: #ffffff;
+  --nx-raised: #ffffff;
+  --nx-input: #ffffff;
+  --nx-border: #e3e8f0;
+  --nx-border-strong: #d5dce7;
+  --nx-text: #0b1530;
+  --nx-muted: #52607a;
+  --nx-faint: #7a879f;
+  --nx-ok-bg: #e3f6ee;
+  --nx-ok-fg: #0e7a54;
+  --nx-err-bg: #fdecee;
+  --nx-err-fg: #b42335;
+  --nx-warn-bg: #fdf3dd;
+  --nx-warn-fg: #8a5a00;
+  --nx-info-bg: #e8f1ff;
+  --nx-info-fg: #1456c8;
+  --nx-neutral-bg: #edf1f6;
+  --nx-neutral-fg: #46546e;
+  color: var(--nx-text);
+  background: var(--nx-bg);
+}
+.theme-dark {
+  --nx-bg: #070d1f;
+  --nx-panel: #0e1730;
+  --nx-raised: #121c38;
+  --nx-input: #0b1328;
+  --nx-border: #1c2848;
+  --nx-border-strong: #26355c;
+  --nx-text: #e8eef9;
+  --nx-muted: #93a1be;
+  --nx-faint: #7f8daa;
+  --nx-ok-bg: rgba(43, 212, 154, 0.12);
+  --nx-ok-fg: #2bd49a;
+  --nx-err-bg: rgba(255, 138, 147, 0.12);
+  --nx-err-fg: #ff8a93;
+  --nx-warn-bg: rgba(245, 177, 61, 0.12);
+  --nx-warn-fg: #f5b13d;
+  --nx-info-bg: rgba(90, 168, 255, 0.14);
+  --nx-info-fg: #5aa8ff;
+  --nx-neutral-bg: rgba(147, 161, 190, 0.12);
+  --nx-neutral-fg: #93a1be;
+  color: var(--nx-text);
+  background: var(--nx-bg);
+}
+
+@theme inline {
+  --color-bg: var(--nx-bg);
+  --color-panel: var(--nx-panel);
+  --color-raised: var(--nx-raised);
+  --color-field: var(--nx-input);
+  --color-line: var(--nx-border);
+  --color-line-strong: var(--nx-border-strong);
+  --color-fg: var(--nx-text);
+  --color-muted: var(--nx-muted);
+  --color-faint: var(--nx-faint);
+  --color-ok-bg: var(--nx-ok-bg);
+  --color-ok-fg: var(--nx-ok-fg);
+  --color-err-bg: var(--nx-err-bg);
+  --color-err-fg: var(--nx-err-fg);
+  --color-warn-bg: var(--nx-warn-bg);
+  --color-warn-fg: var(--nx-warn-fg);
+  --color-info-bg: var(--nx-info-bg);
+  --color-info-fg: var(--nx-info-fg);
+  --color-neutral-bg: var(--nx-neutral-bg);
+  --color-neutral-fg: var(--nx-neutral-fg);
+}

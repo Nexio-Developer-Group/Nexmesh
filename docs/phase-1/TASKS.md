@@ -18,7 +18,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T2.5** Workspace agent skeleton (`nexmesh-agent`) + outbound handshake
 
 ## M3 — Web shell + canvas (§7, mockups 1a–1c)
-- [ ] **T3.1** Web scaffold: Vite, React, TS, Tailwind, design tokens, fonts, logo, theme
+- [x] **T3.1** Web scaffold: Vite, React, TS, Tailwind, design tokens, fonts, logo, theme
 - [ ] **T3.2** API client, TanStack Query, routing, app shell + auth stub
 - [ ] **T3.3** Workspaces dashboard (grid/list, filters, sort, empty/loading/provisioning/failed states, delete-by-typing-name)
 - [ ] **T3.4** Create Code Space screen (name, locked OS, resource sliders + limit errors, GPU disabled state, summary, provisioning screen)
