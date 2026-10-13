@@ -6,6 +6,18 @@ on:
 jobs:
   server:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexmesh
+          POSTGRES_PASSWORD: nexmesh
+          POSTGRES_DB: nexmesh_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U nexmesh" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NEXMESH_TEST_DATABASE_URL: postgres://nexmesh:nexmesh@localhost:5432/nexmesh_test?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
