@@ -11,7 +11,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T1.5** OpenAPI contract (`api/openapi.yaml`) for Phase 1 endpoints
 
 ## M2 — Workspace provisioning (§6, §13, §15 workspace bullets)
-- [ ] **T2.1** `RuntimeDriver` interface + `fake` driver; resource validation (limits, host capacity, GPU capability)
+- [x] **T2.1** `RuntimeDriver` interface + `fake` driver; resource validation (limits, host capacity, GPU capability)
 - [ ] **T2.2** Docker driver (container per workspace, private network, volumes, cgroup limits, no privileged, no socket)
 - [ ] **T2.3** Workspace API: create/list/get/delete, provisioning states (Allocating → Preparing → Starting → Ready) with real status + errors
 - [ ] **T2.4** Operations table + worker + reconciler (desired vs observed); SSE event stream
