@@ -32,7 +32,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T4.4** Install tab + confirmation dialog + progress/logs UI; Runtimes panel
 
 ## M5 — Secrets + Connect (§11)
-- [ ] **T5.1** Secrets service: AES-256-GCM envelope encryption, `SecretsBackend`, redaction filter
+- [x] **T5.1** Secrets service: AES-256-GCM envelope encryption, `SecretsBackend`, redaction filter
 - [ ] **T5.2** SSRF-safe dialer + deny-list (+ tests: rebinding, IPv6-mapped, metadata, redirects)
 - [ ] **T5.3** Connection-string parsers (MongoDB, MySQL, Redis, Kafka, RabbitMQ) + fuzz tests
 - [ ] **T5.4** Probers with 7 ordered stages for all five services; rate limit; audit events
