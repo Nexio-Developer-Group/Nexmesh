@@ -1,0 +1,21 @@
+id: go
+name: Go
+monogram: Go
+categories: []
+kind: runtime
+description: Go toolchain.
+supportedModes:
+- install
+versions:
+  default: 1.23.3
+  supported:
+  - 1.23.3
+  - 1.22.9
+install:
+  strategy: mise
+  tool: go
+resources:
+  cpu: 0.1
+  ramMB: 128
+  storageGB: 1
+schemaVersion: 1

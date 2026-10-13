@@ -1,0 +1,86 @@
+id: redis
+name: Redis
+monogram: Rd
+categories:
+- messaging
+kind: service
+description: In-memory data store for caching, data structures, and selected messaging patterns.
+supportedModes:
+- install
+- connect
+versions:
+  default: 7.4.1
+  supported:
+  - 7.4.1
+  - 7.2.6
+  - 6.2.16
+install:
+  strategy: image
+  image: redis
+  ports:
+  - 6379
+  volumes:
+  - name: data
+    path: /data
+    sizeGB: 2
+  env: {}
+resources:
+  cpu: 0.25
+  ramMB: 256
+  storageGB: 2
+health:
+  type: tcp
+  port: 6379
+connection:
+  schemes:
+  - redis
+  - rediss
+  defaultPort: 6379
+  envPrefix: REDIS
+  fields:
+  - name: host
+    label: Host
+    type: string
+    required: true
+    advanced: false
+  - name: port
+    label: Port
+    type: number
+    required: true
+    advanced: false
+    default: 6379
+  - name: username
+    label: Username
+    type: string
+    required: false
+    advanced: true
+  - name: password
+    label: Password
+    type: password
+    required: false
+    advanced: true
+  - name: db
+    label: Database index
+    type: number
+    required: false
+    advanced: true
+    default: 0
+  - name: cluster
+    label: Cluster mode
+    type: boolean
+    required: false
+    advanced: true
+    default: false
+  - name: tls
+    label: TLS
+    type: boolean
+    required: false
+    advanced: true
+    default: true
+  - name: caCertificate
+    label: CA certificate
+    type: textarea
+    required: false
+    advanced: true
+    help: PEM. Leave empty to use system roots.
+schemaVersion: 1

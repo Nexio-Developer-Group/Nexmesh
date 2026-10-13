@@ -1,0 +1,22 @@
+id: shell
+name: Shell
+monogram: Sh
+categories:
+- scripting
+kind: scripting
+description: Command-interpreter environment for system and development tasks.
+supportedModes:
+- install
+versions:
+  default: dash
+  supported:
+  - dash
+install:
+  strategy: apt
+  packages:
+  - dash
+resources:
+  cpu: 0.1
+  ramMB: 64
+  storageGB: 1
+schemaVersion: 1

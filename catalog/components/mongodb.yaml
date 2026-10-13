@@ -1,0 +1,97 @@
+id: mongodb
+name: MongoDB
+monogram: Mg
+categories:
+- database
+kind: service
+description: Document-oriented database service.
+supportedModes:
+- install
+- connect
+versions:
+  default: 8.0.4
+  supported:
+  - 8.0.4
+  - 7.0.14
+  - 6.0.19
+install:
+  strategy: image
+  image: mongo
+  ports:
+  - 27017
+  volumes:
+  - name: data
+    path: /data/db
+    sizeGB: 10
+  env: {}
+resources:
+  cpu: 0.5
+  ramMB: 1024
+  storageGB: 10
+health:
+  type: tcp
+  port: 27017
+connection:
+  schemes:
+  - mongodb
+  - mongodb+srv
+  defaultPort: 27017
+  envPrefix: MONGODB
+  fields:
+  - name: host
+    label: Host
+    type: string
+    required: true
+    advanced: false
+    placeholder: cluster0.example.mongodb.net
+  - name: port
+    label: Port
+    type: number
+    required: false
+    advanced: false
+    default: 27017
+  - name: database
+    label: Database
+    type: string
+    required: true
+    advanced: false
+  - name: username
+    label: Username
+    type: string
+    required: true
+    advanced: false
+  - name: password
+    label: Password
+    type: password
+    required: true
+    advanced: false
+  - name: authSource
+    label: Auth source
+    type: string
+    required: false
+    advanced: true
+    default: admin
+  - name: replicaSet
+    label: Replica set name
+    type: string
+    required: false
+    advanced: true
+  - name: srv
+    label: SRV connection
+    type: boolean
+    required: false
+    advanced: true
+    default: false
+  - name: tls
+    label: TLS
+    type: boolean
+    required: false
+    advanced: true
+    default: true
+  - name: caCertificate
+    label: CA certificate
+    type: textarea
+    required: false
+    advanced: true
+    help: PEM. Leave empty to use system roots.
+schemaVersion: 1

@@ -1,0 +1,23 @@
+id: certbot
+name: Certbot
+monogram: Cb
+categories:
+- hosting
+kind: tool
+description: Tool for obtaining and renewing TLS certificates.
+supportedModes:
+- install
+versions:
+  default: 3.0.1
+  supported:
+  - 3.0.1
+  - 2.11.0
+install:
+  strategy: apt
+  packages:
+  - certbot
+resources:
+  cpu: 0.1
+  ramMB: 64
+  storageGB: 1
+schemaVersion: 1

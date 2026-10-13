@@ -1,0 +1,26 @@
+id: angular
+name: Angular
+monogram: An
+categories:
+- frontend
+kind: framework
+description: Frontend application framework.
+supportedModes:
+- install
+versions:
+  default: 19.0.0
+  supported:
+  - 19.0.0
+  - 18.2.0
+install:
+  strategy: package
+  manager: npm
+  requires:
+  - nodejs
+resources:
+  cpu: 0.25
+  ramMB: 256
+  storageGB: 1
+ports:
+- 4200
+schemaVersion: 1

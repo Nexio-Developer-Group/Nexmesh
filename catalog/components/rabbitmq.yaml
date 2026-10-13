@@ -1,0 +1,85 @@
+id: rabbitmq
+name: RabbitMQ
+monogram: Rb
+categories:
+- messaging
+kind: service
+description: Message broker for asynchronous service communication.
+supportedModes:
+- install
+- connect
+versions:
+  default: 4.0.4
+  supported:
+  - 4.0.4
+  - 3.13.7
+install:
+  strategy: image
+  image: rabbitmq
+  ports:
+  - 5672
+  - 15672
+  volumes:
+  - name: data
+    path: /var/lib/rabbitmq
+    sizeGB: 2
+  env: {}
+resources:
+  cpu: 0.5
+  ramMB: 512
+  storageGB: 2
+health:
+  type: tcp
+  port: 5672
+connection:
+  schemes:
+  - amqp
+  - amqps
+  defaultPort: 5672
+  envPrefix: RABBITMQ
+  fields:
+  - name: host
+    label: Host
+    type: string
+    required: true
+    advanced: false
+  - name: port
+    label: Port
+    type: number
+    required: true
+    advanced: false
+    default: 5672
+  - name: username
+    label: Username
+    type: string
+    required: true
+    advanced: false
+  - name: password
+    label: Password
+    type: password
+    required: true
+    advanced: false
+  - name: vhost
+    label: Virtual host
+    type: string
+    required: false
+    advanced: true
+    default: /
+  - name: managementUrl
+    label: Management API URL
+    type: string
+    required: false
+    advanced: true
+  - name: tls
+    label: TLS
+    type: boolean
+    required: false
+    advanced: true
+    default: true
+  - name: caCertificate
+    label: CA certificate
+    type: textarea
+    required: false
+    advanced: true
+    help: PEM. Leave empty to use system roots.
+schemaVersion: 1

@@ -1,0 +1,21 @@
+id: htmlcss
+name: HTML and CSS
+monogram: Ht
+categories:
+- frontend
+kind: framework
+description: Web page structure and presentation technologies.
+supportedModes:
+- install
+versions:
+  default: living
+  supported:
+  - living
+install:
+  strategy: scaffold
+  command: static-site
+resources:
+  cpu: 0.1
+  ramMB: 64
+  storageGB: 1
+schemaVersion: 1

@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
 	"github.com/nexio-developer-group/nexmesh/server/internal/config"
 	"github.com/nexio-developer-group/nexmesh/server/internal/httpapi"
 )
@@ -17,7 +18,13 @@ import (
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	cfg := config.Load()
+	cat, err := catalog.Load(cfg.CatalogDir)
+	if err != nil {
+		log.Error("catalog", "err", err)
+		os.Exit(1)
+	}
 	api := httpapi.New(log)
+	api.RegisterCatalog(cat)
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: api.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

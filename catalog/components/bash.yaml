@@ -1,0 +1,22 @@
+id: bash
+name: Bash
+monogram: Ba
+categories:
+- scripting
+kind: scripting
+description: A specific shell implementation commonly used for automation.
+supportedModes:
+- install
+versions:
+  default: '5.2'
+  supported:
+  - '5.2'
+install:
+  strategy: apt
+  packages:
+  - bash
+resources:
+  cpu: 0.1
+  ramMB: 64
+  storageGB: 1
+schemaVersion: 1

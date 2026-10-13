@@ -1,0 +1,26 @@
+id: fastapi
+name: FastAPI
+monogram: Fa
+categories:
+- backend
+kind: framework
+description: Python framework for building APIs.
+supportedModes:
+- install
+versions:
+  default: 0.115.4
+  supported:
+  - 0.115.4
+  - 0.111.1
+install:
+  strategy: package
+  manager: pip
+  requires:
+  - python
+resources:
+  cpu: 0.25
+  ramMB: 256
+  storageGB: 1
+ports:
+- 8000
+schemaVersion: 1

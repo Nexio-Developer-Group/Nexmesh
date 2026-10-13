@@ -1,0 +1,23 @@
+id: javascript
+name: JavaScript
+monogram: Js
+categories:
+- scripting
+kind: scripting
+description: Runtime-dependent scripting support; Node.js provides the execution runtime.
+supportedModes:
+- install
+versions:
+  default: es2024
+  supported:
+  - es2024
+install:
+  strategy: package
+  manager: npm
+  requires:
+  - nodejs
+resources:
+  cpu: 0.1
+  ramMB: 64
+  storageGB: 1
+schemaVersion: 1

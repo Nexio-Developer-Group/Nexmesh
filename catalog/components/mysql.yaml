@@ -1,0 +1,88 @@
+id: mysql
+name: MySQL
+monogram: My
+categories:
+- database
+kind: service
+description: Relational SQL database service.
+supportedModes:
+- install
+- connect
+versions:
+  default: 8.4.3
+  supported:
+  - 8.4.3
+  - 8.0.40
+install:
+  strategy: image
+  image: mysql
+  ports:
+  - 3306
+  volumes:
+  - name: data
+    path: /var/lib/mysql
+    sizeGB: 10
+  env: {}
+resources:
+  cpu: 0.5
+  ramMB: 1024
+  storageGB: 10
+health:
+  type: tcp
+  port: 3306
+connection:
+  schemes:
+  - mysql
+  defaultPort: 3306
+  envPrefix: MYSQL
+  fields:
+  - name: host
+    label: Host
+    type: string
+    required: true
+    advanced: false
+  - name: port
+    label: Port
+    type: number
+    required: true
+    advanced: false
+    default: 3306
+  - name: database
+    label: Database
+    type: string
+    required: true
+    advanced: false
+  - name: username
+    label: Username
+    type: string
+    required: true
+    advanced: false
+  - name: password
+    label: Password
+    type: password
+    required: true
+    advanced: false
+  - name: sslMode
+    label: SSL mode
+    type: select
+    required: false
+    advanced: true
+    default: required
+    options:
+    - disabled
+    - preferred
+    - required
+    - verify-ca
+    - verify-full
+  - name: caCertificate
+    label: CA certificate
+    type: textarea
+    required: false
+    advanced: true
+  - name: timeoutSeconds
+    label: Connection timeout (s)
+    type: number
+    required: false
+    advanced: true
+    default: 10
+schemaVersion: 1

@@ -1,0 +1,90 @@
+id: kafka
+name: Kafka
+monogram: Ka
+categories:
+- messaging
+kind: service
+description: Distributed event-streaming platform.
+supportedModes:
+- install
+- connect
+versions:
+  default: 3.8.1
+  supported:
+  - 3.8.1
+  - 3.7.1
+install:
+  strategy: image
+  image: apache/kafka
+  ports:
+  - 9092
+  volumes:
+  - name: data
+    path: /var/lib/kafka/data
+    sizeGB: 10
+  env: {}
+resources:
+  cpu: 1
+  ramMB: 2048
+  storageGB: 10
+health:
+  type: tcp
+  port: 9092
+connection:
+  schemes: []
+  defaultPort: 9092
+  envPrefix: KAFKA
+  fields:
+  - name: bootstrapServers
+    label: Bootstrap servers
+    type: string
+    required: true
+    advanced: false
+    placeholder: broker1:9092,broker2:9092
+  - name: securityProtocol
+    label: Security protocol
+    type: select
+    required: false
+    advanced: true
+    default: PLAINTEXT
+    options:
+    - PLAINTEXT
+    - SSL
+    - SASL_PLAINTEXT
+    - SASL_SSL
+  - name: saslMechanism
+    label: SASL mechanism
+    type: select
+    required: false
+    advanced: true
+    options:
+    - PLAIN
+    - SCRAM-SHA-256
+    - SCRAM-SHA-512
+  - name: username
+    label: Username or API key
+    type: string
+    required: false
+    advanced: true
+  - name: password
+    label: Password or API secret
+    type: password
+    required: false
+    advanced: true
+  - name: caCertificate
+    label: CA certificate
+    type: textarea
+    required: false
+    advanced: true
+  - name: schemaRegistryUrl
+    label: Schema registry URL
+    type: string
+    required: false
+    advanced: true
+  - name: clientId
+    label: Client ID
+    type: string
+    required: false
+    advanced: true
+    default: nexmesh
+schemaVersion: 1

@@ -1,0 +1,23 @@
+id: nodejs
+name: Node.js
+monogram: 'No'
+categories:
+- backend
+kind: runtime
+description: JavaScript runtime for server-side applications and tooling.
+supportedModes:
+- install
+versions:
+  default: 22.11.0
+  supported:
+  - 22.11.0
+  - 20.18.0
+  - 18.20.4
+install:
+  strategy: mise
+  tool: node
+resources:
+  cpu: 0.1
+  ramMB: 128
+  storageGB: 1
+schemaVersion: 1

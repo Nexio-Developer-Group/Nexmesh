@@ -1,0 +1,26 @@
+id: react
+name: React
+monogram: Re
+categories:
+- frontend
+kind: framework
+description: Library for component-based user interfaces.
+supportedModes:
+- install
+versions:
+  default: 19.1.0
+  supported:
+  - 19.1.0
+  - 18.3.1
+install:
+  strategy: package
+  manager: npm
+  requires:
+  - nodejs
+resources:
+  cpu: 0.25
+  ramMB: 256
+  storageGB: 1
+ports:
+- 5173
+schemaVersion: 1

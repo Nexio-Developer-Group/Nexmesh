@@ -1,0 +1,26 @@
+id: nestjs
+name: NestJS
+monogram: Ne
+categories:
+- backend
+kind: framework
+description: Structured server-side framework for Node.js.
+supportedModes:
+- install
+versions:
+  default: 10.4.7
+  supported:
+  - 10.4.7
+  - 10.3.10
+install:
+  strategy: package
+  manager: npm
+  requires:
+  - nodejs
+resources:
+  cpu: 0.25
+  ramMB: 256
+  storageGB: 1
+ports:
+- 3000
+schemaVersion: 1
