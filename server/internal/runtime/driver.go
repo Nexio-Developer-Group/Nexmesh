@@ -48,6 +48,8 @@ type ServiceSpec struct {
 	Env         map[string]string
 	Ports       []int
 	Volumes     []VolumeMount
+	CPU         float64 // optional per-service cap; 0 = no cap
+	RAMMB       int     // optional per-service cap; 0 = no cap
 }
 
 type VolumeMount struct {
