@@ -79,7 +79,11 @@ describe('PropertiesPanel', () => {
 
 describe('TechNode', () => {
   const node = (c: CanvasComponent, d: CatalogComponent, extra: Record<string, unknown> = {}) =>
-    render(<ReactFlowProvider><TechNode {...({ id: c.id, data: { component: c, def: d, selected: false, ...extra } } as never)} /></ReactFlowProvider>)
+    render(
+      <ReactFlowProvider>
+        <TechNode {...(({ id: c.id, data: { component: c, def: d, selected: false, ...extra } }) as unknown as Parameters<typeof TechNode>[0])} />
+      </ReactFlowProvider>,
+    )
 
   it('shows state and mode badges as text', () => {
     node(comp({ observedState: 'running', mode: 'installed' }), catalog.components[0])
