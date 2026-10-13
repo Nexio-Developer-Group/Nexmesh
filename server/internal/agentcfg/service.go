@@ -62,6 +62,12 @@ type Input struct {
 	Capabilities    Capabilities `json:"capabilities"`
 }
 
+// RunFunc performs Test Configuration. Production uses modelprovider.Run.
+type RunFunc func(ctx context.Context, p modelprovider.Params, report func(domain.StageResult)) (*domain.TestResult, []modelprovider.Model)
+
+// WithRunner replaces the model test runner (tests).
+func (s *Service) WithRunner(fn RunFunc) *Service { s.run = fn; return s }
+
 type Service struct {
 	st        store.Store
 	sec       *secrets.Service
@@ -78,7 +84,7 @@ type Service struct {
 	// TestFreshness bounds how long a passing test authorizes saving.
 	TestFreshness time.Duration
 	// probe is replaceable in tests.
-	run func(ctx context.Context, p modelprovider.Params, report func(domain.StageResult)) (*domain.TestResult, []modelprovider.Model)
+	run RunFunc
 }
 
 func NewService(st store.Store, sec *secrets.Service, g *netguard.Guard, aud *audit.Recorder, providers []*catalog.Provider, fingerprintKey []byte) *Service {

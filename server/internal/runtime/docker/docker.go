@@ -46,8 +46,11 @@ type Config struct {
 	// StorageQuota enables --storage-opt size=..., which needs overlay2 on
 	// XFS with project quotas (spike 1, PRD 20.6). Off by default.
 	StorageQuota bool
-	MemInfoPath  string // default /proc/meminfo
-	Runner       Runner // default: the docker CLI
+	// HostGateway adds host.docker.internal to workspace containers so the
+	// workspace agent can reach the control plane published on the host.
+	HostGateway bool
+	MemInfoPath string // default /proc/meminfo
+	Runner      Runner // default: the docker CLI
 }
 
 type Driver struct {
@@ -164,6 +167,12 @@ func (d *Driver) CreateWorkspace(ctx context.Context, spec runtime.WorkspaceSpec
 	return err
 }
 
+// isStockImage reports whether the image is a plain distribution image (no
+// Nexmesh agent entrypoint).
+func isStockImage(image string) bool {
+	return strings.HasPrefix(image, "ubuntu:") || image == "ubuntu"
+}
+
 func (d *Driver) createContainer(ctx context.Context, spec runtime.WorkspaceSpec) error {
 	lbl := []string{"--label", "nexmesh.workspace=" + spec.ID, "--label", "nexmesh.managed=true"}
 	args := []string{"create", "--name", ctrName(spec.ID), "--hostname", spec.Name, "--network", netName(spec.ID),
@@ -177,8 +186,14 @@ func (d *Driver) createContainer(ctx context.Context, spec runtime.WorkspaceSpec
 	if d.cfg.StorageQuota {
 		args = append(args, "--storage-opt", fmt.Sprintf("size=%dG", spec.Resources.StorageGB))
 	}
-	// The workspace agent replaces this idle command once it is wired in (T2.5).
-	args = append(args, spec.Image, "sleep", "infinity")
+	if d.cfg.HostGateway {
+		args = append(args, "--add-host", "host.docker.internal:host-gateway")
+	}
+	args = append(args, spec.Image)
+	if isStockImage(spec.Image) {
+		// A stock Ubuntu image has no agent: keep the container alive for installs.
+		args = append(args, "sleep", "infinity")
+	}
 	_, err := d.out(ctx, args...)
 	return err
 }

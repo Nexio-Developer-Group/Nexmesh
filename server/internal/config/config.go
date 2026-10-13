@@ -7,12 +7,18 @@ import (
 )
 
 type Config struct {
-	Addr          string // HTTP listen address
-	Store         string // "memory" or "postgres"
-	DatabaseURL   string
-	Driver        string // "fake" or "docker"
-	CatalogDir    string
-	PublicURL     string // how workspace containers reach the control plane
+	Addr        string // HTTP listen address
+	Store       string // "memory" or "postgres"
+	DatabaseURL string
+	Driver      string // "fake" or "docker"
+	CatalogDir  string
+	PublicURL   string // how workspace containers reach the control plane
+	// WorkspaceImage is the base image for workspaces: "ubuntu:24.04" runs an
+	// idle container; a Nexmesh workspace image (deploy/workspace) runs the agent.
+	WorkspaceImage string
+	// HostGateway makes the host reachable from workspace containers as
+	// host.docker.internal (where the control plane is published).
+	HostGateway   bool
 	MasterKey     string // base64 32-byte key for the secrets service
 	MasterKeyFile string // used when MasterKey is unset; created on first run
 	// AllowPrivateEgress lets Test Connection and health checks reach RFC 1918
@@ -35,6 +41,8 @@ func Load() Config {
 		Driver:              env("NEXMESH_DRIVER", "docker"),
 		CatalogDir:          env("NEXMESH_CATALOG_DIR", "../catalog"),
 		PublicURL:           env("NEXMESH_PUBLIC_URL", "http://host.docker.internal:8080"),
+		WorkspaceImage:      env("NEXMESH_WORKSPACE_IMAGE", "ubuntu:24.04"),
+		HostGateway:         os.Getenv("NEXMESH_HOST_GATEWAY") != "false",
 		MasterKey:           os.Getenv("NEXMESH_MASTER_KEY"),
 		MasterKeyFile:       env("NEXMESH_MASTER_KEY_FILE", "nexmesh-master.key"),
 		AllowPrivateEgress:  os.Getenv("NEXMESH_ALLOW_PRIVATE_EGRESS") == "true",

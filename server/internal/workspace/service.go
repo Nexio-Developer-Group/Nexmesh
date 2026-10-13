@@ -73,6 +73,14 @@ func ValidateName(name string) error {
 	return nil
 }
 
+// WithImage sets the workspace base image (default Ubuntu 24.04).
+func (s *Service) WithImage(image string) *Service {
+	if image != "" {
+		s.image = image
+	}
+	return s
+}
+
 // WithAgent enables workspace-agent registration: each provisioned container
 // receives the control-plane URL and a one-time token in its environment.
 func (s *Service) WithAgent(t AgentTokens, controlURL string) *Service {

@@ -136,3 +136,49 @@ func TestInspectMissing(t *testing.T) {
 		t.Fatalf("%+v %v", o, err)
 	}
 }
+
+func TestAgentImageRunsItsOwnEntrypointAndGetsHostGateway(t *testing.T) {
+	r := &rec{reply: map[string]string{"info": `{"runc":{}}`}}
+	d := newDriver(t, r)
+	d.cfg.HostGateway = true
+	spec := runtime.WorkspaceSpec{ID: "ws1", Name: "n", Image: "nexmesh/workspace:0.1", Resources: runtime.Resources{CPU: 1, RAMGB: 1, StorageGB: 10}}
+	if err := d.CreateWorkspace(context.Background(), spec, func(string, string) {}); err != nil {
+		t.Fatal(err)
+	}
+	create := strings.Join(r.find("create"), " ")
+	if strings.Contains(create, "sleep infinity") {
+		t.Errorf("agent images keep their entrypoint: %s", create)
+	}
+	if !strings.Contains(create, "--add-host host.docker.internal:host-gateway") {
+		t.Errorf("control plane must be reachable from the workspace: %s", create)
+	}
+	r2 := &rec{reply: map[string]string{"info": `{"runc":{}}`}}
+	spec.Image = "ubuntu:24.04"
+	if err := newDriver(t, r2).CreateWorkspace(context.Background(), spec, func(string, string) {}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(strings.Join(r2.find("create"), " "), "ubuntu:24.04 sleep infinity") {
+		t.Error("stock Ubuntu needs a keep-alive command")
+	}
+}
+
+func TestRecreateKeepsVolumeAndServices(t *testing.T) {
+	r := &rec{reply: map[string]string{"info": `{"runc":{}}`}}
+	d := newDriver(t, r)
+	spec := runtime.WorkspaceSpec{ID: "ws1", Name: "n", Image: "ubuntu:24.04", Resources: runtime.Resources{CPU: 2, RAMGB: 4, StorageGB: 60}}
+	if err := d.RecreateWorkspace(context.Background(), spec, func(string, string) {}); err != nil {
+		t.Fatal(err)
+	}
+	if r.find("rm", "-f", "nexmesh-ws1") == nil || r.find("create") == nil || r.find("start", "nexmesh-ws1") == nil {
+		t.Fatalf("calls: %v", r.calls)
+	}
+	for _, c := range r.calls {
+		j := strings.Join(c, " ")
+		if strings.HasPrefix(j, "volume rm") || strings.HasPrefix(j, "network rm") {
+			t.Errorf("recreate must keep the volume and network: %s", j)
+		}
+	}
+	if !strings.Contains(strings.Join(r.find("create"), " "), "--cpus 2") {
+		t.Error("new limits not applied")
+	}
+}
