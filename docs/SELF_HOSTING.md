@@ -2,7 +2,7 @@
 
 Nexmesh runs on one Linux host with Docker. `docker compose` starts PostgreSQL and the control plane (the web app is embedded in the same binary).
 
-> Status: Phase 1 (MVP). The Docker driver, compose bundle and workspace image have unit tests and `docker compose config` validation but have **not yet been exercised against a live Docker daemon in CI** (see `docs/phase-1/ACCEPTANCE.md`). Run the smoke test below on your host before relying on it.
+> Status: Phase 1 (MVP). The Docker driver, compose bundle and workspace image have unit tests and `docker compose config` validation but have **not yet been exercised against a live Docker daemon in CI** (see `docs/phase-1/ACCEPTANCE.md`, gap 1). Run the smoke test below on your host before relying on it.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ Nexmesh runs on one Linux host with Docker. `docker compose` starts PostgreSQL a
 
 ```sh
 cp deploy/.env.example deploy/.env
-echo "NEXMESH_MASTER_KEY=$(deploy/gen-key.sh)" >> deploy/.env   # edit the file if the empty key line comes first
+deploy/gen-key.sh          # prints a key: paste it after NEXMESH_MASTER_KEY= in deploy/.env
 docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
 open http://localhost:8080
 ```

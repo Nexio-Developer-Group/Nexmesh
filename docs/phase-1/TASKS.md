@@ -50,10 +50,10 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T7.1** Audit events everywhere (actor type, no secrets)
 - [x] **T7.2** `docker compose` self-host bundle + docs
 - [x] **T7.3** Playwright E2E for create → drag → install/connect → settings
-- [ ] **T7.4** Walk through PRD §15 checklist; record gaps; spike notes
+- [x] **T7.4** Walk through PRD §15 checklist; record gaps; spike notes
 
 ## Progress log
-Updated as tasks complete (see git history for detail).
+All Phase 1 tasks are implemented. The acceptance walk-through, evidence, known gaps and spike notes are in [`ACCEPTANCE.md`](ACCEPTANCE.md). The most important open item is running the Docker driver and compose bundle against a live Docker daemon.
 
 ## Notes and deferred items
 - T2.5: agent link is HTTPS + heartbeats in Phase 1; moves to a gRPC bidirectional stream in Phase 2 (terminals). The workspace container currently runs `sleep infinity`; the `nexmesh/workspace` image (Ubuntu 24.04 + agent + mise) is built in T7.2 and the Docker driver switches to it then.
