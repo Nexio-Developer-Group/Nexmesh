@@ -1,0 +1,11 @@
+node_modules/
+dist/
+bin/
+*.log
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+server/internal/webui/dist/*
+!server/internal/webui/dist/.gitkeep

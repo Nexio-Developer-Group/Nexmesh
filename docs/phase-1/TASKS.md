@@ -4,7 +4,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 Acceptance references are PRD Section 15 bullets.
 
 ## M1 — Foundation
-- [ ] **T1.1** Repo scaffold: monorepo dirs, `.gitignore`, LICENSE check, README, Makefile, CI workflow (go test, web build)
+- [x] **T1.1** Repo scaffold: monorepo dirs, `.gitignore`, LICENSE check, README, Makefile, CI workflow (go test, web build)
 - [ ] **T1.2** Go module + control-plane skeleton: config, slog logging, HTTP router, `/healthz`, graceful shutdown
 - [ ] **T1.3** PostgreSQL schema + goose migrations (users, workspaces, components, operations, secrets, agent_configs, audit_events); store layer with in-memory fallback for tests
 - [ ] **T1.4** Catalog: JSON Schema + YAML manifests for all PRD §8 entries (kind, versions, supportedModes, ports, volumes, resources, connection field schema); loader + validator + `GET /api/catalog`
