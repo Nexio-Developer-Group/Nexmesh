@@ -43,8 +43,8 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T6.1** Workspace Settings API: general + resources (validation, restart-required summary, storage shrink rejection, OS locked)
 - [x] **T6.2** `ModelProvider` adapters (Anthropic, OpenAI-compatible, Gemini, Ollama) + Test Configuration + model list fetch
 - [x] **T6.3** Agent config API (CRUD, default, replace key, test-then-save) + loopback/private warning
-- [ ] **T6.4** Settings UI (General / Resources / Code Agent) incl. custom/local form
-- [ ] **T6.5** Advanced Setup section on Create Code Space
+- [x] **T6.4** Settings UI (General / Resources / Code Agent) incl. custom/local form
+- [x] **T6.5** Advanced Setup section on Create Code Space
 
 ## M7 — Hardening + acceptance
 - [ ] **T7.1** Audit events everywhere (actor type, no secrets)

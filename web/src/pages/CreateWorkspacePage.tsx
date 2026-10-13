@@ -8,6 +8,7 @@ import { Field } from '@/components/ui/Field'
 import { TopBar } from '@/layouts/TopBar'
 import { ResourceRow } from '@/features/workspaces/ResourceRow'
 import { MIN, validateResources } from '@/lib/resources'
+import { AdvancedSetup, type AdvancedState } from '@/features/agent/AdvancedSetup'
 
 const NAME_RE = /^[a-z0-9][a-z0-9-]{0,46}[a-z0-9]$/
 
@@ -39,6 +40,7 @@ export default function CreateWorkspacePage() {
   const [cpu, setCpu] = useState(4)
   const [storageGb, setStorage] = useState(40)
   const [gpu, setGpu] = useState(false)
+  const [agent, setAgent] = useState<AdvancedState>({ started: false, tested: false, input: null })
   const debouncedName = useDebounced(name)
   const avail = useNameAvailable(NAME_RE.test(debouncedName) ? debouncedName : '')
 
@@ -48,11 +50,13 @@ export default function CreateWorkspacePage() {
 
   const serverErr = create.error instanceof ApiError ? create.error : null
   const fieldErr = (f: string) => (limitErr?.field === f ? limitErr.message : serverErr?.field === f ? serverErr.message : undefined)
-  const canCreate = !!host && !!name && !nameError && !nameTaken && !limitErr
+  // An untouched agent section never blocks creation; a started but untested one does (PRD 6.4).
+  const agentBlocked = agent.started && !agent.tested
+  const canCreate = !!host && !!name && !nameError && !nameTaken && !limitErr && !agentBlocked
 
   const submit = () => {
     if (!canCreate) return
-    create.mutate({ name, description, cpu, ramGb, storageGb, gpu }, { onSuccess: (w) => nav(`/w/${w.id}/provisioning`) })
+    create.mutate({ name, description, cpu, ramGb, storageGb, gpu, ...(agent.input ? { agent: agent.input } : {}) }, { onSuccess: (w) => nav(`/w/${w.id}/provisioning`) })
   }
 
   return (
@@ -104,17 +108,20 @@ export default function CreateWorkspacePage() {
             </div>
           </Section>
 
-          <div id="advanced-setup-slot" />
+          <AdvancedSetup onChange={setAgent} />
         </form>
 
         <aside className="lg:sticky lg:top-8 lg:self-start">
           <div className="rounded-card border border-line bg-panel p-6">
             <h2 className="text-base font-bold">Summary</h2>
             <dl className="mt-4 space-y-2.5 text-sm">
-              {[['OS', 'Ubuntu 24.04 LTS'], ['CPU', `${Number.isFinite(cpu) ? cpu : '–'} vCPU`], ['RAM', `${Number.isFinite(ramGb) ? ramGb : '–'} GB`], ['Storage', `${Number.isFinite(storageGb) ? storageGb : '–'} GB`], ['GPU', gpu ? 'Attached' : 'None'], ['Code agent', 'Not configured']].map(([k, v]) => (
+              {[['OS', 'Ubuntu 24.04 LTS'], ['CPU', `${Number.isFinite(cpu) ? cpu : '–'} vCPU`], ['RAM', `${Number.isFinite(ramGb) ? ramGb : '–'} GB`], ['Storage', `${Number.isFinite(storageGb) ? storageGb : '–'} GB`], ['GPU', gpu ? 'Attached' : 'None'], ['Code agent', !agent.started ? 'Not configured' : `${agent.providerName ?? 'Custom'} · ${agent.tested ? 'tested' : 'untested'}`]].map(([k, v]) => (
                 <div key={k} className="flex justify-between"><dt className="text-muted">{k}</dt><dd className="font-mono text-[13px]">{v}</dd></div>
               ))}
             </dl>
+            {agentBlocked && (
+              <p role="alert" className="mt-4 rounded-lg bg-warn-bg p-3 text-[13px] text-warn-fg">The code agent section is started but not tested. Test Configuration, or clear the section.</p>
+            )}
             {(limitErr || serverErr) && (
               <p role="alert" className="mt-4 rounded-lg bg-err-bg p-3 text-[13px] text-err-fg">
                 <strong>Can't create this combination.</strong> {limitErr?.message ?? serverErr?.message}

@@ -6,6 +6,7 @@ import NotFoundPage from '@/pages/NotFoundPage'
 import CreateWorkspacePage from '@/pages/CreateWorkspacePage'
 import ProvisioningPage from '@/pages/ProvisioningPage'
 import WorkspacePage from '@/pages/WorkspacePage'
+import SettingsPage from '@/pages/SettingsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/workspaces" element={<DashboardPage />} />
           <Route path="/new" element={<CreateWorkspacePage />} />
           <Route path="/w/:id" element={<WorkspacePage />} />
+          <Route path="/w/:id/settings" element={<SettingsPage />} />
           <Route path="/w/:id/provisioning" element={<ProvisioningPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

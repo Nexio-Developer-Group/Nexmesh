@@ -110,3 +110,37 @@ export interface Operation {
   log: string[]
   error?: string
 }
+
+// ---- code agent configuration (PRD 12)
+
+export interface ProviderField {
+  name: string; label: string; type: 'string' | 'password' | 'select' | 'boolean' | 'number'
+  required?: boolean; advanced?: boolean; placeholder?: string; help?: string; options?: string[]
+}
+
+export interface AgentProvider {
+  id: string; name: string; tagline: string; order: number; hosted: boolean; protocols: string[]
+  baseUrl?: string; defaultModel?: string; notice?: string; comingSoon?: string[]; fields: ProviderField[]
+}
+
+export interface AgentConfig {
+  id: string; name: string; provider: string; modelId: string; endpoint?: string; protocol?: string
+  params: Record<string, unknown>; hasKey: boolean; lastTest?: TestResult; isDefault: boolean; createdAt: string
+}
+
+export interface AgentModel { id: string; name?: string; contextWindow?: number }
+export interface AgentTestResult extends TestResult { models?: AgentModel[]; fingerprint?: string }
+
+/** Body for test / create / update of an agent configuration. */
+export interface AgentInput {
+  name: string; provider: string; modelId: string; endpoint?: string; protocol?: string; apiKey?: string
+  organization?: string; project?: string; authStyle?: string; headerName?: string; customHeaders?: Record<string, string>
+  tlsInsecure?: boolean; caCertificate?: string
+  maxOutputTokens?: number; temperature?: number; contextWindow?: number; timeoutSeconds?: number; retries?: number
+  capabilities?: { streaming: boolean; tools: boolean; vision: boolean }
+}
+
+export interface SettingsPreview {
+  changes: { field: string; from: unknown; to: unknown; appliesImmediately: boolean }[]
+  restartRequired: boolean
+}

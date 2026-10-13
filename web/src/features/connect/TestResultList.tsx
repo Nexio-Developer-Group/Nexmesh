@@ -16,19 +16,19 @@ function Icon({ status }: { status: StageResult['status'] }) {
 const STATUS_WORD: Record<StageResult['status'], string> = { passed: 'passed', failed: 'failed', running: 'running', skipped: 'skipped', pending: 'pending' }
 
 /** Each check, in order, with its own pass/fail and specific message (PRD 11.5). */
-export function TestResultList({ result, running }: { result?: TestResult | null; running?: boolean }) {
+export function TestResultList({ result, running, stages = STAGES, title = 'Connection test' }: { result?: TestResult | null; running?: boolean; stages?: { key: string; label: string }[]; title?: string }) {
   const byStage = new Map((result?.stages ?? []).map((s) => [s.stage, s]))
   // A skipped stage on a passing result means "not applicable" (for example TLS is off), so it counts.
-  const done = result?.passed ? STAGES.length : (result?.stages.filter((s) => s.status === 'passed').length ?? 0)
-  const summary = running ? 'Testing…' : !result?.at ? '' : result.passed ? `Passed · ${done} of ${STAGES.length} checks` : `Failed at ${STAGES.find((s) => s.key === result.failedStage)?.label ?? 'a check'}`
+  const done = result?.passed ? stages.length : (result?.stages.filter((s) => s.status === 'passed').length ?? 0)
+  const summary = running ? 'Testing…' : !result?.at ? '' : result.passed ? `Passed · ${done} of ${stages.length} checks` : `Failed at ${stages.find((s) => s.key === result.failedStage)?.label ?? 'a check'}`
   return (
-    <section aria-label="Connection test">
+    <section aria-label={title}>
       <div className="mb-2 flex items-baseline justify-between">
-        <h3 className="text-[13px] font-semibold">Connection test</h3>
+        <h3 className="text-[13px] font-semibold">{title}</h3>
         <span role="status" className={clsx('text-xs', result?.passed ? 'text-ok-fg' : result && !running && result.failedStage ? 'text-err-fg' : 'text-muted')}>{summary}</span>
       </div>
       <ol className="space-y-2.5">
-        {STAGES.map((s) => {
+        {stages.map((s) => {
           const r = byStage.get(s.key)
           const status = r?.status ?? 'pending'
           return (

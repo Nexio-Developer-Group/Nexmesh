@@ -34,6 +34,7 @@ export const useCatalog = () =>
 export const useHost = () => useQuery({ queryKey: keys.host, queryFn: () => api.get<Host>('/api/host') })
 
 export interface CreateWorkspaceInput {
+  agent?: import('./types').AgentInput
   name: string
   description: string
   cpu: number
