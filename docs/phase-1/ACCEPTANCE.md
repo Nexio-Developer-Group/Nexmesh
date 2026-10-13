@@ -67,6 +67,6 @@ cd web && pnpm exec playwright test   # browser journey (embedded UI, fake drive
 
 ## Test inventory (at the time of writing)
 
-- Go: 16 packages, `go test -race ./...`; fuzz target for connection strings; real-service integration tests behind `NEXMESH_IT=1`.
+- Go: 18 packages with tests, `go test -race ./...`; fuzz target for connection strings; real-service integration tests behind `NEXMESH_IT=1`.
 - Web: 77 component and unit tests (Vitest, Testing Library).
 - Browser: 10 Playwright tests including an axe WCAG 2 A/AA scan of dashboard, create, canvas and settings screens.
