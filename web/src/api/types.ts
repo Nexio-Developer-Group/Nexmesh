@@ -102,6 +102,7 @@ export interface Operation {
   workspaceId: string
   componentId?: string
   type: string
+  params?: Record<string, unknown>
   status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled'
   progress: number
   log: string[]

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { api } from '@/api/client'
 import { useCatalog, useWorkspace, useWorkspaceEvents } from '@/api/hooks'
 import type { CanvasComponent } from '@/api/types'
 import { Button } from '@/components/ui/Button'
@@ -10,7 +11,9 @@ import { UserMenu } from '@/layouts/TopBar'
 import { Canvas } from '@/features/canvas/Canvas'
 import { CatalogSidebar } from '@/features/canvas/CatalogSidebar'
 import { PropertiesPanel } from '@/features/canvas/PropertiesPanel'
-import { applyComponentEvent, useAddComponent, useComponents, useMoveComponent } from '@/features/canvas/hooks'
+import { RuntimesPanel } from '@/features/canvas/RuntimesPanel'
+import { InstallTab } from '@/features/canvas/InstallTab'
+import { applyComponentEvent, applyOperationEvent, useAddComponent, useComponents, useMoveComponent } from '@/features/canvas/hooks'
 import { osLabel } from '@/lib/format'
 
 export default function WorkspacePage() {
@@ -22,8 +25,13 @@ export default function WorkspacePage() {
   const add = useAddComponent(id ?? '')
   const move = useMoveComponent(id ?? '')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [runtimesOpen, setRuntimesOpen] = useState(false)
 
-  useWorkspaceEvents(id, (type, data) => id && applyComponentEvent(qc, id, type, data))
+  useWorkspaceEvents(id, (type, data) => {
+    if (!id) return
+    applyComponentEvent(qc, id, type, data)
+    if (type === 'operation') applyOperationEvent(qc, id, data)
+  })
 
   const defs = useMemo(() => new Map((catalog?.components ?? []).map((c) => [c.id, c])), [catalog])
   const selected = comps.find((c) => c.id === selectedId)
@@ -64,6 +72,7 @@ export default function WorkspacePage() {
         {ws && <StatusBadge state={ws.status === 'ready' ? 'running' : 'stopped'} />}
         {ws && <span className="hidden font-mono text-[11px] text-muted md:inline">{osLabel(ws.os)} · {ws.cpu} vCPU · {ws.ramGb} GB · {ws.storageGb} GB</span>}
         <div className="ml-auto flex items-center gap-3">
+          <Button size="sm" onClick={() => setRuntimesOpen(true)}>Runtimes</Button>
           <Link to={`/w/${id}/settings`}><Button size="sm">Workspace settings</Button></Link>
           <UserMenu />
         </div>
@@ -71,7 +80,7 @@ export default function WorkspacePage() {
 
       <div className="flex min-h-0 flex-1">
         {catalog && (
-          <CatalogSidebar catalog={catalog} onCanvas={comps} onAdd={addNext} runtimes={runtimes} disabled={ws?.status !== 'ready'} />
+          <CatalogSidebar catalog={catalog} onCanvas={comps} onAdd={addNext} runtimes={runtimes} onInstallRuntime={() => setRuntimesOpen(true)} disabled={ws?.status !== 'ready'} />
         )}
         <main className="relative flex min-w-0 flex-1 flex-col bg-bg" aria-label="Canvas">
           <div className="flex items-center gap-3 px-5 py-3 text-[13px]">
@@ -89,18 +98,19 @@ export default function WorkspacePage() {
               onSelect={setSelectedId}
               onDropComponent={dropAt}
               onMove={(cid, x, y) => move.mutate({ id: cid, x, y })}
-              onRetry={() => {}}
+              onRetry={(c) => { api.post(`/api/workspaces/${id}/components/${c.id}/retry`).catch(() => setSelectedId(c.id)) }}
               onViewLogs={(c: CanvasComponent) => setSelectedId(c.id)}
             />
           </div>
           {add.error && <p role="alert" className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-err-bg px-4 py-2 text-sm text-err-fg">{add.error.message}</p>}
         </main>
+        {runtimesOpen && ws && <RuntimesPanel workspace={ws} defs={defs} onClose={() => setRuntimesOpen(false)} />}
         {selected && defs.get(selected.catalogId) && (
           <PropertiesPanel
             component={selected}
             def={defs.get(selected.catalogId)!}
             onClose={() => setSelectedId(null)}
-            renderInstall={(c, def) => <div className="p-5 text-sm text-muted">Install options for {def.name} {c.version}.</div>}
+            renderInstall={(c, def) => <InstallTab workspaceId={id!} component={c} def={def} />}
             renderConnect={(_c, def) => <div className="p-5 text-sm text-muted">Connect to an existing {def.name} deployment.</div>}
           />
         )}

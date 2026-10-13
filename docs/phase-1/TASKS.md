@@ -29,7 +29,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T4.1** Component API: add (Draft), move, install (confirm + prerequisite checks), start/stop/retry, remove (data kept unless requested), capacity
 - [x] **T4.2** Runtimes (mise): Python/Node/Go install, versions, active version, record in workspace config
 - [x] **T4.3** Service installs as sidecar containers from pinned images; port-conflict + resource prerequisite checks
-- [ ] **T4.4** Install tab + confirmation dialog + progress/logs UI; Runtimes panel
+- [x] **T4.4** Install tab + confirmation dialog + progress/logs UI; Runtimes panel
 
 ## M5 — Secrets + Connect (§11)
 - [ ] **T5.1** Secrets service: AES-256-GCM envelope encryption, `SecretsBackend`, redaction filter
