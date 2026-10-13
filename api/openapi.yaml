@@ -1,0 +1,264 @@
+openapi: 3.1.0
+info:
+  title: Nexmesh Control Plane API
+  version: 0.1.0
+  description: Phase 1 (MVP) contract. See docs/phase-1/TASKS.md. Secrets are write-only and never appear in any response.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: system
+  - name: catalog
+  - name: workspaces
+  - name: components
+  - name: connections
+  - name: runtimes
+  - name: agent
+paths:
+  /healthz:
+    get: { tags: [system], summary: Liveness, responses: { '200': { description: ok } } }
+  /api/host:
+    get:
+      tags: [system]
+      summary: Host limits and capabilities used to validate resources
+      responses:
+        '200': { description: ok, content: { application/json: { schema: { $ref: '#/components/schemas/Host' } } } }
+  /api/catalog:
+    get:
+      tags: [catalog]
+      summary: Categorised technology catalog
+      responses:
+        '200': { description: ok, content: { application/json: { schema: { $ref: '#/components/schemas/Catalog' } } } }
+  /api/workspaces:
+    get:
+      tags: [workspaces]
+      summary: List workspaces
+      responses:
+        '200': { description: ok, content: { application/json: { schema: { type: object, properties: { workspaces: { type: array, items: { $ref: '#/components/schemas/Workspace' } } } } } } }
+    post:
+      tags: [workspaces]
+      summary: Create Code Space (async provisioning)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateWorkspace' } } }
+      responses:
+        '201': { description: created, content: { application/json: { schema: { $ref: '#/components/schemas/Workspace' } } } }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /api/workspaces/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [workspaces], summary: Get workspace, responses: { '200': { description: ok, content: { application/json: { schema: { $ref: '#/components/schemas/Workspace' } } } }, '404': { $ref: '#/components/responses/Error' } } }
+    delete: { tags: [workspaces], summary: Delete workspace (requires confirmName), parameters: [{ name: confirmName, in: query, required: true, schema: { type: string } }], responses: { '204': { description: deleted }, '422': { $ref: '#/components/responses/Error' } } }
+  /api/workspaces/{id}/start: { post: { tags: [workspaces], parameters: [{ $ref: '#/components/parameters/id' }], summary: Start, responses: { '202': { description: accepted } } } }
+  /api/workspaces/{id}/stop: { post: { tags: [workspaces], parameters: [{ $ref: '#/components/parameters/id' }], summary: Stop, responses: { '202': { description: accepted } } } }
+  /api/workspaces/{id}/events:
+    get:
+      tags: [workspaces]
+      summary: Server-Sent Events stream of workspace, component and operation changes
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: event stream, content: { text/event-stream: { schema: { type: string } } } } }
+  /api/workspaces/{id}/settings:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    post:
+      tags: [workspaces]
+      summary: Preview a settings change (what changes, restart needed) without applying
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SettingsChange' } } } }
+      responses: { '200': { description: ok, content: { application/json: { schema: { $ref: '#/components/schemas/SettingsPreview' } } } }, '422': { $ref: '#/components/responses/Error' } }
+    patch:
+      tags: [workspaces]
+      summary: Apply a settings change. The operating system cannot be changed.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SettingsChange' } } } }
+      responses: { '200': { description: applied, content: { application/json: { schema: { $ref: '#/components/schemas/Workspace' } } } }, '422': { $ref: '#/components/responses/Error' } }
+  /api/workspaces/{id}/components:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [components], summary: List cards, responses: { '200': { description: ok, content: { application/json: { schema: { type: object, properties: { components: { type: array, items: { $ref: '#/components/schemas/Component' } } } } } } } } }
+    post:
+      tags: [components]
+      summary: Drop a technology on the canvas (creates a Draft card)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [catalogId], properties: { catalogId: { type: string }, x: { type: number }, y: { type: number } } } } } }
+      responses: { '201': { description: created, content: { application/json: { schema: { $ref: '#/components/schemas/Component' } } } } }
+  /api/workspaces/{id}/components/{cid}:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/cid' }]
+    get: { tags: [components], summary: Get card, responses: { '200': { description: ok, content: { application/json: { schema: { $ref: '#/components/schemas/Component' } } } } } }
+    patch: { tags: [components], summary: Move card or change desired install settings, requestBody: { content: { application/json: { schema: { type: object, properties: { x: { type: number }, y: { type: number }, version: { type: string }, settings: { type: object } } } } } }, responses: { '200': { description: ok } } }
+    delete: { tags: [components], summary: Remove a Draft card or remove an installed component, responses: { '202': { description: accepted } } }
+  /api/workspaces/{id}/components/{cid}/install:
+    post:
+      tags: [components]
+      summary: Confirm install (and optionally start). Persists version and settings first.
+      parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/cid' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [version, confirm], properties: { version: { type: string }, settings: { type: object }, start: { type: boolean }, confirm: { type: boolean } } } } } }
+      responses: { '202': { description: operation queued, content: { application/json: { schema: { $ref: '#/components/schemas/Operation' } } } }, '422': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
+  /api/workspaces/{id}/components/{cid}/{action}:
+    post:
+      tags: [components]
+      summary: Lifecycle action on an installed component
+      parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/cid' }, { name: action, in: path, required: true, schema: { enum: [start, stop, retry] } }]
+      responses: { '202': { description: operation queued } }
+  /api/workspaces/{id}/components/{cid}/logs:
+    get: { tags: [components], summary: Operation log for the component, parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/cid' }], responses: { '200': { description: ok, content: { application/json: { schema: { type: object, properties: { operations: { type: array, items: { $ref: '#/components/schemas/Operation' } } } } } } } } }
+  /api/connections/parse:
+    post:
+      tags: [connections]
+      summary: Parse a pasted connection string into form fields (secrets returned only to the caller, never stored)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [catalogId, uri], properties: { catalogId: { type: string }, uri: { type: string } } } } } }
+      responses: { '200': { description: ok, content: { application/json: { schema: { type: object, properties: { fields: { type: object } } } } } }, '422': { $ref: '#/components/responses/Error' } }
+  /api/workspaces/{id}/components/{cid}/connection/test:
+    post:
+      tags: [connections]
+      summary: Test Connection (runs from the control plane, read-only, rate limited)
+      parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/cid' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectionInput' } } } }
+      responses: { '200': { description: result, content: { application/json: { schema: { $ref: '#/components/schemas/TestResult' } } } }, '429': { $ref: '#/components/responses/Error' } }
+  /api/workspaces/{id}/components/{cid}/connection:
+    parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/cid' }]
+    post:
+      tags: [connections]
+      summary: Add to Workspace. Rejected unless the last test passed for exactly these values.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectionInput' } } } }
+      responses: { '200': { description: connected, content: { application/json: { schema: { $ref: '#/components/schemas/Component' } } } }, '422': { $ref: '#/components/responses/Error' } }
+    put:
+      tags: [connections]
+      summary: Edit a connection (requires a passing test for the new values)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectionInput' } } } }
+      responses: { '200': { description: updated, content: { application/json: { schema: { $ref: '#/components/schemas/Component' } } } } }
+    delete: { tags: [connections], summary: Disconnect. Deletes stored secrets, never remote data., responses: { '204': { description: disconnected } } }
+  /api/workspaces/{id}/components/{cid}/connection/retest:
+    post: { tags: [connections], summary: Re-test the stored connection, parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/cid' }], responses: { '200': { description: result, content: { application/json: { schema: { $ref: '#/components/schemas/TestResult' } } } } } }
+  /api/workspaces/{id}/components/{cid}/connection/rotate:
+    post:
+      tags: [connections]
+      summary: Rotate credentials (requires passing test with the new secret)
+      parameters: [{ $ref: '#/components/parameters/id' }, { $ref: '#/components/parameters/cid' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [secrets], properties: { secrets: { type: object, additionalProperties: { type: string } } } } } } }
+      responses: { '200': { description: rotated, content: { application/json: { schema: { $ref: '#/components/schemas/Component' } } } } }
+  /api/workspaces/{id}/runtimes:
+    get: { tags: [runtimes], summary: Installed and active runtime versions, parameters: [{ $ref: '#/components/parameters/id' }], responses: { '200': { description: ok } } }
+  /api/workspaces/{id}/runtimes/{name}/install:
+    post: { tags: [runtimes], summary: Install a runtime version, parameters: [{ $ref: '#/components/parameters/id' }, { name: name, in: path, required: true, schema: { enum: [python, nodejs, go] } }], requestBody: { content: { application/json: { schema: { type: object, required: [version], properties: { version: { type: string }, activate: { type: boolean } } } } } }, responses: { '202': { description: queued } } }
+  /api/agent/providers:
+    get: { tags: [agent], summary: Provider catalog, responses: { '200': { description: ok } } }
+  /api/agent/test:
+    post:
+      tags: [agent]
+      summary: Test Configuration without saving (used on the Create Code Space screen)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AgentConfigInput' } } } }
+      responses: { '200': { description: result, content: { application/json: { schema: { $ref: '#/components/schemas/TestResult' } } } } }
+  /api/workspaces/{id}/agent-configs:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [agent], summary: List agent configurations, responses: { '200': { description: ok } } }
+    post: { tags: [agent], summary: Save a configuration. Requires a passing test for the same values., requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AgentConfigInput' } } } }, responses: { '201': { description: saved }, '422': { $ref: '#/components/responses/Error' } } }
+  /api/workspaces/{id}/agent-configs/{aid}:
+    parameters: [{ $ref: '#/components/parameters/id' }, { name: aid, in: path, required: true, schema: { type: string } }]
+    put: { tags: [agent], summary: Edit (requires passing test), responses: { '200': { description: ok } } }
+    delete: { tags: [agent], summary: Delete configuration and stored credentials, responses: { '204': { description: deleted } } }
+  /api/workspaces/{id}/agent-configs/{aid}/default:
+    post: { tags: [agent], summary: Set as default, parameters: [{ $ref: '#/components/parameters/id' }, { name: aid, in: path, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
+  /api/workspaces/{id}/agent-configs/{aid}/retest:
+    post: { tags: [agent], summary: Re-test a saved configuration, parameters: [{ $ref: '#/components/parameters/id' }, { name: aid, in: path, required: true, schema: { type: string } }], responses: { '200': { description: result } } }
+  /api/workspaces/{id}/agent-configs/{aid}/key:
+    put: { tags: [agent], summary: Replace API key (write-only), parameters: [{ $ref: '#/components/parameters/id' }, { name: aid, in: path, required: true, schema: { type: string } }], requestBody: { content: { application/json: { schema: { type: object, required: [apiKey], properties: { apiKey: { type: string } } } } } }, responses: { '200': { description: ok } } }
+  /api/workspaces/{id}/audit:
+    get: { tags: [system], summary: Audit events (no secret values), parameters: [{ $ref: '#/components/parameters/id' }], responses: { '200': { description: ok } } }
+components:
+  parameters:
+    id: { name: id, in: path, required: true, schema: { type: string } }
+    cid: { name: cid, in: path, required: true, schema: { type: string } }
+  responses:
+    Error: { description: error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  schemas:
+    Error:
+      type: object
+      properties: { error: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string } } } }
+    Host:
+      type: object
+      properties: { maxCpu: { type: integer }, maxRamGb: { type: integer }, maxStorageGb: { type: integer }, gpuAvailable: { type: boolean }, gpuReason: { type: string }, freeRamGb: { type: number } }
+    Catalog:
+      type: object
+      properties: { categories: { type: array, items: { type: object } }, components: { type: array, items: { type: object } } }
+    Workspace:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        os: { type: string, const: ubuntu-24.04, description: Immutable }
+        cpu: { type: integer }
+        ramGb: { type: integer }
+        storageGb: { type: integer }
+        gpu: { type: boolean }
+        status: { enum: [allocating, preparing, starting, ready, stopped, failed] }
+        step: { type: string }
+        error: { type: string }
+        restartRequired: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        lastOpenedAt: { type: string, format: date-time }
+    CreateWorkspace:
+      type: object
+      required: [name, cpu, ramGb, storageGb]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        cpu: { type: integer }
+        ramGb: { type: integer }
+        storageGb: { type: integer }
+        gpu: { type: boolean }
+        agent: { $ref: '#/components/schemas/AgentConfigInput' }
+    SettingsChange:
+      type: object
+      description: Any subset of general and resource settings. Including an os field is rejected.
+      properties: { name: { type: string }, description: { type: string }, cpu: { type: integer }, ramGb: { type: integer }, storageGb: { type: integer }, gpu: { type: boolean } }
+    SettingsPreview:
+      type: object
+      properties:
+        changes: { type: array, items: { type: object, properties: { field: { type: string }, from: {}, to: {}, appliesImmediately: { type: boolean } } } }
+        restartRequired: { type: boolean }
+    Component:
+      type: object
+      properties:
+        id: { type: string }
+        workspaceId: { type: string }
+        catalogId: { type: string }
+        mode: { enum: ['', installed, connected] }
+        version: { type: string }
+        settings: { type: object }
+        connection: { type: object, description: Non-secret connection settings only }
+        connName: { type: string }
+        environment: { enum: ['', development, staging, production] }
+        lastTest: { $ref: '#/components/schemas/TestResult' }
+        desiredState: { type: string }
+        observedState: { enum: [draft, installing, running, stopped, failed, testing, test_failed, test_passed, connected, degraded, disconnected] }
+        message: { type: string }
+        progress: { type: integer }
+        x: { type: number }
+        y: { type: number }
+    ConnectionInput:
+      type: object
+      required: [fields]
+      properties:
+        connName: { type: string }
+        environment: { enum: [development, staging, production] }
+        fields: { type: object, description: Values for the catalog connection fields. Password-type fields are write-only. }
+    TestResult:
+      type: object
+      properties:
+        passed: { type: boolean }
+        failedStage: { type: string }
+        message: { type: string }
+        stages: { type: array, items: { type: object, properties: { stage: { type: string }, status: { enum: [pending, running, passed, failed, skipped] }, message: { type: string } } } }
+        latencyMs: { type: integer }
+        serverVersion: { type: string }
+        at: { type: string, format: date-time }
+    Operation:
+      type: object
+      properties: { id: { type: string }, type: { type: string }, status: { enum: [pending, running, succeeded, failed, cancelled] }, progress: { type: integer }, log: { type: array, items: { type: string } }, error: { type: string } }
+    AgentConfigInput:
+      type: object
+      required: [name, provider, modelId]
+      properties:
+        name: { type: string }
+        provider: { enum: [anthropic, openai, google, custom] }
+        modelId: { type: string }
+        endpoint: { type: string }
+        protocol: { enum: [openai, anthropic, ollama] }
+        apiKey: { type: string, writeOnly: true }
+        params: { type: object }

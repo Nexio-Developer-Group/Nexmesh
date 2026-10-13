@@ -8,7 +8,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T1.2** Go module + control-plane skeleton: config, slog logging, HTTP router, `/healthz`, graceful shutdown
 - [x] **T1.3** PostgreSQL schema + goose migrations (users, workspaces, components, operations, secrets, agent_configs, audit_events); store layer with in-memory fallback for tests
 - [x] **T1.4** Catalog: JSON Schema + YAML manifests for all PRD §8 entries (kind, versions, supportedModes, ports, volumes, resources, connection field schema); loader + validator + `GET /api/catalog`
-- [ ] **T1.5** OpenAPI contract (`api/openapi.yaml`) for Phase 1 endpoints
+- [x] **T1.5** OpenAPI contract (`api/openapi.yaml`) for Phase 1 endpoints
 
 ## M2 — Workspace provisioning (§6, §13, §15 workspace bullets)
 - [ ] **T2.1** `RuntimeDriver` interface + `fake` driver; resource validation (limits, host capacity, GPU capability)
