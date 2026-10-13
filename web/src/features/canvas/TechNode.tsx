@@ -30,7 +30,10 @@ const border: Record<string, string> = {
 export function TechNode({ data }: NodeProps<TechNodeType>) {
   const { component: c, def, selected } = data
   const port = def.ports?.[0] ?? def.install?.ports?.[0]
-  const sub = [c.version, port ? `:${port}` : null].filter(Boolean).join(' · ')
+  const conn = c.mode === 'connected' ? c.connection : undefined
+  const sub = conn
+    ? [conn.host ?? conn.bootstrapServers, conn.port ? `:${conn.port}` : null].filter(Boolean).join('') + (c.lastTest?.serverVersion ? ` · ${c.lastTest.serverVersion}` : '')
+    : [c.version, port ? `:${port}` : null].filter(Boolean).join(' · ')
   const installing = c.observedState === 'installing'
   return (
     <div
@@ -67,7 +70,7 @@ export function TechNode({ data }: NodeProps<TechNodeType>) {
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         <StatusBadge state={c.observedState} label={installing ? `Installing ${c.progress}%` : undefined} />
-        <ModeBadge mode={c.mode} />
+        <ModeBadge mode={c.mode} pendingConnect={['test_passed', 'test_failed', 'testing'].includes(c.observedState)} />
       </div>
 
       {c.observedState === 'failed' && c.mode === 'installed' && (

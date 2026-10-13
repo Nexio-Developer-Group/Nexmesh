@@ -343,7 +343,7 @@ func (s *Service) Save(ctx context.Context, owner, wsID, id string, in Connectio
 		if len(sec) > 0 {
 			x.SecretRef = activeID(id)
 		}
-		x.Message = fmt.Sprintf("Last check passed, %d ms", lt.LatencyMS)
+		x.Message = "Last check passed, " + latencyText(lt.LatencyMS)
 		return nil
 	})
 	if err != nil {
@@ -397,7 +397,7 @@ func (s *Service) applyHealth(ctx context.Context, c *domain.Component, def *cat
 	c2, err := s.st.UpdateComponent(ctx, c.ID, func(x *domain.Component) error {
 		x.LastTest = res
 		if res.Passed {
-			x.Observed, x.Message = domain.StateConnected, fmt.Sprintf("Last check passed, %d ms", res.LatencyMS)
+			x.Observed, x.Message = domain.StateConnected, "Last check passed, "+latencyText(res.LatencyMS)
 		} else {
 			x.Observed, x.Message = domain.StateDegraded, "Health check failed: "+res.Message
 		}
@@ -452,7 +452,7 @@ func (s *Service) Rotate(ctx context.Context, owner, wsID, id string, newSecrets
 		return nil, nil, err
 	}
 	c2, err := s.st.UpdateComponent(ctx, id, func(x *domain.Component) error {
-		x.LastTest, x.Observed, x.Message = res, domain.StateConnected, fmt.Sprintf("Credentials rotated. Last check passed, %d ms", res.LatencyMS)
+		x.LastTest, x.Observed, x.Message = res, domain.StateConnected, "Credentials rotated. Last check passed, "+latencyText(res.LatencyMS)
 		return nil
 	})
 	if err != nil {
@@ -563,3 +563,11 @@ func (s *Service) RunHealth(ctx context.Context, every time.Duration) {
 
 var _ = strings.TrimSpace
 var _ = store.ErrNotFound
+
+// latencyText formats a probe latency; sub-millisecond results read "<1 ms".
+func latencyText(ms int64) string {
+	if ms < 1 {
+		return "<1 ms"
+	}
+	return fmt.Sprintf("%d ms", ms)
+}

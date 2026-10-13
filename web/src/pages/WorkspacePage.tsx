@@ -12,6 +12,7 @@ import { Canvas } from '@/features/canvas/Canvas'
 import { CatalogSidebar } from '@/features/canvas/CatalogSidebar'
 import { PropertiesPanel } from '@/features/canvas/PropertiesPanel'
 import { RuntimesPanel } from '@/features/canvas/RuntimesPanel'
+import { ConnectTab } from '@/features/connect/ConnectTab'
 import { InstallTab } from '@/features/canvas/InstallTab'
 import { applyComponentEvent, applyOperationEvent, useAddComponent, useComponents, useMoveComponent } from '@/features/canvas/hooks'
 import { osLabel } from '@/lib/format'
@@ -111,7 +112,7 @@ export default function WorkspacePage() {
             def={defs.get(selected.catalogId)!}
             onClose={() => setSelectedId(null)}
             renderInstall={(c, def) => <InstallTab workspaceId={id!} component={c} def={def} />}
-            renderConnect={(_c, def) => <div className="p-5 text-sm text-muted">Connect to an existing {def.name} deployment.</div>}
+            renderConnect={(c, def) => <ConnectTab workspaceId={id!} component={c} def={def} />}
           />
         )}
       </div>

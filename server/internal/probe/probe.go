@@ -221,7 +221,11 @@ func Run(ctx context.Context, p Params, report Report) *domain.TestResult {
 	}
 	res.ServerVersion, res.LatencyMS = d.Version, d.Latency.Milliseconds()
 	detail := strings.TrimSpace(strings.Join([]string{d.Version, d.Info}, " "))
-	set(StageServer, "passed", fmt.Sprintf("%s · %d ms", strings.TrimSpace(detail), d.Latency.Milliseconds()))
+	lat := "<1 ms"
+	if ms := d.Latency.Milliseconds(); ms >= 1 {
+		lat = fmt.Sprintf("%d ms", ms)
+	}
+	set(StageServer, "passed", strings.TrimSpace(detail)+" · "+lat)
 	if d.Version != "" && !versionSupported(p.Def, d.Version) {
 		res.Warnings = append(res.Warnings, fmt.Sprintf("%s %s is outside the tested range (%s). It may still work.", p.Def.Name, d.Version, strings.Join(p.Def.Versions.Supported, ", ")))
 	}

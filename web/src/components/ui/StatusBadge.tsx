@@ -45,7 +45,8 @@ export function StatusBadge({ state, label, className }: { state: StateKey; labe
   )
 }
 
-export function ModeBadge({ mode }: { mode: 'installed' | 'connected' | '' }) {
+export function ModeBadge({ mode, pendingConnect }: { mode: 'installed' | 'connected' | ''; pendingConnect?: boolean }) {
+  if (!mode && pendingConnect) return <span className="inline-flex h-[22px] items-center rounded-md border border-dashed border-line-strong px-2 text-[11px] text-faint">Connect · not added</span>
   if (!mode) return <span className="inline-flex h-[22px] items-center rounded-md border border-dashed border-line-strong px-2 text-[11px] text-faint">Install or Connect</span>
   return (
     <span className="inline-flex h-[22px] items-center rounded-md border border-line-strong px-2 text-[11px] font-medium text-muted">

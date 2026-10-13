@@ -72,6 +72,7 @@ export interface TestResult {
   passed: boolean
   failedStage?: string
   message?: string
+  warnings?: string[]
   stages: StageResult[]
   latencyMs?: number
   serverVersion?: string
@@ -95,6 +96,7 @@ export interface CanvasComponent {
   progress: number
   x: number
   y: number
+  updatedAt?: string
 }
 
 export interface Operation {

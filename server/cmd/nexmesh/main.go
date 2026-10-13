@@ -95,11 +95,14 @@ func main() {
 	if err != nil {
 		fatal("secrets", err)
 	}
+	if cfg.AllowLoopbackEgress {
+		log.Warn("loopback egress is allowed (development only): the control plane's own services are reachable by Test Connection")
+	}
 	sec := secrets.New(backend)
 	fp := hmac.New(sha256.New, masterKey)
 	fp.Write([]byte("nexmesh/test-fingerprint/v1"))
 	compSvc := component.NewService(st, cat, bus, aud).WithRuntime(drv, eng).WithConnect(component.ConnectConfig{
-		Secrets: sec, Guard: netguard.New(netguard.Policy{AllowPrivate: cfg.AllowPrivateEgress}),
+		Secrets: sec, Guard: netguard.New(netguard.Policy{AllowPrivate: cfg.AllowPrivateEgress, AllowLoopback: cfg.AllowLoopbackEgress}),
 		FingerprintKey: fp.Sum(nil), Log: log,
 	})
 	agents.WithEnv(compSvc)
