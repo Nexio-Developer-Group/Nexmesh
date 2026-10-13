@@ -83,7 +83,11 @@ type Driver interface {
 	Exec(ctx context.Context, id string, cmd []string, out io.Writer) error
 
 	// Service sidecars on the workspace's private network.
-	StartService(ctx context.Context, spec ServiceSpec, progress func(detail string)) error
+	// InstallService pulls the image and creates (but does not start) the
+	// service container and its volumes. Install and start are separate
+	// lifecycle actions (PRD 10 step 6).
+	InstallService(ctx context.Context, spec ServiceSpec, progress func(detail string)) error
+	StartService(ctx context.Context, workspaceID, name string) error
 	StopService(ctx context.Context, workspaceID, name string) error
 	RemoveService(ctx context.Context, workspaceID, name string, deleteData bool) error
 	InspectService(ctx context.Context, workspaceID, name string) (Observed, error)

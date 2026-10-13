@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,6 +18,10 @@ type Fake struct {
 	ws       map[string]*fakeWS
 	services map[string]*fakeSvc // key: workspaceID/name
 	FailNext map[string]error    // injected failures by operation name
+	// BusyPorts simulates ports already taken on the backend; starting a
+	// service that exposes one fails with ErrPortInUse.
+	BusyPorts map[int]bool
+	ExecLog   []string // commands passed to Exec, for assertions
 }
 
 type fakeWS struct {
@@ -30,7 +35,7 @@ type fakeSvc struct {
 }
 
 func NewFake(caps Capabilities) *Fake {
-	return &Fake{caps: caps, ws: map[string]*fakeWS{}, services: map[string]*fakeSvc{}, FailNext: map[string]error{}}
+	return &Fake{caps: caps, ws: map[string]*fakeWS{}, services: map[string]*fakeSvc{}, FailNext: map[string]error{}, BusyPorts: map[int]bool{}}
 }
 
 func (f *Fake) fail(op string) error {
@@ -154,23 +159,18 @@ func (f *Fake) Exec(_ context.Context, id string, cmd []string, out io.Writer) e
 	if err := f.fail("exec"); err != nil {
 		return err
 	}
+	f.ExecLog = append(f.ExecLog, strings.Join(cmd, " "))
 	fmt.Fprintf(out, "$ %v\nok\n", cmd)
 	return nil
 }
 
 func svcKey(ws, name string) string { return ws + "/" + name }
 
-func (f *Fake) StartService(ctx context.Context, spec ServiceSpec, progress func(detail string)) error {
+func (f *Fake) InstallService(ctx context.Context, spec ServiceSpec, progress func(detail string)) error {
 	f.mu.Lock()
-	if err := f.fail("start_service"); err != nil {
+	if err := f.fail("install_service"); err != nil {
 		f.mu.Unlock()
 		return err
-	}
-	for _, s := range f.services {
-		if s.spec.WorkspaceID != spec.WorkspaceID && f.hostPortClash(s, spec) {
-			f.mu.Unlock()
-			return ErrPortInUse
-		}
 	}
 	f.mu.Unlock()
 	progress("pulling " + spec.Image)
@@ -179,13 +179,28 @@ func (f *Fake) StartService(ctx context.Context, spec ServiceSpec, progress func
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.services[svcKey(spec.WorkspaceID, spec.Name)] = &fakeSvc{spec: spec, running: true}
+	f.services[svcKey(spec.WorkspaceID, spec.Name)] = &fakeSvc{spec: spec}
 	return nil
 }
 
-// hostPortClash is false in the fake: services only expose ports on the
-// private per-workspace network, so cross-workspace clashes cannot occur.
-func (f *Fake) hostPortClash(*fakeSvc, ServiceSpec) bool { return false }
+func (f *Fake) StartService(_ context.Context, ws, name string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.fail("start_service"); err != nil {
+		return err
+	}
+	s, ok := f.services[svcKey(ws, name)]
+	if !ok {
+		return ErrNotFound
+	}
+	for _, p := range s.spec.Ports {
+		if f.BusyPorts[p] {
+			return ErrPortInUse
+		}
+	}
+	s.running = true
+	return nil
+}
 
 func (f *Fake) StopService(_ context.Context, ws, name string) error {
 	f.mu.Lock()

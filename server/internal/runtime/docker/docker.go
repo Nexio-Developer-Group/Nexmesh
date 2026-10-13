@@ -238,13 +238,13 @@ func (d *Driver) Exec(ctx context.Context, id string, cmd []string, out io.Write
 	return d.r.Run(ctx, out, append([]string{"exec", ctrName(id)}, cmd...)...)
 }
 
-func (d *Driver) StartService(ctx context.Context, spec runtime.ServiceSpec, progress func(string)) error {
+func (d *Driver) InstallService(ctx context.Context, spec runtime.ServiceSpec, progress func(string)) error {
 	name := svcCtrName(spec.WorkspaceID, spec.Name)
 	progress("pulling " + spec.Image)
 	if _, err := d.out(ctx, "pull", "--quiet", spec.Image); err != nil {
 		return err
 	}
-	args := []string{"run", "-d", "--name", name, "--network", netName(spec.WorkspaceID), "--network-alias", spec.Name,
+	args := []string{"create", "--name", name, "--network", netName(spec.WorkspaceID), "--network-alias", spec.Name,
 		"--label", "nexmesh.workspace=" + spec.WorkspaceID, "--label", "nexmesh.service=" + spec.Name,
 		"--restart", "unless-stopped"}
 	args = append(args, hardening()...)
@@ -265,8 +265,13 @@ func (d *Driver) StartService(ctx context.Context, spec runtime.ServiceSpec, pro
 		args = append(args, "-e", k+"="+v)
 	}
 	args = append(args, spec.Image)
-	progress("starting " + spec.Name)
-	if _, err := d.out(ctx, args...); err != nil {
+	progress("creating container " + name)
+	_, err := d.out(ctx, args...)
+	return err
+}
+
+func (d *Driver) StartService(ctx context.Context, ws, name string) error {
+	if _, err := d.out(ctx, "start", svcCtrName(ws, name)); err != nil {
 		if strings.Contains(err.Error(), "port is already allocated") || strings.Contains(err.Error(), "address already in use") {
 			return runtime.ErrPortInUse
 		}

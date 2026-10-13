@@ -18,6 +18,9 @@ install:
   manager: pip
   requires:
   - python
+  packages:
+  - fastapi=={version}
+  - uvicorn
 resources:
   cpu: 0.25
   ramMB: 256

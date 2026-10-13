@@ -102,13 +102,13 @@ func TestFreeRAMComesFromHost(t *testing.T) {
 func TestServiceSidecar(t *testing.T) {
 	r := &rec{}
 	d := newDriver(t, r)
-	err := d.StartService(context.Background(), runtime.ServiceSpec{WorkspaceID: "ws1", Name: "mongodb", Image: "mongo:8.0.4",
+	err := d.InstallService(context.Background(), runtime.ServiceSpec{WorkspaceID: "ws1", Name: "mongodb", Image: "mongo:8.0.4",
 		Env: map[string]string{"MONGO_INITDB_ROOT_USERNAME": "admin"}, RAMMB: 1024, CPU: 0.5,
 		Volumes: []runtime.VolumeMount{{Name: "data", Path: "/data/db"}}}, func(string) {})
 	if err != nil {
 		t.Fatal(err)
 	}
-	run := strings.Join(r.find("run"), " ")
+	run := strings.Join(r.find("create", "--name", "nexmesh-ws1-mongodb"), " ")
 	for _, want := range []string{"--network nexmesh-ws1", "--network-alias mongodb", "nexmesh-ws1-mongodb-data:/data/db", "--memory 1024m", "--cpus 0.5", "--cap-drop ALL"} {
 		if !strings.Contains(run, want) {
 			t.Errorf("missing %q in %s", want, run)
@@ -117,8 +117,14 @@ func TestServiceSidecar(t *testing.T) {
 	if strings.Contains(run, " -p ") || strings.Contains(run, "--publish") {
 		t.Error("services must not publish host ports")
 	}
-	r.err = map[string]error{"run": errors.New("docker run: port is already allocated")}
-	if err := d.StartService(context.Background(), runtime.ServiceSpec{WorkspaceID: "ws1", Name: "x", Image: "x:1"}, func(string) {}); !errors.Is(err, runtime.ErrPortInUse) {
+	if r.find("start") != nil {
+		t.Error("install must not start the service")
+	}
+	if err := d.StartService(context.Background(), "ws1", "mongodb"); err != nil {
+		t.Fatal(err)
+	}
+	r.err = map[string]error{"start": errors.New("docker start: port is already allocated")}
+	if err := d.StartService(context.Background(), "ws1", "mongodb"); !errors.Is(err, runtime.ErrPortInUse) {
 		t.Fatalf("want ErrPortInUse got %v", err)
 	}
 }

@@ -23,12 +23,12 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T3.3** Workspaces dashboard (grid/list, filters, sort, empty/loading/provisioning/failed states, delete-by-typing-name)
 - [x] **T3.4** Create Code Space screen (name, locked OS, resource sliders + limit errors, GPU disabled state, summary, provisioning screen)
 - [x] **T3.5** Workspace canvas: header, searchable catalog sidebar, React Flow canvas, drag/drop, card states + mode badges, empty state
-- [ ] **T3.6** Cards bound to real component state via SSE
+- [x] **T3.6** Cards bound to real component state via SSE
 
 ## M4 — Install flow (§9, §10)
-- [~] **T4.1** Component API: add (Draft), move, remove draft — done; install/start/stop/remove operations — pending (see M4 continuation)
-- [ ] **T4.2** Runtimes (mise): Python/Node/Go install, versions, active version, record in workspace config
-- [ ] **T4.3** Service installs as sidecar containers from pinned images; port-conflict + resource prerequisite checks
+- [x] **T4.1** Component API: add (Draft), move, install (confirm + prerequisite checks), start/stop/retry, remove (data kept unless requested), capacity
+- [x] **T4.2** Runtimes (mise): Python/Node/Go install, versions, active version, record in workspace config
+- [x] **T4.3** Service installs as sidecar containers from pinned images; port-conflict + resource prerequisite checks
 - [ ] **T4.4** Install tab + confirmation dialog + progress/logs UI; Runtimes panel
 
 ## M5 — Secrets + Connect (§11)

@@ -13,6 +13,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
+	"github.com/nexio-developer-group/nexmesh/server/internal/ops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
 )
@@ -28,6 +29,8 @@ type Service struct {
 	cat *catalog.Catalog
 	bus *events.Bus
 	aud *audit.Recorder
+	drv runtime.Driver // set by WithRuntime
+	eng *ops.Engine
 }
 
 func NewService(st store.Store, cat *catalog.Catalog, bus *events.Bus, aud *audit.Recorder) *Service {
@@ -36,6 +39,14 @@ func NewService(st store.Store, cat *catalog.Catalog, bus *events.Bus, aud *audi
 
 func (s *Service) publish(c *domain.Component) {
 	s.bus.Publish(c.WorkspaceID, events.Event{Type: "component", Data: c})
+}
+
+func (s *Service) publishWorkspace(w *domain.Workspace) {
+	s.bus.Publish(w.ID, events.Event{Type: "workspace", Data: w})
+}
+
+func (s *Service) publishRemoved(wsID, id string) {
+	s.bus.Publish(wsID, events.Event{Type: "component_removed", Data: map[string]string{"id": id}})
 }
 
 // workspace loads the workspace and enforces ownership.

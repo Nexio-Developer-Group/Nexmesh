@@ -62,6 +62,7 @@ const (
 	StateInstalling = "installing"
 	StateRunning    = "running"
 	StateStopped    = "stopped"
+	StateReady      = "ready" // installed and usable, nothing to run (runtimes, frameworks, tools)
 	StateFailed     = "failed"
 	StateTesting    = "testing"
 	StateTestFailed = "test_failed"
@@ -123,16 +124,17 @@ const (
 )
 
 type Operation struct {
-	ID          string    `json:"id"`
-	WorkspaceID string    `json:"workspaceId"`
-	ComponentID string    `json:"componentId,omitempty"`
-	Type        string    `json:"type"` // provision, install, start, stop, remove, runtime_install ...
-	Status      string    `json:"status"`
-	Progress    int       `json:"progress"`
-	Log         []string  `json:"log"`
-	Error       string    `json:"error,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID          string         `json:"id"`
+	WorkspaceID string         `json:"workspaceId"`
+	ComponentID string         `json:"componentId,omitempty"`
+	Type        string         `json:"type"` // provision, install_component, start_component, ...
+	Params      map[string]any `json:"params,omitempty"`
+	Status      string         `json:"status"`
+	Progress    int            `json:"progress"`
+	Log         []string       `json:"log"`
+	Error       string         `json:"error,omitempty"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt"`
 }
 
 type AgentConfig struct {

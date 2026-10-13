@@ -18,6 +18,9 @@ install:
   manager: npm
   requires:
   - nodejs
+  packages:
+  - '@nestjs/core@{version}'
+  - '@nestjs/common@{version}'
 resources:
   cpu: 0.25
   ramMB: 256

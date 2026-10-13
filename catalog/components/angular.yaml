@@ -18,6 +18,8 @@ install:
   manager: npm
   requires:
   - nodejs
+  packages:
+  - '@angular/cli@{version}'
 resources:
   cpu: 0.25
   ramMB: 256

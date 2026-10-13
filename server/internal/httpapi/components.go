@@ -1,10 +1,12 @@
 package httpapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/component"
+	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 )
 
 // RegisterComponents mounts canvas card endpoints.
@@ -58,11 +60,84 @@ func (s *Server) RegisterComponents(svc *component.Service) {
 	})
 
 	s.Handle("DELETE /api/workspaces/{id}/components/{cid}", func(w http.ResponseWriter, r *http.Request) {
-		if err := svc.Remove(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid")); err != nil {
+		id, cid := r.PathValue("id"), r.PathValue("cid")
+		c, err := svc.Get(r.Context(), Owner(r), id, cid)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		if c.Mode == "installed" && c.Observed != "draft" {
+			op, err := svc.RemoveInstalled(r.Context(), Owner(r), id, cid, r.URL.Query().Get("deleteData") == "true")
+			if err != nil {
+				s.HandleError(w, err)
+				return
+			}
+			WriteJSON(w, http.StatusAccepted, op)
+			return
+		}
+		if err := svc.Remove(r.Context(), Owner(r), id, cid); err != nil {
 			s.HandleError(w, err)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
+	})
+
+	s.Handle("POST /api/workspaces/{id}/components/{cid}/install", func(w http.ResponseWriter, r *http.Request) {
+		var in component.InstallInput
+		if !DecodeJSON(w, r, &in) {
+			return
+		}
+		op, err := svc.Install(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid"), in)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusAccepted, op)
+	})
+
+	lifecycle := func(fn func(ctx context.Context, owner, ws, id string) (*domain.Operation, error)) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			op, err := fn(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid"))
+			if err != nil {
+				s.HandleError(w, err)
+				return
+			}
+			WriteJSON(w, http.StatusAccepted, op)
+		}
+	}
+	s.Handle("POST /api/workspaces/{id}/components/{cid}/start", lifecycle(svc.Start))
+	s.Handle("POST /api/workspaces/{id}/components/{cid}/stop", lifecycle(svc.Stop))
+	s.Handle("POST /api/workspaces/{id}/components/{cid}/retry", lifecycle(svc.Retry))
+
+	s.Handle("GET /api/workspaces/{id}/capacity", func(w http.ResponseWriter, r *http.Request) {
+		c, err := svc.Capacity(r.Context(), Owner(r), r.PathValue("id"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, c)
+	})
+
+	s.Handle("GET /api/workspaces/{id}/runtimes", func(w http.ResponseWriter, r *http.Request) {
+		rt, err := svc.Runtimes(r.Context(), Owner(r), r.PathValue("id"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"runtimes": rt})
+	})
+
+	s.Handle("POST /api/workspaces/{id}/runtimes/{name}/install", func(w http.ResponseWriter, r *http.Request) {
+		var in component.RuntimeInstall
+		if !DecodeJSON(w, r, &in) {
+			return
+		}
+		op, err := svc.InstallRuntime(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("name"), in)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusAccepted, op)
 	})
 }
 

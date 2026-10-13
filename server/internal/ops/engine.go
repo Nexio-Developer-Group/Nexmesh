@@ -50,7 +50,12 @@ func (e *Engine) Register(opType string, h Handler) { e.handlers[opType] = h }
 
 // Enqueue persists an operation and wakes the workers.
 func (e *Engine) Enqueue(ctx context.Context, workspaceID, componentID, opType string) (*domain.Operation, error) {
-	op := &domain.Operation{ID: store.NewID("op"), WorkspaceID: workspaceID, ComponentID: componentID, Type: opType,
+	return e.EnqueueParams(ctx, workspaceID, componentID, opType, nil)
+}
+
+// EnqueueParams is Enqueue with a payload for the handler. Params never carry secrets.
+func (e *Engine) EnqueueParams(ctx context.Context, workspaceID, componentID, opType string, params map[string]any) (*domain.Operation, error) {
+	op := &domain.Operation{Params: params, ID: store.NewID("op"), WorkspaceID: workspaceID, ComponentID: componentID, Type: opType,
 		Status: domain.OpPending, Log: []string{}, CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC()}
 	if err := e.st.CreateOperation(ctx, op); err != nil {
 		return nil, err

@@ -74,16 +74,16 @@ func main() {
 	agents := agentapi.NewRegistry(st, bus)
 	wsSvc := workspace.NewService(st, drv, eng, bus, aud, log).WithAgent(agents, cfg.PublicURL)
 
-	eng.Start(ctx)
 	go wsSvc.RunReconciler(ctx, 15*time.Second)
 	go agents.Run(ctx)
 
 	api := httpapi.New(log)
 	api.RegisterCatalog(cat)
 	agents.Register(api)
-	compSvc := component.NewService(st, cat, bus, aud)
+	compSvc := component.NewService(st, cat, bus, aud).WithRuntime(drv, eng)
 	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc})
 	api.RegisterComponents(compSvc)
+	eng.Start(ctx) // after every handler is registered
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: api.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() {
