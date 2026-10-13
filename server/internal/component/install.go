@@ -605,3 +605,17 @@ func (s *Service) runtimeHandler(ctx context.Context, op *domain.Operation, p op
 }
 
 var _ = store.ErrNotFound
+
+// StorageUsedGB is the storage reserved by installed components. It lets
+// workspace settings reject a reduction below current usage.
+func (s *Service) StorageUsedGB(ctx context.Context, wsID string) float64 {
+	w, err := s.st.GetWorkspace(ctx, wsID)
+	if err != nil {
+		return 0
+	}
+	c, err := s.capacity(ctx, w, "")
+	if err != nil {
+		return 0
+	}
+	return c.UsedStore
+}

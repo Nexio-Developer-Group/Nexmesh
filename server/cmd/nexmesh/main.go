@@ -62,7 +62,7 @@ func main() {
 	switch cfg.Driver {
 	case "fake":
 		f := runtime.NewFake(runtime.Capabilities{MaxCPU: cfg.MaxCPU, MaxRAMGB: cfg.MaxRAMGB, MaxStorageGB: cfg.MaxStorageGB, GPU: cfg.HostGPU,
-			GPUReason: "this execution backend has no GPU drivers installed."})
+			GPUReason: "this execution backend has no GPU drivers installed.", StorageShrink: true})
 		if ms, _ := strconv.Atoi(os.Getenv("NEXMESH_FAKE_DELAY_MS")); ms > 0 {
 			f.Delay = time.Duration(ms) * time.Millisecond
 		}
@@ -106,6 +106,7 @@ func main() {
 		FingerprintKey: fp.Sum(nil), Log: log,
 	})
 	agents.WithEnv(compSvc)
+	wsSvc.WithUsage(compSvc)
 	go compSvc.RunHealth(ctx, 30*time.Second)
 	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc})
 	api.RegisterComponents(compSvc)

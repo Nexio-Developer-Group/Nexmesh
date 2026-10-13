@@ -18,6 +18,9 @@ type Capabilities struct {
 	FreeRAMGB    float64 `json:"freeRamGb"`
 	GPU          bool    `json:"gpuAvailable"`
 	GPUReason    string  `json:"gpuReason,omitempty"`
+	// StorageShrink reports whether the backend can reduce a workspace's storage
+	// allowance. Increasing is always supported (PRD 12.2, spike 1).
+	StorageShrink bool `json:"storageShrink"`
 }
 
 type Resources struct {
@@ -76,7 +79,12 @@ type Driver interface {
 	StartWorkspace(ctx context.Context, id string) error
 	StopWorkspace(ctx context.Context, id string) error
 	RemoveWorkspace(ctx context.Context, id string) error
+	// UpdateResources applies CPU and RAM changes to a running workspace without a restart.
 	UpdateResources(ctx context.Context, id string, res Resources) error
+	// RecreateWorkspace replaces the workspace container (keeping its volume and
+	// network) so changes that cannot be applied live, such as GPU access or the
+	// storage allowance, take effect. Services are untouched.
+	RecreateWorkspace(ctx context.Context, spec WorkspaceSpec, progress func(step, detail string)) error
 	InspectWorkspace(ctx context.Context, id string) (Observed, error)
 
 	// Exec runs a command inside the workspace container, streaming output.

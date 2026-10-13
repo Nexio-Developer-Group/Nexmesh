@@ -1,10 +1,13 @@
 package httpapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
@@ -142,6 +145,60 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 			return
 		}
 		WriteJSON(w, http.StatusAccepted, op)
+	})
+
+	// decodeSettings rejects any attempt to change the operating system.
+	decodeSettings := func(w http.ResponseWriter, r *http.Request) (workspace.SettingsChange, bool) {
+		var in workspace.SettingsChange
+		raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))
+		if err != nil {
+			WriteError(w, http.StatusBadRequest, "bad_request", "Could not read the request body.")
+			return in, false
+		}
+		var probe map[string]json.RawMessage
+		if json.Unmarshal(raw, &probe) != nil {
+			WriteError(w, http.StatusBadRequest, "bad_request", "Request body is not valid JSON for this endpoint.")
+			return in, false
+		}
+		for k := range probe {
+			if strings.EqualFold(k, "os") || strings.EqualFold(k, "osVersion") {
+				s.HandleError(w, workspace.ErrOSLocked)
+				return in, false
+			}
+		}
+		dec := json.NewDecoder(bytes.NewReader(raw))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&in); err != nil {
+			WriteError(w, http.StatusBadRequest, "bad_request", "Request body is not valid JSON for this endpoint.")
+			return in, false
+		}
+		return in, true
+	}
+
+	s.Handle("POST /api/workspaces/{id}/settings", func(w http.ResponseWriter, r *http.Request) {
+		in, ok := decodeSettings(w, r)
+		if !ok {
+			return
+		}
+		pv, err := d.Svc.PreviewSettings(r.Context(), Owner(r), r.PathValue("id"), in)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, pv)
+	})
+
+	s.Handle("PATCH /api/workspaces/{id}/settings", func(w http.ResponseWriter, r *http.Request) {
+		in, ok := decodeSettings(w, r)
+		if !ok {
+			return
+		}
+		ws, err := d.Svc.ApplySettings(r.Context(), Owner(r), r.PathValue("id"), in)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, d.dto(r.Context(), ws))
 	})
 
 	s.Handle("GET /api/workspaces/{id}/operations", func(w http.ResponseWriter, r *http.Request) {

@@ -210,3 +210,36 @@ func TestParseConnectionStringEndpoint(t *testing.T) {
 		t.Fatalf("parse error leaks the password: %s", msg)
 	}
 }
+
+func TestSettingsAPILocksOperatingSystem(t *testing.T) {
+	ts := testServer(t)
+	_, ws := do(t, "POST", ts.URL+"/api/workspaces", `{"name":"locked","cpu":2,"ramGb":4,"storageGb":20}`)
+	id := ws["id"].(string)
+	for i := 0; i < 200; i++ {
+		_, g := do(t, "GET", ts.URL+"/api/workspaces/"+id, "")
+		if g["status"] == "ready" {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	for _, method := range []string{"PATCH", "POST"} {
+		res, body := do(t, method, ts.URL+"/api/workspaces/"+id+"/settings", `{"os":"debian-12","cpu":3}`)
+		e, _ := body["error"].(map[string]any)
+		if res.StatusCode != 422 || e["code"] != "os_locked" || e["field"] != "os" {
+			t.Fatalf("%s: %d %v", method, res.StatusCode, body)
+		}
+	}
+	_, g := do(t, "GET", ts.URL+"/api/workspaces/"+id, "")
+	if g["os"] != "ubuntu-24.04" || g["cpu"].(float64) != 2 {
+		t.Fatalf("workspace changed by a rejected request: %v", g)
+	}
+	// A valid change works and the response keeps the OS.
+	res, body := do(t, "PATCH", ts.URL+"/api/workspaces/"+id+"/settings", `{"cpu":3,"description":"hi"}`)
+	if res.StatusCode != 200 || body["cpu"].(float64) != 3 || body["os"] != "ubuntu-24.04" {
+		t.Fatalf("%d %v", res.StatusCode, body)
+	}
+	res, body = do(t, "POST", ts.URL+"/api/workspaces/"+id+"/settings", `{"storageGb":50}`)
+	if res.StatusCode != 200 || body["restartRequired"] != true {
+		t.Fatalf("%d %v", res.StatusCode, body)
+	}
+}

@@ -156,6 +156,16 @@ func (d *Driver) CreateWorkspace(ctx context.Context, spec runtime.WorkspaceSpec
 	if _, err := d.out(ctx, "pull", "--quiet", spec.Image); err != nil {
 		return err
 	}
+	if err := d.createContainer(ctx, spec); err != nil {
+		return err
+	}
+	progress("starting", "starting workspace container")
+	_, err = d.out(ctx, "start", ctrName(spec.ID))
+	return err
+}
+
+func (d *Driver) createContainer(ctx context.Context, spec runtime.WorkspaceSpec) error {
+	lbl := []string{"--label", "nexmesh.workspace=" + spec.ID, "--label", "nexmesh.managed=true"}
 	args := []string{"create", "--name", ctrName(spec.ID), "--hostname", spec.Name, "--network", netName(spec.ID),
 		"--network-alias", "workspace", "-v", volName(spec.ID) + ":/workspace", "-w", "/workspace"}
 	args = append(args, lbl...)
@@ -169,10 +179,26 @@ func (d *Driver) CreateWorkspace(ctx context.Context, spec runtime.WorkspaceSpec
 	}
 	// The workspace agent replaces this idle command once it is wired in (T2.5).
 	args = append(args, spec.Image, "sleep", "infinity")
-	if _, err := d.out(ctx, args...); err != nil {
+	_, err := d.out(ctx, args...)
+	return err
+}
+
+func (d *Driver) RecreateWorkspace(ctx context.Context, spec runtime.WorkspaceSpec, progress func(step, detail string)) error {
+	caps, err := d.Capabilities(ctx)
+	if err != nil {
 		return err
 	}
-	progress("starting", "starting workspace container")
+	if err := runtime.ValidateResources(spec.Resources, caps); err != nil {
+		return err
+	}
+	progress("starting", "replacing the workspace container (volume and services are kept)")
+	_, _ = d.out(ctx, "stop", "--time", "10", ctrName(spec.ID))
+	if _, err := d.out(ctx, "rm", "-f", ctrName(spec.ID)); err != nil && !strings.Contains(err.Error(), "No such") {
+		return err
+	}
+	if err := d.createContainer(ctx, spec); err != nil {
+		return err
+	}
 	_, err = d.out(ctx, "start", ctrName(spec.ID))
 	return err
 }

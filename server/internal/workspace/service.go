@@ -34,6 +34,7 @@ type AgentTokens interface {
 }
 
 type Service struct {
+	usage      UsageProvider
 	agents     AgentTokens
 	controlURL string
 	st         store.Store
@@ -50,6 +51,7 @@ func NewService(st store.Store, drv runtime.Driver, eng *ops.Engine, bus *events
 	eng.Register("provision", s.provision)
 	eng.Register("start_workspace", s.startWorkspace)
 	eng.Register("stop_workspace", s.stopWorkspace)
+	eng.Register("apply_settings", s.applySettingsHandler)
 	return s
 }
 

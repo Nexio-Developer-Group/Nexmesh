@@ -40,7 +40,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T5.6** Properties panel Connect tab UI (parse string, masked write-only password, result list, production banner, Connected view)
 
 ## M6 — Settings + Code Agent (§6.4, §12)
-- [ ] **T6.1** Workspace Settings API: general + resources (validation, restart-required summary, storage shrink rejection, OS locked)
+- [x] **T6.1** Workspace Settings API: general + resources (validation, restart-required summary, storage shrink rejection, OS locked)
 - [ ] **T6.2** `ModelProvider` adapters (Anthropic, OpenAI-compatible, Gemini, Ollama) + Test Configuration + model list fetch
 - [ ] **T6.3** Agent config API (CRUD, default, replace key, test-then-save) + loopback/private warning
 - [ ] **T6.4** Settings UI (General / Resources / Code Agent) incl. custom/local form

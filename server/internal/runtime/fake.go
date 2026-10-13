@@ -126,6 +126,30 @@ func (f *Fake) RemoveWorkspace(_ context.Context, id string) error {
 	return nil
 }
 
+func (f *Fake) RecreateWorkspace(ctx context.Context, spec WorkspaceSpec, progress func(step, detail string)) error {
+	f.mu.Lock()
+	if err := f.fail("recreate"); err != nil {
+		f.mu.Unlock()
+		return err
+	}
+	if _, err := f.get(spec.ID); err != nil {
+		f.mu.Unlock()
+		return err
+	}
+	f.mu.Unlock()
+	if err := ValidateResources(spec.Resources, f.caps); err != nil {
+		return err
+	}
+	progress("starting", "replacing the workspace container")
+	if err := f.sleep(ctx); err != nil {
+		return err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.ws[spec.ID] = &fakeWS{spec: spec, running: true}
+	return nil
+}
+
 func (f *Fake) UpdateResources(_ context.Context, id string, res Resources) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
