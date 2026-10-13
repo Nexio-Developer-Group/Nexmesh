@@ -14,6 +14,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/agentapi"
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
+	"github.com/nexio-developer-group/nexmesh/server/internal/component"
 	"github.com/nexio-developer-group/nexmesh/server/internal/config"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
 	"github.com/nexio-developer-group/nexmesh/server/internal/httpapi"
@@ -80,7 +81,9 @@ func main() {
 	api := httpapi.New(log)
 	api.RegisterCatalog(cat)
 	agents.Register(api)
-	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus})
+	compSvc := component.NewService(st, cat, bus, aud)
+	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc})
+	api.RegisterComponents(compSvc)
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: api.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() {

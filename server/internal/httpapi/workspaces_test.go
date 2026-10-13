@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
+	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
+	"github.com/nexio-developer-group/nexmesh/server/internal/component"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
 	"github.com/nexio-developer-group/nexmesh/server/internal/ops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
@@ -131,5 +133,55 @@ func TestEventsStream(t *testing.T) {
 	}
 	if !sawReady {
 		t.Fatal("did not receive ready event over SSE")
+	}
+}
+
+func TestComponentsAPIAndSummary(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	st := store.NewMemory()
+	bus := events.NewBus()
+	drv := runtime.NewFake(runtime.Capabilities{MaxCPU: 12, MaxRAMGB: 24, MaxStorageGB: 200})
+	eng := ops.NewEngine(st, bus, log, 2)
+	aud := audit.New(st, log)
+	svc := workspace.NewService(st, drv, eng, bus, aud, log)
+	cat, _ := catalog.Load("../../../catalog")
+	comp := component.NewService(st, cat, bus, aud)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	eng.Start(ctx)
+	api := New(log)
+	api.RegisterWorkspaces(WorkspaceDeps{Svc: svc, Driver: drv, Store: st, Bus: bus, Summary: comp})
+	api.RegisterComponents(comp)
+	ts := httptest.NewServer(api.Handler())
+	t.Cleanup(ts.Close)
+
+	_, ws := do(t, "POST", ts.URL+"/api/workspaces", `{"name":"cards","cpu":1,"ramGb":1,"storageGb":5}`)
+	id := ws["id"].(string)
+	for i := 0; i < 200; i++ {
+		_, g := do(t, "GET", ts.URL+"/api/workspaces/"+id, "")
+		if g["status"] == "ready" {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	res, c := do(t, "POST", ts.URL+"/api/workspaces/"+id+"/components", `{"catalogId":"mongodb","x":40,"y":60}`)
+	if res.StatusCode != 201 || c["observedState"] != "draft" {
+		t.Fatalf("add: %d %v", res.StatusCode, c)
+	}
+	res, bad := do(t, "POST", ts.URL+"/api/workspaces/"+id+"/components", `{"catalogId":"cobol"}`)
+	if res.StatusCode != 422 {
+		t.Fatalf("unknown: %d %v", res.StatusCode, bad)
+	}
+	_, list := do(t, "GET", ts.URL+"/api/workspaces/"+id+"/components", "")
+	if len(list["components"].([]any)) != 1 {
+		t.Fatalf("list: %v", list)
+	}
+	_, g := do(t, "GET", ts.URL+"/api/workspaces/"+id, "")
+	if g["summary"] != "1 component" {
+		t.Fatalf("summary: %v", g["summary"])
+	}
+	res, _ = do(t, "DELETE", ts.URL+"/api/workspaces/"+id+"/components/"+c["id"].(string), "")
+	if res.StatusCode != 204 {
+		t.Fatalf("delete: %d", res.StatusCode)
 	}
 }

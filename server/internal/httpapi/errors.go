@@ -16,6 +16,10 @@ type ValidationBody struct {
 	Field   string `json:"field,omitempty"`
 }
 
+// extraErrors lets feature files map their own sentinel errors to HTTP status
+// codes without errors.go importing every feature package's internals.
+var extraErrors []func(error) (status int, code string, ok bool)
+
 // HandleError maps domain errors to HTTP responses. Unknown errors become a
 // generic 500 so internal details are never leaked.
 func (s *Server) HandleError(w http.ResponseWriter, err error) {
@@ -32,6 +36,12 @@ func (s *Server) HandleError(w http.ResponseWriter, err error) {
 	case errors.Is(err, workspace.ErrBadState), errors.Is(err, store.ErrConflict):
 		WriteError(w, http.StatusConflict, "conflict", err.Error())
 	default:
+		for _, f := range extraErrors {
+			if status, code, ok := f(err); ok {
+				WriteError(w, status, code, err.Error())
+				return
+			}
+		}
 		s.log.Error("unhandled error", "err", err)
 		WriteError(w, http.StatusInternalServerError, "internal", "Something went wrong on our side.")
 	}

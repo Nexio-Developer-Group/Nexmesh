@@ -1,10 +1,12 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
@@ -26,11 +28,30 @@ func Owner(r *http.Request) string {
 	return "local"
 }
 
+// Summarizer describes a workspace's components for the dashboard.
+type Summarizer interface {
+	Summary(ctx context.Context, workspaceID string) string
+}
+
+type workspaceDTO struct {
+	*domain.Workspace
+	Summary string `json:"summary,omitempty"`
+}
+
 type WorkspaceDeps struct {
-	Svc    *workspace.Service
-	Driver runtime.Driver
-	Store  store.Store
-	Bus    *events.Bus
+	Summary Summarizer // optional
+	Svc     *workspace.Service
+	Driver  runtime.Driver
+	Store   store.Store
+	Bus     *events.Bus
+}
+
+func (d WorkspaceDeps) dto(ctx context.Context, w *domain.Workspace) workspaceDTO {
+	out := workspaceDTO{Workspace: w}
+	if d.Summary != nil {
+		out.Summary = d.Summary.Summary(ctx, w.ID)
+	}
+	return out
 }
 
 func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
@@ -49,7 +70,11 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 			s.HandleError(w, err)
 			return
 		}
-		WriteJSON(w, http.StatusOK, map[string]any{"workspaces": list})
+		out := make([]workspaceDTO, 0, len(list))
+		for _, ws := range list {
+			out = append(out, d.dto(r.Context(), ws))
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"workspaces": out})
 	})
 
 	s.Handle("GET /api/workspaces/name-available", func(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +115,7 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 			return
 		}
 		d.Svc.Touch(r.Context(), Owner(r), ws.ID)
-		WriteJSON(w, http.StatusOK, ws)
+		WriteJSON(w, http.StatusOK, d.dto(r.Context(), ws))
 	})
 
 	s.Handle("DELETE /api/workspaces/{id}", func(w http.ResponseWriter, r *http.Request) {

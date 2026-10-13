@@ -26,7 +26,7 @@ Acceptance references are PRD Section 15 bullets.
 - [ ] **T3.6** Cards bound to real component state via SSE
 
 ## M4 — Install flow (§9, §10)
-- [ ] **T4.1** Component API: add (Draft), update desired state, install/start/stop/remove as operations
+- [~] **T4.1** Component API: add (Draft), move, remove draft — done; install/start/stop/remove operations — pending (see M4 continuation)
 - [ ] **T4.2** Runtimes (mise): Python/Node/Go install, versions, active version, record in workspace config
 - [ ] **T4.3** Service installs as sidecar containers from pinned images; port-conflict + resource prerequisite checks
 - [ ] **T4.4** Install tab + confirmation dialog + progress/logs UI; Runtimes panel
