@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/nexio-developer-group/nexmesh/server/internal/agentcfg"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
@@ -41,7 +42,15 @@ type workspaceDTO struct {
 	Summary string `json:"summary,omitempty"`
 }
 
+// AgentGate lets workspace creation carry an optional code agent configuration
+// (Advanced Setup, PRD 6.4).
+type AgentGate interface {
+	RequireTested(owner string, in agentcfg.Input) error
+	Create(ctx context.Context, owner, workspaceID string, in agentcfg.Input) (*domain.AgentConfig, error)
+}
+
 type WorkspaceDeps struct {
+	Agent   AgentGate  // optional
 	Summary Summarizer // optional
 	Svc     *workspace.Service
 	Driver  runtime.Driver
@@ -99,16 +108,41 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 	})
 
 	s.Handle("POST /api/workspaces", func(w http.ResponseWriter, r *http.Request) {
-		var in workspace.CreateInput
+		var in struct {
+			workspace.CreateInput
+			Agent *agentcfg.Input `json:"agent"`
+		}
 		if !DecodeJSON(w, r, &in) {
 			return
 		}
-		ws, err := d.Svc.Create(r.Context(), Owner(r), in)
+		// Create Code Space is blocked only by an agent section the user started
+		// and left untested; an absent section never blocks (PRD 6.4).
+		if in.Agent != nil && d.Agent != nil {
+			if err := d.Agent.RequireTested(Owner(r), *in.Agent); err != nil {
+				s.HandleError(w, err)
+				return
+			}
+		}
+		ws, err := d.Svc.Create(r.Context(), Owner(r), in.CreateInput)
 		if err != nil {
 			s.HandleError(w, err)
 			return
 		}
-		WriteJSON(w, http.StatusCreated, ws)
+		agentErr := ""
+		if in.Agent != nil && d.Agent != nil {
+			if _, err := d.Agent.Create(r.Context(), Owner(r), ws.ID, *in.Agent); err != nil {
+				// The workspace exists; the user can configure the agent in Settings.
+				agentErr = err.Error()
+			}
+		}
+		if agentErr == "" {
+			WriteJSON(w, http.StatusCreated, ws)
+			return
+		}
+		WriteJSON(w, http.StatusCreated, struct {
+			*domain.Workspace
+			AgentError string `json:"agentError"`
+		}{ws, agentErr})
 	})
 
 	s.Handle("GET /api/workspaces/{id}", func(w http.ResponseWriter, r *http.Request) {

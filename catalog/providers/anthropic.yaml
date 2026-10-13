@@ -1,0 +1,13 @@
+schemaVersion: 1
+id: anthropic
+name: Anthropic
+tagline: Hosted
+order: 1
+hosted: true
+protocols: [anthropic]
+baseUrl: https://api.anthropic.com
+defaultModel: claude-sonnet-4-5
+notice: Prompts and project context will be sent to Anthropic. Usage and rate limits belong to your provider account.
+fields:
+  - { name: apiKey, label: API key, type: password, required: true, help: "Never shown again after saving. Not injected into project code." }
+  - { name: baseUrl, label: Base URL, type: string, advanced: true, placeholder: "https://api.anthropic.com", help: "Optional, for proxies or gateways." }

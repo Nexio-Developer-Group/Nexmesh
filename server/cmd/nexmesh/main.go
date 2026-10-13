@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/agentapi"
+	"github.com/nexio-developer-group/nexmesh/server/internal/agentcfg"
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
 	"github.com/nexio-developer-group/nexmesh/server/internal/component"
@@ -105,12 +106,18 @@ func main() {
 		Secrets: sec, Guard: netguard.New(netguard.Policy{AllowPrivate: cfg.AllowPrivateEgress, AllowLoopback: cfg.AllowLoopbackEgress}),
 		FingerprintKey: fp.Sum(nil), Log: log,
 	})
+	providers, err := catalog.LoadProviders(cfg.CatalogDir)
+	if err != nil {
+		fatal("providers", err)
+	}
+	agentSvc := agentcfg.NewService(st, sec, netguard.New(netguard.Policy{AllowPrivate: cfg.AllowPrivateEgress, AllowLoopback: cfg.AllowLoopbackEgress}), aud, providers, fp.Sum(nil))
 	agents.WithEnv(compSvc)
 	wsSvc.WithUsage(compSvc)
 	go compSvc.RunHealth(ctx, 30*time.Second)
-	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc})
+	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc, Agent: agentSvc})
 	api.RegisterComponents(compSvc)
 	api.RegisterConnections(compSvc)
+	api.RegisterAgent(agentSvc)
 	eng.Start(ctx) // after every handler is registered
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: api.Handler(), ReadHeaderTimeout: 10 * time.Second}

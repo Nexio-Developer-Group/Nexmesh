@@ -1,0 +1,14 @@
+schemaVersion: 1
+id: google
+name: Google
+tagline: Gemini API
+order: 3
+hosted: true
+protocols: [gemini]
+baseUrl: https://generativelanguage.googleapis.com
+defaultModel: gemini-2.5-pro
+notice: Prompts and project context will be sent to Google. Usage and rate limits belong to your provider account.
+comingSoon: ["Vertex AI (project, location and service-account credentials)"]
+fields:
+  - { name: apiKey, label: API key, type: password, required: true, help: "Gemini API key. Never shown again after saving." }
+  - { name: baseUrl, label: Base URL, type: string, advanced: true, placeholder: "https://generativelanguage.googleapis.com" }

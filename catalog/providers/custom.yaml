@@ -1,0 +1,14 @@
+schemaVersion: 1
+id: custom
+name: Custom or local
+tagline: Your endpoint
+order: 4
+hosted: false
+protocols: [openai, anthropic, ollama]
+notice: Self-hosted and private models keep prompts and project context in your own infrastructure.
+fields:
+  - { name: endpoint, label: Endpoint base URL, type: string, required: true, placeholder: "https://models.internal.example.com/v1" }
+  - { name: protocol, label: API protocol, type: select, required: true, options: [openai, anthropic, ollama], help: "OpenAI-compatible, Anthropic-compatible or Ollama-native." }
+  - { name: apiKey, label: API key or token, type: password, help: "Optional. Many local servers need none." }
+  - { name: authStyle, label: Authentication style, type: select, advanced: true, options: [bearer, header] }
+  - { name: headerName, label: Header name, type: string, advanced: true, placeholder: "X-Api-Key" }

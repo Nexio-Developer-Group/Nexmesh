@@ -46,3 +46,25 @@ func TestRulesRejectBadManifests(t *testing.T) {
 		}
 	}
 }
+
+func TestShippedProvidersLoad(t *testing.T) {
+	ps, err := LoadProviders("../../../catalog")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ids []string
+	for _, p := range ps {
+		ids = append(ids, p.ID)
+		if p.Hosted && len(p.Protocols) != 1 {
+			t.Errorf("%s: a hosted provider has exactly one protocol", p.ID)
+		}
+		for _, f := range p.Fields {
+			if f.Name == "apiKey" && f.Type != "password" {
+				t.Errorf("%s: apiKey must be a password field", p.ID)
+			}
+		}
+	}
+	if got := ids; len(got) != 4 || got[0] != "anthropic" || got[3] != "custom" {
+		t.Fatalf("%v", got)
+	}
+}

@@ -1,0 +1,15 @@
+schemaVersion: 1
+id: openai
+name: OpenAI
+tagline: Hosted
+order: 2
+hosted: true
+protocols: [openai]
+baseUrl: https://api.openai.com/v1
+defaultModel: gpt-4.1
+notice: Prompts and project context will be sent to OpenAI. Usage and rate limits belong to your provider account.
+fields:
+  - { name: apiKey, label: API key, type: password, required: true, help: "Never shown again after saving. Not injected into project code." }
+  - { name: organization, label: Organization ID, type: string, advanced: true }
+  - { name: project, label: Project ID, type: string, advanced: true }
+  - { name: baseUrl, label: Base URL, type: string, advanced: true, placeholder: "https://api.openai.com/v1", help: "Optional, for proxies or gateways." }
