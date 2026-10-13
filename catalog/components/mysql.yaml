@@ -23,7 +23,8 @@ install:
   - name: data
     path: /var/lib/mysql
     sizeGB: 10
-  env: {}
+  env:
+    MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
 resources:
   cpu: 0.5
   ramMB: 1024

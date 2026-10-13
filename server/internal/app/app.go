@@ -173,6 +173,7 @@ func (a *App) Run(ctx context.Context) {
 	go a.Workspaces.RunReconciler(ctx, 15*time.Second)
 	go a.agent.Run(ctx)
 	go a.Components.RunHealth(ctx, 30*time.Second)
+	go a.Components.RunReconciler(ctx, 15*time.Second)
 	<-ctx.Done()
 }
 
@@ -182,6 +183,7 @@ func (a *App) Start(ctx context.Context) {
 	go a.Workspaces.RunReconciler(ctx, 15*time.Second)
 	go a.agent.Run(ctx)
 	go a.Components.RunHealth(ctx, 30*time.Second)
+	go a.Components.RunReconciler(ctx, 15*time.Second)
 }
 
 func (a *App) Close() { a.closer() }

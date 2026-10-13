@@ -50,6 +50,7 @@ type ServiceSpec struct {
 	Name        string // stable name within the workspace network, e.g. "mongodb"
 	Image       string // pinned image reference including tag
 	Env         map[string]string
+	Command     []string // optional command arguments after the image
 	Ports       []int
 	Volumes     []VolumeMount
 	CPU         float64 // optional per-service cap; 0 = no cap

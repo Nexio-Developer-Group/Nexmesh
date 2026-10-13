@@ -115,9 +115,15 @@ func TestInstallWithoutStartLeavesServiceStopped(t *testing.T) {
 
 func TestInstallPrerequisites(t *testing.T) {
 	f := newInstallFixture(t, 1) // 1 GB workspace
-	kafka := f.add(t, "kafka")
-	if _, err := f.svc.Install(f.ctx, "u1", "ws1", kafka.ID, InstallInput{Version: "3.8.1", Confirm: true}); errCode(err) != "insufficient_resources" {
-		t.Fatalf("kafka in 1GB: %v", err)
+	redis := f.add(t, "redis")
+	if _, err := f.svc.Install(f.ctx, "u1", "ws1", redis.ID, InstallInput{Version: "7.4.1", Confirm: true}); err != nil {
+		t.Fatal(err)
+	}
+	f.wait(t, redis.ID, domain.StateStopped)
+	kafka := f.add(t, "kafka") // needs 1 GB; only 768 MB are left
+	_, err := f.svc.Install(f.ctx, "u1", "ws1", kafka.ID, InstallInput{Version: "3.8.1", Confirm: true})
+	if errCode(err) != "insufficient_resources" || !strings.Contains(err.Error(), "needs 1 GB RAM; this workspace has 0.8 GB free") {
+		t.Fatalf("kafka with 768 MB free: %v", err)
 	}
 	if _, err := f.svc.Install(f.ctx, "u1", "ws1", kafka.ID, InstallInput{Version: "9.9", Confirm: true}); errCode(err) != "unsupported_version" {
 		t.Fatalf("version: %v", err)
@@ -265,5 +271,43 @@ func TestInstallScriptsUseOnlyCatalogValues(t *testing.T) {
 	}
 	if s := shellQuoteAll([]string{"a'b"}); s != `'a'\''b'` {
 		t.Fatal(s)
+	}
+}
+
+func TestReconcileInstalledShowsRealState(t *testing.T) {
+	f := newInstallFixture(t, 8)
+	c := f.add(t, "redis")
+	_, _ = f.svc.Install(f.ctx, "u1", "ws1", c.ID, InstallInput{Version: "7.4.1", Start: true, Confirm: true})
+	f.wait(t, c.ID, domain.StateRunning)
+
+	f.svc.ReconcileInstalled(f.ctx)
+	if got, _ := f.st.GetComponent(f.ctx, c.ID); got.Observed != domain.StateRunning {
+		t.Fatalf("healthy service must stay running: %+v", got)
+	}
+	// The container is stopped behind the control plane's back.
+	_ = f.drv.StopService(f.ctx, "ws1", "redis")
+	f.svc.ReconcileInstalled(f.ctx)
+	got, _ := f.st.GetComponent(f.ctx, c.ID)
+	if got.Observed != domain.StateFailed || !strings.Contains(got.Message, "stopped unexpectedly") {
+		t.Fatalf("%+v", got)
+	}
+	// A failed card is owned by its operation: reconciliation leaves it alone.
+	_ = f.drv.StartService(f.ctx, "ws1", "redis")
+	f.svc.ReconcileInstalled(f.ctx)
+	if got, _ := f.st.GetComponent(f.ctx, c.ID); got.Observed != domain.StateFailed {
+		t.Fatalf("failed state should wait for Retry: %+v", got)
+	}
+	// Stopped by the user, then started outside: observed catches up.
+	f.drv.ExecLog = nil
+	_, _ = f.st.UpdateComponent(f.ctx, c.ID, func(x *domain.Component) error { x.Observed = domain.StateStopped; x.Message = ""; return nil })
+	f.svc.ReconcileInstalled(f.ctx)
+	if got, _ := f.st.GetComponent(f.ctx, c.ID); got.Observed != domain.StateRunning {
+		t.Fatalf("%+v", got)
+	}
+	// Container removed on the backend.
+	_ = f.drv.RemoveService(f.ctx, "ws1", "redis", false)
+	f.svc.ReconcileInstalled(f.ctx)
+	if got, _ := f.st.GetComponent(f.ctx, c.ID); got.Observed != domain.StateFailed || !strings.Contains(got.Message, "no longer exists") {
+		t.Fatalf("%+v", got)
 	}
 }

@@ -182,3 +182,17 @@ func TestRecreateKeepsVolumeAndServices(t *testing.T) {
 		t.Error("new limits not applied")
 	}
 }
+
+func TestServiceCommandAndEnvArePassedThrough(t *testing.T) {
+	r := &rec{}
+	d := newDriver(t, r)
+	err := d.InstallService(context.Background(), runtime.ServiceSpec{WorkspaceID: "ws1", Name: "redis", Image: "redis:7.4.1",
+		Command: []string{"redis-server", "--protected-mode", "no"}, Env: map[string]string{"A": "b"}}, func(string) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	create := strings.Join(r.find("create", "--name", "nexmesh-ws1-redis"), " ")
+	if !strings.HasSuffix(create, "redis:7.4.1 redis-server --protected-mode no") || !strings.Contains(create, "-e A=b") {
+		t.Fatalf("%s", create)
+	}
+}

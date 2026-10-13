@@ -45,16 +45,18 @@ type Versions struct {
 }
 
 type Install struct {
-	Strategy string            `json:"strategy" yaml:"strategy"`
-	Image    string            `json:"image,omitempty" yaml:"image,omitempty"`
-	Tool     string            `json:"tool,omitempty" yaml:"tool,omitempty"`
-	Manager  string            `json:"manager,omitempty" yaml:"manager,omitempty"`
-	Command  string            `json:"command,omitempty" yaml:"command,omitempty"`
-	Packages []string          `json:"packages,omitempty" yaml:"packages,omitempty"`
-	Requires []string          `json:"requires,omitempty" yaml:"requires,omitempty"`
-	Ports    []int             `json:"ports,omitempty" yaml:"ports,omitempty"`
-	Env      map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
-	Volumes  []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty"`
+	Strategy string `json:"strategy" yaml:"strategy"`
+	Image    string `json:"image,omitempty" yaml:"image,omitempty"`
+	Tool     string `json:"tool,omitempty" yaml:"tool,omitempty"`
+	Manager  string `json:"manager,omitempty" yaml:"manager,omitempty"`
+	Command  string `json:"command,omitempty" yaml:"command,omitempty"`
+	// ServiceCommand overrides the image command for image-based services.
+	ServiceCommand []string          `json:"serviceCommand,omitempty" yaml:"serviceCommand,omitempty"`
+	Packages       []string          `json:"packages,omitempty" yaml:"packages,omitempty"`
+	Requires       []string          `json:"requires,omitempty" yaml:"requires,omitempty"`
+	Ports          []int             `json:"ports,omitempty" yaml:"ports,omitempty"`
+	Env            map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	Volumes        []Volume          `json:"volumes,omitempty" yaml:"volumes,omitempty"`
 }
 
 type Volume struct {

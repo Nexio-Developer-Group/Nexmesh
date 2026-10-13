@@ -25,6 +25,12 @@ install:
     path: /data
     sizeGB: 2
   env: {}
+  serviceCommand:
+  - redis-server
+  - --protected-mode
+  - 'no'
+  - --appendonly
+  - 'yes'
 resources:
   cpu: 0.25
   ramMB: 256

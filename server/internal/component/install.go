@@ -8,6 +8,7 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
@@ -257,7 +258,7 @@ func (s *Service) fail(id, msg string, err error) error {
 func serviceName(def *catalog.Component) string { return def.ID }
 
 func (s *Service) serviceSpec(w *domain.Workspace, c *domain.Component, def *catalog.Component) runtime.ServiceSpec {
-	spec := runtime.ServiceSpec{WorkspaceID: w.ID, Name: serviceName(def), Image: def.Install.Image + ":" + c.Version, Env: map[string]string{}}
+	spec := runtime.ServiceSpec{WorkspaceID: w.ID, Name: serviceName(def), Image: def.Install.Image + ":" + c.Version, Env: map[string]string{}, Command: def.Install.ServiceCommand}
 	maps := def.Install.Env
 	for k, v := range maps {
 		spec.Env[k] = v
@@ -618,4 +619,62 @@ func (s *Service) StorageUsedGB(ctx context.Context, wsID string) float64 {
 		return 0
 	}
 	return c.UsedStore
+}
+
+// ReconcileInstalled compares installed service components with what the
+// backend reports and writes the observed state back (PRD 13.1): a container
+// that stopped, crashed or disappeared is shown as such, not as the last
+// state the control plane remembers.
+func (s *Service) ReconcileInstalled(ctx context.Context) {
+	if s.drv == nil {
+		return
+	}
+	list, err := s.st.ListWorkspaces(ctx, "")
+	if err != nil {
+		return
+	}
+	for _, w := range list {
+		if w.Status != domain.WSReady {
+			continue
+		}
+		comps, err := s.st.ListComponents(ctx, w.ID)
+		if err != nil {
+			continue
+		}
+		for _, c := range comps {
+			def, ok := s.cat.Get(c.CatalogID)
+			if !ok || c.Mode != domain.ModeInstalled || def.Install == nil || def.Install.Strategy != "image" {
+				continue
+			}
+			if c.Observed != domain.StateRunning && c.Observed != domain.StateStopped {
+				continue // installing, failed and so on are owned by their operation
+			}
+			obs, err := s.drv.InspectService(ctx, w.ID, serviceName(def))
+			if err != nil {
+				continue
+			}
+			switch {
+			case !obs.Exists:
+				s.setState(ctx, c.ID, domain.StateFailed, "The service container no longer exists on the execution backend.", -1)
+			case obs.Running && c.Observed == domain.StateStopped:
+				s.setState(ctx, c.ID, domain.StateRunning, "", -1)
+			case !obs.Running && c.Observed == domain.StateRunning:
+				s.setState(ctx, c.ID, domain.StateFailed, "The service stopped unexpectedly ("+obs.Detail+").", -1)
+			}
+		}
+	}
+}
+
+// RunReconciler calls ReconcileInstalled on an interval until ctx ends.
+func (s *Service) RunReconciler(ctx context.Context, every time.Duration) {
+	t := time.NewTicker(every)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			s.ReconcileInstalled(ctx)
+		}
+	}
 }

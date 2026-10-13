@@ -306,6 +306,7 @@ func (d *Driver) InstallService(ctx context.Context, spec runtime.ServiceSpec, p
 		args = append(args, "-e", k+"="+v)
 	}
 	args = append(args, spec.Image)
+	args = append(args, spec.Command...)
 	progress("creating container " + name)
 	_, err := d.out(ctx, args...)
 	return err

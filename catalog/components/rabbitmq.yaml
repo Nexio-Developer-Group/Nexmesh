@@ -24,7 +24,9 @@ install:
   - name: data
     path: /var/lib/rabbitmq
     sizeGB: 2
-  env: {}
+  env:
+    RABBITMQ_DEFAULT_USER: nexmesh
+    RABBITMQ_DEFAULT_PASS: nexmesh
 resources:
   cpu: 0.5
   ramMB: 512
