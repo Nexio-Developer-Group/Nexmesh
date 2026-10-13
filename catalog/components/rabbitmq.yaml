@@ -83,4 +83,11 @@ connection:
     required: false
     advanced: true
     help: PEM. Leave empty to use system roots.
+  - name: tlsInsecure
+    label: Skip certificate verification
+    type: boolean
+    required: false
+    advanced: true
+    default: false
+    help: Encrypts the connection but does not check the server identity. Only use for testing.
 schemaVersion: 1

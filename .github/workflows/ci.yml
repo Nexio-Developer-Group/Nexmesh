@@ -32,3 +32,27 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm, cache-dependency-path: web/pnpm-lock.yaml }
       - run: cd web && pnpm install --frozen-lockfile && pnpm build && pnpm test --run
+  integration:
+    # Probe tests against real Redis, MariaDB, MongoDB, RabbitMQ and Kafka.
+    runs-on: ubuntu-24.04
+    continue-on-error: true # promote to required once it has run green in CI
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: server/go.mod }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - name: Install service binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends redis-server mariadb-server rabbitmq-server openssl
+          sudo systemctl stop redis-server mariadb rabbitmq-server || true
+          sudo mkdir -p /opt/nx-test && sudo chown "$USER" /opt/nx-test && cd /opt/nx-test
+          curl -fsSL -o mongo.tgz https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.14.tgz && tar xzf mongo.tgz
+          curl -fsSL -o kafka.tgz https://archive.apache.org/dist/kafka/3.8.1/kafka_2.13-3.8.1.tgz && tar xzf kafka.tgz
+      - name: Start services
+        run: |
+          sudo -E env "PATH=$PATH" bash -c 'source scripts/it/env.sh && scripts/it/start-services.sh redis && scripts/it/start-services.sh mysql && scripts/it/start-services.sh mongo'
+          sudo bash -c 'source scripts/it/env.sh && (setsid scripts/it/start-services.sh rabbit </dev/null >/tmp/rabbit.log 2>&1 &) ; (setsid scripts/it/start-services.sh kafka </dev/null >/tmp/kafka.log 2>&1 &) ; sleep 60'
+      - name: Probe integration tests
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" bash -c 'source scripts/it/env.sh && cd server && NEXMESH_IT=1 go test ./internal/probe/ -count=1 -v'

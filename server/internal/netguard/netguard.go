@@ -32,6 +32,7 @@ var ErrNoAddress = errors.New("host did not resolve to any address")
 // Resolver abstracts DNS so tests can simulate rebinding.
 type Resolver interface {
 	LookupNetIP(ctx context.Context, network, host string) ([]netip.Addr, error)
+	LookupSRV(ctx context.Context, service, proto, name string) (string, []*net.SRV, error)
 }
 
 type Policy struct {
@@ -127,6 +128,41 @@ func isMetadataHost(h string) bool {
 		}
 	}
 	return false
+}
+
+// Lookup resolves host without applying the policy, so Test Connection can
+// report "DNS resolved" and "address blocked" as separate stages.
+func (g *Guard) Lookup(ctx context.Context, host string) ([]netip.Addr, error) {
+	if a, err := netip.ParseAddr(strings.Trim(host, "[]")); err == nil {
+		return []netip.Addr{a.Unmap()}, nil
+	}
+	addrs, err := g.Resolver.LookupNetIP(ctx, "ip", host)
+	if err != nil {
+		return nil, err
+	}
+	if len(addrs) == 0 {
+		return nil, ErrNoAddress
+	}
+	for i := range addrs {
+		addrs[i] = addrs[i].Unmap()
+	}
+	return addrs, nil
+}
+
+// LookupSRV resolves _service._proto.name records (MongoDB +srv).
+func (g *Guard) LookupSRV(ctx context.Context, service, proto, name string) ([]*net.SRV, error) {
+	_, recs, err := g.Resolver.LookupSRV(ctx, service, proto, name)
+	return recs, err
+}
+
+// CheckAll applies the policy to every address in a lookup.
+func (g *Guard) CheckAll(addrs []netip.Addr) error {
+	for _, a := range addrs {
+		if err := g.Check(a); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Resolve returns the host's addresses after policy checks. If any answer is

@@ -79,6 +79,10 @@ func (f *fakeResolver) LookupNetIP(_ context.Context, _, _ string) ([]netip.Addr
 	return f.answers[i], nil
 }
 
+func (f *fakeResolver) LookupSRV(context.Context, string, string, string) (string, []*net.SRV, error) {
+	return "", nil, errors.New("no srv")
+}
+
 func addrs(s ...string) []netip.Addr {
 	var out []netip.Addr
 	for _, x := range s {

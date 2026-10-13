@@ -100,6 +100,7 @@ type TestResult struct {
 	Passed        bool          `json:"passed"`
 	FailedStage   string        `json:"failedStage,omitempty"`
 	Message       string        `json:"message,omitempty"`
+	Warnings      []string      `json:"warnings,omitempty"`
 	Stages        []StageResult `json:"stages"`
 	LatencyMS     int64         `json:"latencyMs,omitempty"`
 	ServerVersion string        `json:"serverVersion,omitempty"`
