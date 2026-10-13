@@ -42,10 +42,10 @@ export function AdvancedSetup({ onChange }: { onChange: (s: AdvancedState) => vo
     <section className="rounded-card border border-line bg-panel" aria-label="Advanced Setup">
       <div className="flex items-center justify-between px-6 py-4">
         <h2 className="flex items-baseline gap-3 text-base font-bold">
-          <span className="font-mono text-[11px] text-blue">04</span>Advanced Setup
+          <span className="font-mono text-[11px] text-link">04</span>Advanced Setup
           <span className="rounded-md bg-neutral-bg px-2 py-0.5 text-xs font-normal text-muted">Optional</span>
         </h2>
-        <button type="button" aria-expanded={open} aria-controls="advanced-body" className="text-sm font-semibold text-blue hover:underline" onClick={() => setOpen((o) => !o)}>
+        <button type="button" aria-expanded={open} aria-controls="advanced-body" className="text-sm font-semibold text-link hover:underline" onClick={() => setOpen((o) => !o)}>
           {open ? 'Collapse' : 'Expand'}
         </button>
       </div>

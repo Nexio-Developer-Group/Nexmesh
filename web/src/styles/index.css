@@ -105,7 +105,9 @@ body {
   --nx-border-strong: #d5dce7;
   --nx-text: #0b1530;
   --nx-muted: #52607a;
-  --nx-faint: #7a879f;
+  --nx-faint: #5b6881;
+  --nx-link: #0b5bd8;
+  --nx-brand-ubuntu: #b23c0e;
   --nx-ok-bg: #e3f6ee;
   --nx-ok-fg: #0e7a54;
   --nx-err-bg: #fdecee;
@@ -129,6 +131,8 @@ body {
   --nx-text: #e8eef9;
   --nx-muted: #93a1be;
   --nx-faint: #7f8daa;
+  --nx-link: #5aa8ff;
+  --nx-brand-ubuntu: #ff9a57;
   --nx-ok-bg: rgba(43, 212, 154, 0.12);
   --nx-ok-fg: #2bd49a;
   --nx-err-bg: rgba(255, 138, 147, 0.12);
@@ -153,6 +157,8 @@ body {
   --color-fg: var(--nx-text);
   --color-muted: var(--nx-muted);
   --color-faint: var(--nx-faint);
+  --color-link: var(--nx-link);
+  --color-ubuntu: var(--nx-brand-ubuntu);
   --color-ok-bg: var(--nx-ok-bg);
   --color-ok-fg: var(--nx-ok-fg);
   --color-err-bg: var(--nx-err-bg);

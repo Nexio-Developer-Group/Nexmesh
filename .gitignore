@@ -10,3 +10,5 @@ coverage/
 server/internal/webui/dist/*
 !server/internal/webui/dist/.gitkeep
 nexmesh-master.key
+test-results/
+playwright-report/

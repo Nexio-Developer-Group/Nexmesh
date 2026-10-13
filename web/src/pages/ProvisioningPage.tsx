@@ -35,7 +35,7 @@ export default function ProvisioningPage() {
     }
   }, [ws?.status, ws?.id, nav])
 
-  if (error) return <p role="alert" className="theme-light p-8">Workspace not found. <Link className="text-blue underline" to="/workspaces">Back to workspaces</Link></p>
+  if (error) return <p role="alert" className="theme-light p-8">Workspace not found. <Link className="text-link underline" to="/workspaces">Back to workspaces</Link></p>
   const failed = ws?.status === 'failed'
   const current = Math.max(0, STEPS.findIndex((s) => s.key === ws?.step))
 
@@ -68,7 +68,7 @@ export default function ProvisioningPage() {
         <div className="mt-6 flex items-center gap-3">
           <Button onClick={() => setShowLogs((v) => !v)}>{showLogs ? 'Hide logs' : 'View logs'}</Button>
           {failed && <Link to="/new"><Button variant="primary">Try different resources</Button></Link>}
-          <Link to="/workspaces" className="ml-auto text-sm text-blue hover:underline">Back to workspaces</Link>
+          <Link to="/workspaces" className="ml-auto text-sm text-link hover:underline">Back to workspaces</Link>
         </div>
         {(showLogs || failed) && ops.data && (
           <pre aria-label="Provisioning log" className="mt-4 max-h-64 overflow-auto rounded-xl bg-night p-4 font-mono text-xs leading-relaxed text-night-text">

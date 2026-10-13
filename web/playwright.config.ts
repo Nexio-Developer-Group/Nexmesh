@@ -1,0 +1,24 @@
+import { defineConfig } from '@playwright/test'
+
+// E2E runs the real binary (embedded UI, fake runtime driver). Set CHROME_PATH
+// to use a preinstalled Chromium instead of Playwright's own download.
+export default defineConfig({
+  testDir: './e2e',
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+  fullyParallel: false,
+  workers: 1,
+  reporter: [['list']],
+  use: {
+    baseURL: 'http://127.0.0.1:18080',
+    viewport: { width: 1440, height: 900 },
+    trace: 'retain-on-failure',
+    launchOptions: process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {},
+  },
+  webServer: {
+    command: 'bash e2e/start.sh',
+    url: 'http://127.0.0.1:18080/healthz',
+    reuseExistingServer: !process.env.CI,
+    timeout: 240_000,
+  },
+})

@@ -49,7 +49,7 @@ Acceptance references are PRD Section 15 bullets.
 ## M7 — Hardening + acceptance
 - [x] **T7.1** Audit events everywhere (actor type, no secrets)
 - [x] **T7.2** `docker compose` self-host bundle + docs
-- [ ] **T7.3** Playwright E2E for create → drag → install/connect → settings
+- [x] **T7.3** Playwright E2E for create → drag → install/connect → settings
 - [ ] **T7.4** Walk through PRD §15 checklist; record gaps; spike notes
 
 ## Progress log

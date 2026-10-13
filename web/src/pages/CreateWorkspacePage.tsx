@@ -22,7 +22,7 @@ function Section({ n, title, aside, children }: { n: string; title: string; asid
   return (
     <section className="rounded-card border border-line bg-panel p-6">
       <div className="mb-4 flex items-baseline justify-between">
-        <h2 className="flex items-baseline gap-3 text-base font-bold"><span className="font-mono text-[11px] text-blue">{n}</span>{title}</h2>
+        <h2 className="flex items-baseline gap-3 text-base font-bold"><span className="font-mono text-[11px] text-link">{n}</span>{title}</h2>
         {aside}
       </div>
       {children}
@@ -81,7 +81,7 @@ export default function CreateWorkspacePage() {
 
           <Section n="02" title="Operating system">
             <div className="flex items-center gap-4 rounded-xl border border-line bg-bg p-3.5">
-              <span className="grid size-10 place-items-center rounded-lg border border-line bg-panel font-mono text-xs font-bold text-[#E95420]">Ub</span>
+              <span className="grid size-10 place-items-center rounded-lg border border-line bg-panel font-mono text-xs font-bold text-ubuntu">Ub</span>
               <div className="flex-1">
                 <p className="font-semibold">Ubuntu 24.04 LTS</p>
                 <p className="font-mono text-[11px] text-muted">noble · x86_64 · default</p>

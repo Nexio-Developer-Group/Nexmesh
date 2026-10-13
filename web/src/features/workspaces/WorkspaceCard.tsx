@@ -35,10 +35,10 @@ export function WorkspaceCard({ workspace: w, view, onStart, onStop, onDelete, o
   const stepIdx = Math.max(0, PROVISION_STEPS.indexOf(w.step as (typeof PROVISION_STEPS)[number])) + 1
 
   const action =
-    w.status === 'ready' ? <Link className="text-sm font-semibold text-blue hover:underline" to={`/w/${w.id}`}>Open</Link>
-    : w.status === 'stopped' ? <button className="text-sm font-semibold text-blue hover:underline" onClick={() => onStart(w)}>Start</button>
-    : w.status === 'failed' ? <button className="text-sm font-semibold text-blue hover:underline" onClick={() => onViewError(w)}>View error</button>
-    : <Link className="text-sm font-semibold text-blue hover:underline" to={`/w/${w.id}/provisioning`}>View progress</Link>
+    w.status === 'ready' ? <Link className="text-sm font-semibold text-link hover:underline" to={`/w/${w.id}`}>Open</Link>
+    : w.status === 'stopped' ? <button className="text-sm font-semibold text-link hover:underline" onClick={() => onStart(w)}>Start</button>
+    : w.status === 'failed' ? <button className="text-sm font-semibold text-link hover:underline" onClick={() => onViewError(w)}>View error</button>
+    : <Link className="text-sm font-semibold text-link hover:underline" to={`/w/${w.id}/provisioning`}>View progress</Link>
 
   return (
     <article

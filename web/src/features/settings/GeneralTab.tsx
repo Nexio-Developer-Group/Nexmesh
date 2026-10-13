@@ -23,7 +23,7 @@ export function GeneralTab({ workspace: w }: { workspace: Workspace }) {
       <div>
         <p className="mb-1.5 text-[13px] font-semibold">Operating system</p>
         <div className="flex items-center gap-4 rounded-xl border border-line bg-panel p-3.5">
-          <span aria-hidden className="grid size-10 place-items-center rounded-lg border border-line bg-raised font-mono text-xs font-bold text-[#E95420]">Ub</span>
+          <span aria-hidden className="grid size-10 place-items-center rounded-lg border border-line bg-raised font-mono text-xs font-bold text-ubuntu">Ub</span>
           <div className="flex-1">
             <p className="font-semibold" id="os-name">{osLabel(w.os)}</p>
             <p className="font-mono text-[11px] text-muted">noble · x86_64</p>
