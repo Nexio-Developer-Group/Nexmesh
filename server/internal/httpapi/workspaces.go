@@ -119,6 +119,20 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 		WriteJSON(w, http.StatusAccepted, op)
 	})
 
+	s.Handle("GET /api/workspaces/{id}/operations", func(w http.ResponseWriter, r *http.Request) {
+		ws, err := d.Svc.Get(r.Context(), Owner(r), r.PathValue("id"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		list, err := d.Store.ListOperations(r.Context(), ws.ID)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"operations": list})
+	})
+
 	s.Handle("GET /api/workspaces/{id}/audit", func(w http.ResponseWriter, r *http.Request) {
 		ws, err := d.Svc.Get(r.Context(), Owner(r), r.PathValue("id"))
 		if err != nil {
