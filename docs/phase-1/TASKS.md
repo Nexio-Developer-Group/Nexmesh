@@ -15,7 +15,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T2.2** Docker driver (container per workspace, private network, volumes, cgroup limits, no privileged, no socket)
 - [x] **T2.3** Workspace API: create/list/get/delete, provisioning states (Allocating → Preparing → Starting → Ready) with real status + errors
 - [x] **T2.4** Operations table + worker + reconciler (desired vs observed); SSE event stream
-- [ ] **T2.5** Workspace agent skeleton (`nexmesh-agent`) + outbound handshake
+- [x] **T2.5** Workspace agent skeleton (`nexmesh-agent`) + outbound handshake
 
 ## M3 — Web shell + canvas (§7, mockups 1a–1c)
 - [ ] **T3.1** Web scaffold: Vite, React, TS, Tailwind, design tokens, fonts, logo, theme
@@ -54,3 +54,7 @@ Acceptance references are PRD Section 15 bullets.
 
 ## Progress log
 Updated as tasks complete (see git history for detail).
+
+## Notes and deferred items
+- T2.5: agent link is HTTPS + heartbeats in Phase 1; moves to a gRPC bidirectional stream in Phase 2 (terminals). The workspace container currently runs `sleep infinity`; the `nexmesh/workspace` image (Ubuntu 24.04 + agent + mise) is built in T7.2 and the Docker driver switches to it then.
+- Storage quota enforcement (`--storage-opt`) is behind `StorageQuota` until spike 1 confirms the host filesystem.

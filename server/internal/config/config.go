@@ -12,6 +12,7 @@ type Config struct {
 	DatabaseURL string
 	Driver      string // "fake" or "docker"
 	CatalogDir  string
+	PublicURL   string // how workspace containers reach the control plane
 	MasterKey   string // base64 32-byte key for the secrets service
 	// Host capacity limits enforced by workspace validation (PRD 6.2).
 	MaxCPU       int
@@ -27,6 +28,7 @@ func Load() Config {
 		DatabaseURL:  env("NEXMESH_DATABASE_URL", "postgres://nexmesh:nexmesh@localhost:5432/nexmesh?sslmode=disable"),
 		Driver:       env("NEXMESH_DRIVER", "docker"),
 		CatalogDir:   env("NEXMESH_CATALOG_DIR", "../catalog"),
+		PublicURL:    env("NEXMESH_PUBLIC_URL", "http://host.docker.internal:8080"),
 		MasterKey:    os.Getenv("NEXMESH_MASTER_KEY"),
 		MaxCPU:       envInt("NEXMESH_MAX_CPU", 12),
 		MaxRAMGB:     envInt("NEXMESH_MAX_RAM_GB", 24),

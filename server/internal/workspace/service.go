@@ -28,14 +28,21 @@ var (
 	nameRe         = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,46}[a-z0-9]$`)
 )
 
+// AgentTokens issues registration tokens for workspace agents.
+type AgentTokens interface {
+	IssueToken(ctx context.Context, workspaceID string) (string, error)
+}
+
 type Service struct {
-	st    store.Store
-	drv   runtime.Driver
-	ops   *ops.Engine
-	bus   *events.Bus
-	aud   *audit.Recorder
-	log   *slog.Logger
-	image string
+	agents     AgentTokens
+	controlURL string
+	st         store.Store
+	drv        runtime.Driver
+	ops        *ops.Engine
+	bus        *events.Bus
+	aud        *audit.Recorder
+	log        *slog.Logger
+	image      string
 }
 
 func NewService(st store.Store, drv runtime.Driver, eng *ops.Engine, bus *events.Bus, aud *audit.Recorder, log *slog.Logger) *Service {
@@ -62,6 +69,13 @@ func ValidateName(name string) error {
 			Message: "Use 2 to 48 lowercase letters, digits or hyphens, starting and ending with a letter or digit."}
 	}
 	return nil
+}
+
+// WithAgent enables workspace-agent registration: each provisioned container
+// receives the control-plane URL and a one-time token in its environment.
+func (s *Service) WithAgent(t AgentTokens, controlURL string) *Service {
+	s.agents, s.controlURL = t, controlURL
+	return s
 }
 
 func (s *Service) publish(w *domain.Workspace) {
@@ -134,6 +148,13 @@ func (s *Service) provision(ctx context.Context, op *domain.Operation, p ops.Pro
 	}
 	spec := runtime.WorkspaceSpec{ID: w.ID, Name: w.Name, Image: s.image,
 		Resources: runtime.Resources{CPU: w.CPU, RAMGB: w.RAMGB, StorageGB: w.StorageGB, GPU: w.GPU}}
+	if s.agents != nil {
+		tok, err := s.agents.IssueToken(ctx, w.ID)
+		if err != nil {
+			return err
+		}
+		spec.Env = map[string]string{"NEXMESH_CONTROL_URL": s.controlURL, "NEXMESH_WORKSPACE_ID": w.ID, "NEXMESH_AGENT_TOKEN": tok}
+	}
 	s.setStep(ctx, w.ID, domain.WSAllocating, domain.WSAllocating, "")
 	p.Logf("allocating resources: %d vCPU, %d GB RAM, %d GB storage", w.CPU, w.RAMGB, w.StorageGB)
 	p.Set(10)

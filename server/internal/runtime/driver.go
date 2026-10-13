@@ -32,6 +32,7 @@ type WorkspaceSpec struct {
 	Name      string
 	Image     string // base image reference, Ubuntu 24.04
 	Resources Resources
+	Env       map[string]string // e.g. agent registration (control URL, token)
 }
 
 // Observed is the actual state reported by the backend.

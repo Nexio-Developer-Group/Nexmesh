@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nexio-developer-group/nexmesh/server/internal/agentapi"
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
 	"github.com/nexio-developer-group/nexmesh/server/internal/config"
@@ -69,13 +70,16 @@ func main() {
 	bus := events.NewBus()
 	eng := ops.NewEngine(st, bus, log, 4)
 	aud := audit.New(st, log)
-	wsSvc := workspace.NewService(st, drv, eng, bus, aud, log)
+	agents := agentapi.NewRegistry(st, bus)
+	wsSvc := workspace.NewService(st, drv, eng, bus, aud, log).WithAgent(agents, cfg.PublicURL)
 
 	eng.Start(ctx)
 	go wsSvc.RunReconciler(ctx, 15*time.Second)
+	go agents.Run(ctx)
 
 	api := httpapi.New(log)
 	api.RegisterCatalog(cat)
+	agents.Register(api)
 	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus})
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: api.Handler(), ReadHeaderTimeout: 10 * time.Second}

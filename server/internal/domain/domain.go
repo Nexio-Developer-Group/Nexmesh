@@ -38,6 +38,10 @@ type Workspace struct {
 	Runtimes map[string]RuntimeState `json:"runtimes"`
 	// RestartRequired is set when desired resources differ from applied ones.
 	RestartRequired bool `json:"restartRequired"`
+	// AgentConnected is observed state: the workspace agent has an active
+	// outbound session with the control plane (PRD 20.3.4).
+	AgentConnected bool       `json:"agentConnected"`
+	AgentLastSeen  *time.Time `json:"agentLastSeen,omitempty"`
 }
 
 type RuntimeState struct {

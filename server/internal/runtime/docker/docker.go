@@ -161,6 +161,9 @@ func (d *Driver) CreateWorkspace(ctx context.Context, spec runtime.WorkspaceSpec
 	args = append(args, lbl...)
 	args = append(args, hardening()...)
 	args = append(args, resourceFlags(spec.Resources)...)
+	for k, v := range spec.Env {
+		args = append(args, "-e", k+"="+v)
+	}
 	if d.cfg.StorageQuota {
 		args = append(args, "--storage-opt", fmt.Sprintf("size=%dG", spec.Resources.StorageGB))
 	}
