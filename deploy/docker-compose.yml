@@ -1,0 +1,68 @@
+# Self-hosted Nexmesh: PostgreSQL + the control plane (web UI included).
+#
+#   cp deploy/.env.example deploy/.env      # then set NEXMESH_MASTER_KEY
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+#
+# Optional workspace image with the agent baked in:
+#   docker compose -f deploy/docker-compose.yml --profile images build workspace-image
+# and set NEXMESH_WORKSPACE_IMAGE=nexmesh/workspace:local in deploy/.env.
+name: nexmesh
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nexmesh
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexmesh}
+      POSTGRES_DB: nexmesh
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexmesh -d nexmesh"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  nexmesh:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: nexmesh/nexmesh:local
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${NEXMESH_PORT:-8080}:8080"
+    environment:
+      NEXMESH_STORE: postgres
+      NEXMESH_DATABASE_URL: postgres://nexmesh:${POSTGRES_PASSWORD:-nexmesh}@postgres:5432/nexmesh?sslmode=disable
+      NEXMESH_DRIVER: docker
+      # Required: encrypts stored credentials. Back it up; secrets cannot be decrypted without it.
+      NEXMESH_MASTER_KEY: ${NEXMESH_MASTER_KEY:?Set NEXMESH_MASTER_KEY in deploy/.env (generate one with deploy/gen-key.sh)}
+      # How workspace containers reach this service (published on the host).
+      NEXMESH_PUBLIC_URL: ${NEXMESH_PUBLIC_URL:-http://host.docker.internal:8080}
+      NEXMESH_WORKSPACE_IMAGE: ${NEXMESH_WORKSPACE_IMAGE:-ubuntu:24.04}
+      NEXMESH_MAX_CPU: ${NEXMESH_MAX_CPU:-8}
+      NEXMESH_MAX_RAM_GB: ${NEXMESH_MAX_RAM_GB:-16}
+      NEXMESH_MAX_STORAGE_GB: ${NEXMESH_MAX_STORAGE_GB:-100}
+      # Let Test Connection reach services on private networks (metadata and link-local stay blocked).
+      NEXMESH_ALLOW_PRIVATE_EGRESS: ${NEXMESH_ALLOW_PRIVATE_EGRESS:-false}
+    volumes:
+      # The control plane manages workspace containers through the host's Docker Engine.
+      # This grants it root-equivalent access to the host: see docs/SELF_HOSTING.md.
+      - /var/run/docker.sock:/var/run/docker.sock
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  workspace-image:
+    profiles: ["images"]
+    build:
+      context: ..
+      dockerfile: deploy/workspace/Dockerfile
+    image: nexmesh/workspace:local
+    entrypoint: ["true"]
+
+volumes:
+  pgdata:
