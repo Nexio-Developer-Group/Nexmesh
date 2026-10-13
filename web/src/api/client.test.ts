@@ -12,7 +12,7 @@ describe('api client', () => {
 
   it('reports a network failure as a friendly error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('failed')))
-    const err = await api.get('/api/host').catch((e) => e)
+    const err = (await api.get('/api/host').catch((e) => e)) as ApiError
     expect(err).toBeInstanceOf(ApiError)
     expect(err.code).toBe('network')
   })

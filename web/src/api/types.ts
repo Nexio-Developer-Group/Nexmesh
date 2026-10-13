@@ -17,6 +17,8 @@ export interface Workspace {
   runtimes: Record<string, { installed: string[]; active: string }>
   restartRequired: boolean
   agentConnected: boolean
+  /** Optional component summary, e.g. "6 components · 2 connected". */
+  summary?: string
 }
 
 export interface Host {
