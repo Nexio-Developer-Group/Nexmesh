@@ -9,6 +9,7 @@ package netguard
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -232,11 +233,16 @@ func (g *Guard) DialContext(ctx context.Context, network, address string) (net.C
 
 // HTTPClient returns a client whose every connection (including redirects)
 // passes the guard, with a bounded redirect chain.
-func (g *Guard) HTTPClient(timeout time.Duration) *http.Client {
+func (g *Guard) HTTPClient(timeout time.Duration) *http.Client { return g.HTTPClientTLS(timeout, nil) }
+
+// HTTPClientTLS is HTTPClient with a custom TLS configuration (a private CA or
+// an explicit verification opt-out).
+func (g *Guard) HTTPClientTLS(timeout time.Duration, cfg *tls.Config) *http.Client {
 	return &http.Client{
 		Timeout: timeout,
 		Transport: &http.Transport{
 			DialContext:           g.DialContext,
+			TLSClientConfig:       cfg,
 			TLSHandshakeTimeout:   g.Timeout,
 			ResponseHeaderTimeout: timeout,
 			DisableKeepAlives:     true,
