@@ -46,6 +46,7 @@ export interface CatalogComponent {
   id: string
   name: string
   monogram: string
+  order?: number
   categories: string[]
   kind: 'runtime' | 'framework' | 'service' | 'tool' | 'scripting'
   description: string

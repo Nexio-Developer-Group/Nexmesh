@@ -1,6 +1,7 @@
 id: angular
 name: Angular
 monogram: An
+order: 8
 categories:
 - frontend
 kind: framework

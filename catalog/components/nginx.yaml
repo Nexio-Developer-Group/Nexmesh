@@ -1,6 +1,7 @@
 id: nginx
 name: Nginx
 monogram: Nx
+order: 16
 categories:
 - hosting
 kind: service

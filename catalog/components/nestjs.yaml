@@ -1,6 +1,7 @@
 id: nestjs
 name: NestJS
 monogram: Ne
+order: 4
 categories:
 - backend
 kind: framework

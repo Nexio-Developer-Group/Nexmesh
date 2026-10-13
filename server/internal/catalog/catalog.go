@@ -26,6 +26,7 @@ type Component struct {
 	ID             string      `json:"id" yaml:"id"`
 	Name           string      `json:"name" yaml:"name"`
 	Monogram       string      `json:"monogram" yaml:"monogram"`
+	Order          int         `json:"order,omitempty" yaml:"order,omitempty"`
 	Categories     []string    `json:"categories" yaml:"categories"`
 	Kind           string      `json:"kind" yaml:"kind"`
 	Description    string      `json:"description" yaml:"description"`
@@ -161,7 +162,13 @@ func Load(dir string) (*Catalog, error) {
 			}
 		}
 	}
-	sort.SliceStable(cat.order, func(i, j int) bool { return cat.order[i].Name < cat.order[j].Name })
+	sort.SliceStable(cat.order, func(i, j int) bool {
+		a, b := cat.order[i], cat.order[j]
+		if a.Order != b.Order {
+			return a.Order < b.Order
+		}
+		return a.Name < b.Name
+	})
 	return cat, nil
 }
 

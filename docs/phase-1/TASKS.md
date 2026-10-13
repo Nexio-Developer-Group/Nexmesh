@@ -22,7 +22,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T3.2** API client, TanStack Query, routing, app shell + auth stub
 - [x] **T3.3** Workspaces dashboard (grid/list, filters, sort, empty/loading/provisioning/failed states, delete-by-typing-name)
 - [x] **T3.4** Create Code Space screen (name, locked OS, resource sliders + limit errors, GPU disabled state, summary, provisioning screen)
-- [ ] **T3.5** Workspace canvas: header, searchable catalog sidebar, React Flow canvas, drag/drop, card states + mode badges, empty state
+- [x] **T3.5** Workspace canvas: header, searchable catalog sidebar, React Flow canvas, drag/drop, card states + mode badges, empty state
 - [ ] **T3.6** Cards bound to real component state via SSE
 
 ## M4 — Install flow (§9, §10)

@@ -3,82 +3,292 @@
   "$id": "https://nexmesh.dev/schema/component.schema.json",
   "title": "Nexmesh catalog component",
   "type": "object",
-  "required": ["schemaVersion", "id", "name", "monogram", "categories", "kind", "description", "supportedModes", "versions"],
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "monogram",
+    "categories",
+    "kind",
+    "description",
+    "supportedModes",
+    "versions"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "name": { "type": "string", "minLength": 1 },
-    "monogram": { "type": "string", "minLength": 1, "maxLength": 3 },
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "monogram": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 3
+    },
     "categories": {
       "type": "array",
-      "items": { "enum": ["database", "backend", "frontend", "messaging", "scripting", "hosting"] },
+      "items": {
+        "enum": [
+          "database",
+          "backend",
+          "frontend",
+          "messaging",
+          "scripting",
+          "hosting"
+        ]
+      },
       "uniqueItems": true
     },
-    "kind": { "enum": ["runtime", "framework", "service", "tool", "scripting"] },
-    "description": { "type": "string" },
-    "supportedModes": {
-      "type": "array", "minItems": 1, "uniqueItems": true,
-      "items": { "enum": ["install", "connect"] }
+    "kind": {
+      "enum": [
+        "runtime",
+        "framework",
+        "service",
+        "tool",
+        "scripting"
+      ]
     },
-    "versions": {
-      "type": "object", "required": ["default", "supported"], "additionalProperties": false,
-      "properties": {
-        "default": { "type": "string" },
-        "supported": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+    "description": {
+      "type": "string"
+    },
+    "supportedModes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "install",
+          "connect"
+        ]
       }
     },
-    "ports": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 65535 } },
-    "install": {
-      "type": "object", "required": ["strategy"],
+    "versions": {
+      "type": "object",
+      "required": [
+        "default",
+        "supported"
+      ],
+      "additionalProperties": false,
       "properties": {
-        "strategy": { "enum": ["image", "mise", "apt", "package", "scaffold"] },
-        "image": { "type": "string" },
-        "tool": { "type": "string" },
-        "manager": { "enum": ["npm", "pip"] },
-        "command": { "type": "string" },
-        "packages": { "type": "array", "items": { "type": "string" } },
-        "requires": { "type": "array", "items": { "type": "string" } },
-        "ports": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 65535 } },
-        "env": { "type": "object", "additionalProperties": { "type": "string" } },
+        "default": {
+          "type": "string"
+        },
+        "supported": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ports": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 65535
+      }
+    },
+    "install": {
+      "type": "object",
+      "required": [
+        "strategy"
+      ],
+      "properties": {
+        "strategy": {
+          "enum": [
+            "image",
+            "mise",
+            "apt",
+            "package",
+            "scaffold"
+          ]
+        },
+        "image": {
+          "type": "string"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "manager": {
+          "enum": [
+            "npm",
+            "pip"
+          ]
+        },
+        "command": {
+          "type": "string"
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "volumes": {
           "type": "array",
           "items": {
-            "type": "object", "required": ["name", "path"], "additionalProperties": false,
-            "properties": { "name": { "type": "string" }, "path": { "type": "string" }, "sizeGB": { "type": "number" } }
+            "type": "object",
+            "required": [
+              "name",
+              "path"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "sizeGB": {
+                "type": "number"
+              }
+            }
           }
         }
       }
     },
     "resources": {
-      "type": "object", "additionalProperties": false,
-      "properties": { "cpu": { "type": "number" }, "ramMB": { "type": "integer" }, "storageGB": { "type": "number" } }
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": {
+          "type": "number"
+        },
+        "ramMB": {
+          "type": "integer"
+        },
+        "storageGB": {
+          "type": "number"
+        }
+      }
     },
     "health": {
-      "type": "object", "required": ["type"],
-      "properties": { "type": { "enum": ["tcp", "http", "none"] }, "port": { "type": "integer" }, "path": { "type": "string" } }
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "tcp",
+            "http",
+            "none"
+          ]
+        },
+        "port": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        }
+      }
     },
     "connection": {
-      "type": "object", "required": ["fields", "envPrefix"],
+      "type": "object",
+      "required": [
+        "fields",
+        "envPrefix"
+      ],
       "properties": {
-        "schemes": { "type": "array", "items": { "type": "string" } },
-        "defaultPort": { "type": "integer" },
-        "envPrefix": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
-        "fields": {
-          "type": "array", "minItems": 1,
+        "schemes": {
+          "type": "array",
           "items": {
-            "type": "object", "required": ["name", "label", "type"], "additionalProperties": false,
+            "type": "string"
+          }
+        },
+        "defaultPort": {
+          "type": "integer"
+        },
+        "envPrefix": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "label",
+              "type"
+            ],
+            "additionalProperties": false,
             "properties": {
-              "name": { "type": "string" }, "label": { "type": "string" },
-              "type": { "enum": ["string", "number", "password", "boolean", "select", "textarea"] },
-              "required": { "type": "boolean" }, "advanced": { "type": "boolean" },
-              "default": {}, "placeholder": { "type": "string" },
-              "options": { "type": "array", "items": { "type": "string" } },
-              "help": { "type": "string" }
+              "name": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "string",
+                  "number",
+                  "password",
+                  "boolean",
+                  "select",
+                  "textarea"
+                ]
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "advanced": {
+                "type": "boolean"
+              },
+              "default": {},
+              "placeholder": {
+                "type": "string"
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "help": {
+                "type": "string"
+              }
             }
           }
         }
       }
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Display order within the catalog sidebar."
     }
   }
 }

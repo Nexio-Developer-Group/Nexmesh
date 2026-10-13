@@ -1,6 +1,7 @@
 id: rabbitmq
 name: RabbitMQ
 monogram: Rb
+order: 12
 categories:
 - messaging
 kind: service

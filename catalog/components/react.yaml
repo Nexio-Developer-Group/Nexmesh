@@ -1,6 +1,7 @@
 id: react
 name: React
 monogram: Re
+order: 7
 categories:
 - frontend
 kind: framework

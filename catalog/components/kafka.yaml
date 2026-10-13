@@ -1,6 +1,7 @@
 id: kafka
 name: Kafka
 monogram: Ka
+order: 10
 categories:
 - messaging
 kind: service

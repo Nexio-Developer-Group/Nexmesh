@@ -1,6 +1,7 @@
 id: python
 name: Python
 monogram: Py
+order: 6
 categories:
 - backend
 - scripting

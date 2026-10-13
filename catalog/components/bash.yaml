@@ -1,6 +1,7 @@
 id: bash
 name: Bash
 monogram: Ba
+order: 15
 categories:
 - scripting
 kind: scripting

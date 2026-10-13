@@ -1,6 +1,7 @@
 id: nodejs
 name: Node.js
 monogram: 'No'
+order: 3
 categories:
 - backend
 kind: runtime

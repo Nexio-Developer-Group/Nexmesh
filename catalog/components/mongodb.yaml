@@ -1,6 +1,7 @@
 id: mongodb
 name: MongoDB
 monogram: Mg
+order: 1
 categories:
 - database
 kind: service

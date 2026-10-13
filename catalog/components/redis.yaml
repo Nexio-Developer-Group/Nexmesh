@@ -1,6 +1,7 @@
 id: redis
 name: Redis
 monogram: Rd
+order: 11
 categories:
 - messaging
 kind: service

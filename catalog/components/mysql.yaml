@@ -1,6 +1,7 @@
 id: mysql
 name: MySQL
 monogram: My
+order: 2
 categories:
 - database
 kind: service

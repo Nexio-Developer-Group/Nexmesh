@@ -190,6 +190,11 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 		ch, cancel := d.Bus.Subscribe(ws.ID)
 		defer cancel()
 		fmt.Fprint(w, ": connected\n\n")
+		// Snapshot first so a client never misses state that changed before it subscribed.
+		if cur, err := d.Svc.Get(r.Context(), Owner(r), ws.ID); err == nil {
+			b, _ := json.Marshal(events.Event{Type: "workspace", Data: cur})
+			fmt.Fprintf(w, "event: workspace\ndata: %s\n\n", b)
+		}
 		fl.Flush()
 		for {
 			select {

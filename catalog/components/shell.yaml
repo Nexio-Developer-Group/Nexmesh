@@ -1,6 +1,7 @@
 id: shell
 name: Shell
 monogram: Sh
+order: 14
 categories:
 - scripting
 kind: scripting

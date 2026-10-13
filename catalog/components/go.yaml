@@ -1,6 +1,7 @@
 id: go
 name: Go
 monogram: Go
+order: 18
 categories: []
 kind: runtime
 description: Go toolchain.

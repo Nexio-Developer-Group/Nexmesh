@@ -1,6 +1,7 @@
 id: fastapi
 name: FastAPI
 monogram: Fa
+order: 5
 categories:
 - backend
 kind: framework
