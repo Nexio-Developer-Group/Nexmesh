@@ -9,3 +9,4 @@ coverage/
 .DS_Store
 server/internal/webui/dist/*
 !server/internal/webui/dist/.gitkeep
+nexmesh-master.key

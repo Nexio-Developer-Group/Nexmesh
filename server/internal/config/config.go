@@ -7,13 +7,17 @@ import (
 )
 
 type Config struct {
-	Addr        string // HTTP listen address
-	Store       string // "memory" or "postgres"
-	DatabaseURL string
-	Driver      string // "fake" or "docker"
-	CatalogDir  string
-	PublicURL   string // how workspace containers reach the control plane
-	MasterKey   string // base64 32-byte key for the secrets service
+	Addr          string // HTTP listen address
+	Store         string // "memory" or "postgres"
+	DatabaseURL   string
+	Driver        string // "fake" or "docker"
+	CatalogDir    string
+	PublicURL     string // how workspace containers reach the control plane
+	MasterKey     string // base64 32-byte key for the secrets service
+	MasterKeyFile string // used when MasterKey is unset; created on first run
+	// AllowPrivateEgress lets Test Connection and health checks reach RFC 1918
+	// addresses (self-hosted deployments). Metadata and link-local stay blocked.
+	AllowPrivateEgress bool
 	// Host capacity limits enforced by workspace validation (PRD 6.2).
 	MaxCPU       int
 	MaxRAMGB     int
@@ -23,17 +27,19 @@ type Config struct {
 
 func Load() Config {
 	return Config{
-		Addr:         env("NEXMESH_ADDR", ":8080"),
-		Store:        env("NEXMESH_STORE", "postgres"),
-		DatabaseURL:  env("NEXMESH_DATABASE_URL", "postgres://nexmesh:nexmesh@localhost:5432/nexmesh?sslmode=disable"),
-		Driver:       env("NEXMESH_DRIVER", "docker"),
-		CatalogDir:   env("NEXMESH_CATALOG_DIR", "../catalog"),
-		PublicURL:    env("NEXMESH_PUBLIC_URL", "http://host.docker.internal:8080"),
-		MasterKey:    os.Getenv("NEXMESH_MASTER_KEY"),
-		MaxCPU:       envInt("NEXMESH_MAX_CPU", 12),
-		MaxRAMGB:     envInt("NEXMESH_MAX_RAM_GB", 24),
-		MaxStorageGB: envInt("NEXMESH_MAX_STORAGE_GB", 200),
-		HostGPU:      os.Getenv("NEXMESH_HOST_GPU") == "true",
+		Addr:               env("NEXMESH_ADDR", ":8080"),
+		Store:              env("NEXMESH_STORE", "postgres"),
+		DatabaseURL:        env("NEXMESH_DATABASE_URL", "postgres://nexmesh:nexmesh@localhost:5432/nexmesh?sslmode=disable"),
+		Driver:             env("NEXMESH_DRIVER", "docker"),
+		CatalogDir:         env("NEXMESH_CATALOG_DIR", "../catalog"),
+		PublicURL:          env("NEXMESH_PUBLIC_URL", "http://host.docker.internal:8080"),
+		MasterKey:          os.Getenv("NEXMESH_MASTER_KEY"),
+		MasterKeyFile:      env("NEXMESH_MASTER_KEY_FILE", "nexmesh-master.key"),
+		AllowPrivateEgress: os.Getenv("NEXMESH_ALLOW_PRIVATE_EGRESS") == "true",
+		MaxCPU:             envInt("NEXMESH_MAX_CPU", 12),
+		MaxRAMGB:           envInt("NEXMESH_MAX_RAM_GB", 24),
+		MaxStorageGB:       envInt("NEXMESH_MAX_STORAGE_GB", 200),
+		HostGPU:            os.Getenv("NEXMESH_HOST_GPU") == "true",
 	}
 }
 

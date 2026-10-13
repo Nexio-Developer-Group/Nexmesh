@@ -44,6 +44,7 @@ type Heartbeat struct {
 }
 
 type Registry struct {
+	env EnvProvider
 	st  store.Store
 	bus *events.Bus
 	mu  sync.Mutex
@@ -121,8 +122,35 @@ func (r *Registry) Run(ctx context.Context) {
 	}
 }
 
+// EnvProvider supplies the environment (including secret values) that the
+// agent injects into processes it starts.
+type EnvProvider interface {
+	ConnectionEnv(ctx context.Context, workspaceID string) (map[string]string, error)
+}
+
+// WithEnv enables GET /agent/v1/workspaces/{id}/env.
+func (r *Registry) WithEnv(p EnvProvider) *Registry { r.env = p; return r }
+
 // Register mounts the agent endpoints on the API server.
 func (r *Registry) Register(s *httpapi.Server) {
+	s.Handle("GET /agent/v1/workspaces/{id}/env", func(w http.ResponseWriter, req *http.Request) {
+		id := req.PathValue("id")
+		if !r.authenticate(req, id) {
+			httpapi.WriteError(w, http.StatusUnauthorized, "unauthorized", "invalid agent token")
+			return
+		}
+		if r.env == nil {
+			httpapi.WriteJSON(w, http.StatusOK, map[string]any{"env": map[string]string{}})
+			return
+		}
+		env, err := r.env.ConnectionEnv(req.Context(), id)
+		if err != nil {
+			httpapi.WriteError(w, http.StatusInternalServerError, "internal", "could not build environment")
+			return
+		}
+		w.Header().Set("Cache-Control", "no-store")
+		httpapi.WriteJSON(w, http.StatusOK, map[string]any{"env": env})
+	})
 	s.Handle("POST /agent/v1/workspaces/{id}/hello", func(w http.ResponseWriter, req *http.Request) {
 		id := req.PathValue("id")
 		if !r.authenticate(req, id) {

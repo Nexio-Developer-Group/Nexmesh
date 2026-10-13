@@ -36,7 +36,7 @@ Acceptance references are PRD Section 15 bullets.
 - [x] **T5.2** SSRF-safe dialer + deny-list (+ tests: rebinding, IPv6-mapped, metadata, redirects)
 - [x] **T5.3** Connection-string parsers (MongoDB, MySQL, Redis, Kafka, RabbitMQ) + fuzz tests
 - [x] **T5.4** Probers with 7 ordered stages for all five services; rate limit; audit events
-- [ ] **T5.5** Connect API: test, add (requires passing test for exact values), re-test, edit, rotate, disconnect; health checks; env var injection model
+- [x] **T5.5** Connect API: test, add (requires passing test for exact values), re-test, edit, rotate, disconnect; health checks; env var injection model
 - [ ] **T5.6** Properties panel Connect tab UI (parse string, masked write-only password, result list, production banner, Connected view)
 
 ## M6 — Settings + Code Agent (§6.4, §12)

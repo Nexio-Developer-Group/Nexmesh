@@ -185,3 +185,28 @@ func TestComponentsAPIAndSummary(t *testing.T) {
 		t.Fatalf("delete: %d", res.StatusCode)
 	}
 }
+
+func TestParseConnectionStringEndpoint(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	st := store.NewMemory()
+	bus := events.NewBus()
+	cat, _ := catalog.Load("../../../catalog")
+	comp := component.NewService(st, cat, bus, audit.New(st, log))
+	api := New(log)
+	api.RegisterConnections(comp)
+	ts := httptest.NewServer(api.Handler())
+	defer ts.Close()
+
+	res, body := do(t, "POST", ts.URL+"/api/connections/parse", `{"catalogId":"mongodb","uri":"mongodb+srv://orders_app:p%40ss@orders.k3x9p.mongodb.net/orders"}`)
+	f := body["fields"].(map[string]any)
+	if res.StatusCode != 200 || f["host"] != "orders.k3x9p.mongodb.net" || f["password"] != "p@ss" || f["srv"] != true {
+		t.Fatalf("%d %v", res.StatusCode, body)
+	}
+	res, body = do(t, "POST", ts.URL+"/api/connections/parse", `{"catalogId":"mongodb","uri":"mysql://u:SuperSecret1@h/d"}`)
+	if res.StatusCode != 422 {
+		t.Fatalf("%d", res.StatusCode)
+	}
+	if msg, _ := body["error"].(map[string]any)["message"].(string); strings.Contains(msg, "SuperSecret1") {
+		t.Fatalf("parse error leaks the password: %s", msg)
+	}
+}

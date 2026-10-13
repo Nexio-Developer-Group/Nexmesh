@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -18,9 +20,11 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/config"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
 	"github.com/nexio-developer-group/nexmesh/server/internal/httpapi"
+	"github.com/nexio-developer-group/nexmesh/server/internal/netguard"
 	"github.com/nexio-developer-group/nexmesh/server/internal/ops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime/docker"
+	"github.com/nexio-developer-group/nexmesh/server/internal/secrets"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
 	"github.com/nexio-developer-group/nexmesh/server/internal/workspace"
 )
@@ -80,9 +84,29 @@ func main() {
 	api := httpapi.New(log)
 	api.RegisterCatalog(cat)
 	agents.Register(api)
-	compSvc := component.NewService(st, cat, bus, aud).WithRuntime(drv, eng)
+	masterKey, created, err := secrets.LoadOrCreateMasterKey(cfg.MasterKey, cfg.MasterKeyFile)
+	if err != nil {
+		fatal("master key", err)
+	}
+	if created {
+		log.Warn("generated a new master key file; back it up, secrets cannot be decrypted without it", "path", cfg.MasterKeyFile)
+	}
+	backend, err := secrets.NewStoreBackend(st, masterKey)
+	if err != nil {
+		fatal("secrets", err)
+	}
+	sec := secrets.New(backend)
+	fp := hmac.New(sha256.New, masterKey)
+	fp.Write([]byte("nexmesh/test-fingerprint/v1"))
+	compSvc := component.NewService(st, cat, bus, aud).WithRuntime(drv, eng).WithConnect(component.ConnectConfig{
+		Secrets: sec, Guard: netguard.New(netguard.Policy{AllowPrivate: cfg.AllowPrivateEgress}),
+		FingerprintKey: fp.Sum(nil), Log: log,
+	})
+	agents.WithEnv(compSvc)
+	go compSvc.RunHealth(ctx, 30*time.Second)
 	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc})
 	api.RegisterComponents(compSvc)
+	api.RegisterConnections(compSvc)
 	eng.Start(ctx) // after every handler is registered
 
 	srv := &http.Server{Addr: cfg.Addr, Handler: api.Handler(), ReadHeaderTimeout: 10 * time.Second}

@@ -25,20 +25,29 @@ var (
 )
 
 type Service struct {
-	st  store.Store
-	cat *catalog.Catalog
-	bus *events.Bus
-	aud *audit.Recorder
-	drv runtime.Driver // set by WithRuntime
-	eng *ops.Engine
+	st   store.Store
+	cat  *catalog.Catalog
+	bus  *events.Bus
+	aud  *audit.Recorder
+	drv  runtime.Driver // set by WithRuntime
+	eng  *ops.Engine
+	conn *connectState // set by WithConnect
 }
 
 func NewService(st store.Store, cat *catalog.Catalog, bus *events.Bus, aud *audit.Recorder) *Service {
 	return &Service{st: st, cat: cat, bus: bus, aud: aud}
 }
 
+// Public returns a copy that is safe to send to clients: internal references
+// to the secrets store are removed.
+func Public(c *domain.Component) *domain.Component {
+	cp := *c
+	cp.SecretRef = ""
+	return &cp
+}
+
 func (s *Service) publish(c *domain.Component) {
-	s.bus.Publish(c.WorkspaceID, events.Event{Type: "component", Data: c})
+	s.bus.Publish(c.WorkspaceID, events.Event{Type: "component", Data: Public(c)})
 }
 
 func (s *Service) publishWorkspace(w *domain.Workspace) {

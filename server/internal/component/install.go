@@ -189,7 +189,7 @@ func (s *Service) Install(ctx context.Context, owner, wsID, id string, in Instal
 	if err != nil {
 		return nil, err
 	}
-	if c.Observed != domain.StateDraft && c.Observed != domain.StateFailed {
+	if c.Observed != domain.StateDraft && c.Observed != domain.StateFailed && c.Observed != domain.StateDisconnect && c.Observed != domain.StateTestFailed && c.Observed != domain.StateTestPassed {
 		return nil, ErrBadComponent
 	}
 	if c.Mode == domain.ModeConnected {
