@@ -433,6 +433,24 @@ def _():
     assert "environment.switch" in ev
 
 
+@check("docker export: compose + Dockerfiles preview, write, existing files kept")
+def _():
+    call("POST", W("/files/dir"), {"path": "svcapi"})
+    call("PUT", W("/files/content"), {"path": "svcapi/package.json", "content": '{"scripts":{"build":"nest build"},"dependencies":{"@nestjs/core":"10"}}'})
+    plan = call("GET", W("/export/compose"))
+    paths = {f["path"] for f in plan["files"]}
+    assert "docker-compose.yml" in paths, plan
+    body = json.dumps(plan)
+    assert "s3cr3t-value" not in body and "ghp_supersecrettoken123" not in body
+    expect("POST", W("/export/compose/write"), {"paths": ["docker-compose.yml"]}, 422)  # confirmation required
+    call("PUT", W("/files/content"), {"path": "docker-compose.yml", "content": "# mine\n"})
+    res = call("POST", W("/export/compose/write"), {"paths": ["docker-compose.yml"], "confirm": True})
+    assert res["skipped"] == ["docker-compose.yml"], res
+    assert "# mine" in json.dumps(call("GET", W("/files/content?path=docker-compose.yml")))
+    res = call("POST", W("/export/compose/write"), {"paths": ["docker-compose.yml"], "confirm": True, "overwrite": True})
+    assert res["written"] == ["docker-compose.yml"]
+
+
 @check("audit: events, filters, CSV export")
 def _():
     ev = call("GET", W("/audit"))["events"]

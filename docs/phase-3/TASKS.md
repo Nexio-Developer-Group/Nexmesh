@@ -21,7 +21,7 @@ Decisions taken here for the open items in PRD Section 17:
 - [x] **T1.3** Architecture view: layers, edges, drift, Mermaid, Markdown, SVG export, highlight mode (F2)
 - [x] **T1.4** Canvas environments: labels, per-environment values, active environment, production protection (F4)
 - [x] **T1.5** External API card: catalog entry, probe, test-then-add (F16)
-- [ ] **T1.6** Dockerfile and docker-compose export without secrets (F25)
+- [x] **T1.6** Dockerfile and docker-compose export without secrets (F25)
 - [ ] **T1.7** Component metrics: CPU, memory, storage; latency trends for connected (F5)
 
 ## M2: Tools on cards (F13)

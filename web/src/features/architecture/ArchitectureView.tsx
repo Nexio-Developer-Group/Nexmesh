@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { WireStateBadge } from '@/features/wires/WireDialog'
+import { DeployFiles } from './DeployFiles'
 import type { WireState } from '@/api/types'
 
 export interface ArchNode { id: string; catalog: string; name: string; layer: string; mode: string; version?: string; state: string; environment?: string; highlight?: boolean }
@@ -112,6 +113,7 @@ export function ArchitectureView({ workspaceId, highlight }: { workspaceId: stri
           )}
         </>
       )}
+      <DeployFiles workspaceId={workspaceId} />
     </div>
   )
 }
