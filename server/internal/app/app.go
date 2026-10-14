@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
+	"github.com/nexio-developer-group/nexmesh/server/internal/definition"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/envvars"
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitcred"
@@ -188,6 +189,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterVariables(envSvc)
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
+	api.RegisterDefinition(definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud))
 	if tpls, err := catalog.LoadTemplates(cfg.CatalogDir, cat); err != nil {
 		return nil, fmt.Errorf("templates: %w", err)
 	} else {

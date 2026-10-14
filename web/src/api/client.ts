@@ -5,6 +5,7 @@ export class ApiError extends Error {
     message: string,
     public field?: string,
     public detail?: string,
+    public issues?: { path: string; message: string }[],
   ) {
     super(message)
   }
@@ -26,7 +27,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const data = text ? JSON.parse(text) : undefined
   if (!res.ok) {
     const e = data?.error
-    throw new ApiError(res.status, e?.code ?? 'error', e?.message ?? `Request failed (${res.status})`, e?.field, e?.detail)
+    throw new ApiError(res.status, e?.code ?? 'error', e?.message ?? `Request failed (${res.status})`, e?.field, e?.detail, e?.issues)
   }
   return data as T
 }

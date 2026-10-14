@@ -42,7 +42,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T6.2** Card logs and health history (F5)
 - [x] **T6.3** Idle auto-stop, snapshots and resume (F7)
 - [x] **T6.4** Stack templates (F3)
-- [ ] **T6.5** Workspace definition export, import and drift report (F12)
+- [x] **T6.5** Workspace definition export, import and drift report (F12)
 - [ ] **T6.6** Connection import from `.env`, connection string or compose service (F14)
 - [ ] **T6.7** Dev container import and export (F6)
 - [ ] **T6.8** Phase 2 acceptance review, E2E additions, docs
