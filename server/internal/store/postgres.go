@@ -285,6 +285,11 @@ func (p *Postgres) ListAudit(ctx context.Context, wsID string, limit int) ([]*do
 }
 
 func (p *Postgres) PutSecret(ctx context.Context, s *domain.SecretRecord) error {
+	// Records that are not envelope-encrypted (agent token hashes) carry no
+	// wrapped key; a nil slice would be sent as NULL and violate NOT NULL.
+	if s.WrappedKey == nil {
+		s.WrappedKey = []byte{}
+	}
 	return p.exec(ctx, `INSERT INTO secrets (id, ciphertext, wrapped_key) VALUES ($1,$2,$3)
 		ON CONFLICT (id) DO UPDATE SET ciphertext=EXCLUDED.ciphertext, wrapped_key=EXCLUDED.wrapped_key`,
 		s.ID, s.Ciphertext, s.WrappedKey)

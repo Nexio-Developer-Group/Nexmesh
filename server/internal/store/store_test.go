@@ -114,6 +114,12 @@ func contract(t *testing.T, s Store) {
 		t.Fatal(err)
 	}
 	_ = s.DeleteSecret(ctx, sec.ID)
+	// Token hashes are stored without a wrapped key.
+	bare := &domain.SecretRecord{ID: NewID("sec"), Ciphertext: []byte("hash")}
+	if err := s.PutSecret(ctx, bare); err != nil {
+		t.Fatalf("secret without wrapped key: %v", err)
+	}
+	_ = s.DeleteSecret(ctx, bare.ID)
 	if _, err := s.GetSecret(ctx, sec.ID); err != ErrNotFound {
 		t.Fatal("secret not deleted")
 	}
