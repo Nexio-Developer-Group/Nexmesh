@@ -252,6 +252,16 @@ func (s *Server) RegisterConnections(svc *component.Service) {
 	s.Handle("POST "+base, save)
 	s.Handle("PUT "+base, save)
 
+	// Remove the connection for one non-main environment (PRD F4).
+	s.Handle("DELETE "+base+"/profiles/{env}", func(w http.ResponseWriter, r *http.Request) {
+		c, err := svc.DeleteProfile(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid"), r.PathValue("env"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, connectionDTO{Component: component.Public(c), ExposedAs: svc.ExposedAs(c)})
+	})
+
 	s.Handle("DELETE "+base, func(w http.ResponseWriter, r *http.Request) {
 		if _, err := svc.Disconnect(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid")); err != nil {
 			s.HandleError(w, err)

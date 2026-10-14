@@ -269,3 +269,42 @@ func TestOtherOwnersCannotSeeOrChangeLines(t *testing.T) {
 		t.Fatal("delete as another owner should fail")
 	}
 }
+
+func TestLinesLabelledForAnotherEnvironmentAreInactive(t *testing.T) {
+	r := newRig(t)
+	nest, mongo := r.card("nestjs", "installed", "ready"), r.card("mongodb", "installed", "running")
+	v, err := r.svc.Create(r.ctx, domain.ActorUser, "u1", "u1", "ws1", wiring.Input{FromID: nest.ID, ToID: mongo.ID, Environment: "production", Confirm: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pv, _ := r.svc.Preview(r.ctx, "u1", "ws1", wiring.Input{FromID: nest.ID, ToID: r.card("redis", "installed", "running").ID, Environment: "production"})
+	found := false
+	for _, w := range pv.Warnings {
+		found = found || strings.Contains(w, "production")
+	}
+	if !found {
+		t.Fatalf("production labelled lines should warn: %v", pv.Warnings)
+	}
+	state := func(env string) string {
+		_, _ = r.st.UpdateWorkspace(r.ctx, "ws1", func(w *domain.Workspace) error { w.ActiveEnvironment = env; return nil })
+		l, _ := r.svc.List(r.ctx, "u1", "ws1")
+		return l[0].State
+	}
+	// Before environments are in use, the label is informational.
+	if l, _ := r.svc.List(r.ctx, "u1", "ws1"); l[0].State != component.WireHealthy {
+		t.Fatalf("legacy behaviour: %s", l[0].State)
+	}
+	if got := state("development"); got != component.WireInactive {
+		t.Fatalf("a production line must be inactive in development, got %s", got)
+	}
+	if env, _ := r.svc.Env(r.ctx, "ws1"); len(env) != 0 {
+		t.Fatalf("an inactive line must inject nothing: %v", env)
+	}
+	if got := state("production"); got != component.WireHealthy {
+		t.Fatalf("active in production: %s", got)
+	}
+	if env, _ := r.svc.Env(r.ctx, "ws1"); env["MONGODB_URI"] == "" {
+		t.Fatalf("active line should inject: %v", env)
+	}
+	_ = v
+}

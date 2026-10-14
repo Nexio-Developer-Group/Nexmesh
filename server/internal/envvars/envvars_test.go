@@ -174,17 +174,79 @@ func TestEditKeepsSecretAndConversionNeedsValue(t *testing.T) {
 func TestDeleteRemovesSecret(t *testing.T) {
 	r := newRig(t)
 	_, _ = r.svc.Set(r.ctx, "u1", "ws1", envvars.SetInput{Name: "TOKEN", Secret: true, Value: sp("abc")})
-	if err := r.svc.Delete(r.ctx, "u1", "ws1", "", "TOKEN"); err != nil {
+	if err := r.svc.Delete(r.ctx, "u1", "ws1", "", "TOKEN", ""); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := r.st.GetSecret(r.ctx, "var_ws1_workspace_TOKEN"); !errors.Is(err, store.ErrNotFound) {
 		t.Fatal("secret survived delete")
 	}
-	if err := r.svc.Delete(r.ctx, "u1", "ws1", "", "TOKEN"); !errors.Is(err, store.ErrNotFound) {
+	if err := r.svc.Delete(r.ctx, "u1", "ws1", "", "TOKEN", ""); !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("double delete: %v", err)
 	}
 	env, _ := r.svc.Environment(r.ctx, "ws1")
 	if _, ok := env["TOKEN"]; ok {
 		t.Fatal("deleted variable still in environment")
+	}
+}
+
+func (r *rig) active(env string) {
+	_, _ = r.st.UpdateWorkspace(r.ctx, "ws1", func(w *domain.Workspace) error { w.ActiveEnvironment = env; return nil })
+}
+
+func TestVariablesAreScopedToAnEnvironmentAndNeverLeakAcross(t *testing.T) {
+	r := newRig(t)
+	set := func(name, env, val string, secret bool) {
+		if _, err := r.svc.Set(r.ctx, "u1", "ws1", envvars.SetInput{Name: name, Environment: env, Secret: secret, Value: sp(val)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	set("API_URL", "", "https://all.example", false)
+	set("API_URL", "staging", "https://staging.example", false)
+	set("API_URL", "production", "https://prod.example", false)
+	set("DB_PASSWORD", "staging", "stg-secret", true)
+	set("DB_PASSWORD", "production", "prod-secret", true)
+	set("ONLY_DEV", "development", "yes", false)
+
+	env := func(e string) map[string]string {
+		r.active(e)
+		m, err := r.svc.Environment(r.ctx, "ws1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return m
+	}
+	d, s, p := env("development"), env("staging"), env("production")
+	if d["API_URL"] != "https://all.example" || d["ONLY_DEV"] != "yes" || d["DB_PASSWORD"] != "" {
+		t.Fatalf("development: %v", d)
+	}
+	if s["API_URL"] != "https://staging.example" || s["DB_PASSWORD"] != "stg-secret" || s["ONLY_DEV"] != "" {
+		t.Fatalf("staging: %v", s)
+	}
+	if p["API_URL"] != "https://prod.example" || p["DB_PASSWORD"] != "prod-secret" {
+		t.Fatalf("production: %v", p)
+	}
+	for name, m := range map[string]map[string]string{"development": d, "staging": s} {
+		for k, v := range m {
+			if strings.Contains(v, "prod") {
+				t.Errorf("a production value reached %s: %s=%s", name, k, v)
+			}
+		}
+	}
+	// Secrets stay write-only per environment, and each environment holds its own.
+	l, _ := r.svc.List(r.ctx, "u1", "ws1")
+	for _, row := range l.Variables {
+		if row.Secret && row.Value != "" {
+			t.Fatalf("secret value listed: %+v", row)
+		}
+	}
+	// Deleting one environment's variable leaves the others.
+	if err := r.svc.Delete(r.ctx, "u1", "ws1", "", "DB_PASSWORD", "staging"); err != nil {
+		t.Fatal(err)
+	}
+	if env("staging")["DB_PASSWORD"] != "" || env("production")["DB_PASSWORD"] != "prod-secret" {
+		t.Fatal("delete must be limited to its environment")
+	}
+	if _, err := r.svc.Set(r.ctx, "u1", "ws1", envvars.SetInput{Name: "X", Environment: "qa", Value: sp("1")}); err == nil {
+		t.Fatal("unknown environment should be rejected")
 	}
 }

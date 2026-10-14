@@ -240,6 +240,9 @@ func (s *Service) Test(ctx context.Context, owner, wsID, id string, in Connectio
 	if err := s.validateMeta(ctx, c, in); err != nil {
 		return nil, err
 	}
+	if s.isProfileOp(c, in.Environment) {
+		return s.testProfile(ctx, owner, c, def, in)
+	}
 	if !s.conn.allow(id) {
 		return nil, ErrRateLimited
 	}
@@ -300,6 +303,9 @@ func (s *Service) Save(ctx context.Context, owner, wsID, id string, in Connectio
 	}
 	if err := s.validateMeta(ctx, c, in); err != nil {
 		return nil, err
+	}
+	if s.isProfileOp(c, in.Environment) {
+		return s.saveProfile(ctx, owner, c, def, in)
 	}
 	editing := c.Mode == domain.ModeConnected
 	name := in.ConnName
@@ -391,8 +397,12 @@ func (s *Service) Retest(ctx context.Context, owner, wsID, id string) (*domain.T
 
 // applyHealth probes a connected component and updates its observed state.
 func (s *Service) applyHealth(ctx context.Context, c *domain.Component, def *catalog.Component, publishStages bool) *domain.TestResult {
-	fields, sec := s.storedFields(ctx, c)
-	res := s.runProbe(ctx, c, def, fields, sec, publishStages)
+	ac := s.activeConn(ctx, c)
+	if ac == nil {
+		s.noConnection(ctx, c)
+		return &domain.TestResult{Passed: false, FailedStage: "environment", Message: "No connection for the active environment.", At: time.Now().UTC()}
+	}
+	res := s.runProbe(ctx, c, def, ac.Fields, ac.Secret, publishStages)
 	prev := c.Observed
 	c2, err := s.st.UpdateComponent(ctx, c.ID, func(x *domain.Component) error {
 		x.LastTest = res
@@ -480,9 +490,14 @@ func (s *Service) Disconnect(ctx context.Context, owner, wsID, id string) (*doma
 	}
 	_ = s.conn.Secrets.Delete(ctx, activeID(id))
 	_ = s.conn.Secrets.Delete(ctx, pendingID(id))
+	for env := range c.Profiles {
+		_ = s.conn.Secrets.Delete(ctx, profileSecretID(id, env))
+		_ = s.conn.Secrets.Delete(ctx, profilePendingID(id, env))
+		_ = s.st.DeleteDoc(ctx, ptestKind, id+"@"+env)
+	}
 	name := c.ConnName
 	c2, err := s.st.UpdateComponent(ctx, id, func(x *domain.Component) error {
-		x.Mode, x.Connection, x.ConnName, x.Environment, x.SecretRef, x.LastTest = domain.ModeUnset, nil, "", "", "", nil
+		x.Mode, x.Connection, x.ConnName, x.Environment, x.SecretRef, x.LastTest, x.Profiles = domain.ModeUnset, nil, "", "", "", nil, nil
 		x.Desired, x.Observed = domain.StateDisconnect, domain.StateDisconnect
 		x.Message = "Disconnected. Data on the external service was not touched."
 		return nil
@@ -507,8 +522,11 @@ func (s *Service) ConnectionEnv(ctx context.Context, wsID string) (map[string]st
 		if c.Mode != domain.ModeConnected || c.ConnName == "" {
 			continue
 		}
-		fields, _ := s.storedFields(ctx, c)
-		for k, v := range connenv.Build(c.CatalogID, c.ConnName, fields) {
+		ac := s.activeConn(ctx, c)
+		if ac == nil {
+			continue // nothing for the active environment: never fall back to another one's values
+		}
+		for k, v := range connenv.Build(c.CatalogID, c.ConnName, ac.Fields) {
 			out[k] = v
 		}
 	}
@@ -517,7 +535,8 @@ func (s *Service) ConnectionEnv(ctx context.Context, wsID string) (map[string]st
 
 // ExposedAs lists the variable names (never values) a connection provides.
 func (s *Service) ExposedAs(c *domain.Component) []string {
-	if c.Mode != domain.ModeConnected {
+	env, strict := s.activeEnv(context.Background(), c.WorkspaceID)
+	if !HasConnectionFor(c, env, strict) {
 		return nil
 	}
 	return connenv.Names(c.CatalogID, c.ConnName)

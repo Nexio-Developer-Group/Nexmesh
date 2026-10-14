@@ -26,13 +26,13 @@ var (
 
 type Service struct {
 	onRemoved []func(ctx context.Context, workspaceID, componentID string)
-	st   store.Store
-	cat  *catalog.Catalog
-	bus  *events.Bus
-	aud  *audit.Recorder
-	drv  runtime.Driver // set by WithRuntime
-	eng  *ops.Engine
-	conn *connectState // set by WithConnect
+	st        store.Store
+	cat       *catalog.Catalog
+	bus       *events.Bus
+	aud       *audit.Recorder
+	drv       runtime.Driver // set by WithRuntime
+	eng       *ops.Engine
+	conn      *connectState // set by WithConnect
 }
 
 func NewService(st store.Store, cat *catalog.Catalog, bus *events.Bus, aud *audit.Recorder) *Service {
@@ -44,6 +44,14 @@ func NewService(st store.Store, cat *catalog.Catalog, bus *events.Bus, aud *audi
 func Public(c *domain.Component) *domain.Component {
 	cp := *c
 	cp.SecretRef = ""
+	if len(c.Profiles) > 0 {
+		cp.Profiles = make(map[string]*domain.ConnProfile, len(c.Profiles))
+		for env, p := range c.Profiles {
+			q := *p
+			q.SecretRef = ""
+			cp.Profiles[env] = &q
+		}
+	}
 	return &cp
 }
 
@@ -167,8 +175,8 @@ func (s *Service) Remove(ctx context.Context, owner, wsID, id string) error {
 	if err != nil {
 		return err
 	}
-	if c.Observed != domain.StateDraft && c.Observed != domain.StateDisconnect && c.Observed != domain.StateTestFailed && c.Observed != domain.StateTestPassed {
-		return ErrBadComponent
+	if c.Mode == domain.ModeConnected || (c.Observed != domain.StateDraft && c.Observed != domain.StateDisconnect && c.Observed != domain.StateTestFailed && c.Observed != domain.StateTestPassed) {
+		return ErrBadComponent // a live connection is disconnected first
 	}
 	if c.SecretRef != "" {
 		_ = s.st.DeleteSecret(ctx, c.SecretRef)

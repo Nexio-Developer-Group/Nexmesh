@@ -48,6 +48,9 @@ type Workspace struct {
 	// GitCredentials are metadata for Git tokens; the token itself lives in
 	// the secrets service.
 	GitCredentials []GitCredential `json:"gitCredentials,omitempty"`
+	// ActiveEnvironment decides which environment's values are injected
+	// (PRD F4): development, staging or production. Empty means development.
+	ActiveEnvironment string `json:"activeEnvironment,omitempty"`
 	// IdleStopMinutes stops the workspace after this many idle minutes (0 = never).
 	IdleStopMinutes int `json:"idleStopMinutes"`
 	// StopReason says why the workspace is stopped: "user" or "idle".
@@ -93,11 +96,13 @@ type GitCredential struct {
 // Variable is one environment variable. ComponentID is empty for
 // workspace-scoped variables. Value is set only when Secret is false.
 type Variable struct {
-	Name        string    `json:"name"`
-	ComponentID string    `json:"componentId,omitempty"`
-	Secret      bool      `json:"secret"`
-	Value       string    `json:"value,omitempty"`
-	Description string    `json:"description,omitempty"`
+	Name        string `json:"name"`
+	ComponentID string `json:"componentId,omitempty"`
+	Secret      bool   `json:"secret"`
+	Value       string `json:"value,omitempty"`
+	Description string `json:"description,omitempty"`
+	// Environment limits the variable to one environment (PRD F4); empty applies to all.
+	Environment string    `json:"environment,omitempty"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	UpdatedBy   string    `json:"updatedBy,omitempty"`
 }
@@ -141,12 +146,15 @@ type Component struct {
 	// Connection holds non-secret connection settings (connected mode only).
 	Connection  map[string]any `json:"connection,omitempty"`
 	ConnName    string         `json:"connName,omitempty"`
-	Environment string         `json:"environment,omitempty"`
+	Environment string         `json:"environment,omitempty"` // the environment the main connection belongs to
 	SecretRef   string         `json:"secretRef,omitempty"`
-	LastTest    *TestResult    `json:"lastTest,omitempty"`
-	Desired     string         `json:"desiredState"`
-	Observed    string         `json:"observedState"`
-	Message     string         `json:"message,omitempty"`
+	// Profiles are connections for the other environments (PRD F4). Each has
+	// its own values and credentials; one environment's never reach another's.
+	Profiles map[string]*ConnProfile `json:"profiles,omitempty"`
+	LastTest *TestResult             `json:"lastTest,omitempty"`
+	Desired  string                  `json:"desiredState"`
+	Observed string                  `json:"observedState"`
+	Message  string                  `json:"message,omitempty"`
 	// SuggestedMode and SuggestedVersion come from a stack template: hints only, nothing is installed until the user confirms.
 	SuggestedMode string    `json:"suggestedMode,omitempty"`
 	Progress      int       `json:"progress"`
@@ -154,6 +162,14 @@ type Component struct {
 	Y             float64   `json:"y"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+// ConnProfile is the connection a connected card uses in one environment.
+type ConnProfile struct {
+	Connection map[string]any `json:"connection"`
+	SecretRef  string         `json:"secretRef,omitempty"`
+	LastTest   *TestResult    `json:"lastTest,omitempty"`
+	UpdatedAt  time.Time      `json:"updatedAt"`
 }
 
 type TestResult struct {
@@ -321,4 +337,37 @@ type Wire struct {
 	Environment string    `json:"environment,omitempty"`
 	Variables   []string  `json:"variables"`
 	CreatedAt   time.Time `json:"createdAt"`
+}
+
+// Environments are the labels a canvas can be switched between (PRD F4).
+const (
+	EnvDevelopment = "development"
+	EnvStaging     = "staging"
+	EnvProduction  = "production"
+)
+
+// ValidEnvironment reports whether e is a known environment name.
+func ValidEnvironment(e string) bool {
+	return e == EnvDevelopment || e == EnvStaging || e == EnvProduction
+}
+
+// UsesEnvironments reports whether anyone has chosen an active environment. Until
+// then a workspace behaves as before F4: every connection and line applies and
+// the environment label on a connection is only informational.
+func (w *Workspace) UsesEnvironments() bool { return w.ActiveEnvironment != "" }
+
+// ActiveEnv returns the workspace's active environment, defaulting to development.
+func (w *Workspace) ActiveEnv() string {
+	if w.ActiveEnvironment == "" {
+		return EnvDevelopment
+	}
+	return w.ActiveEnvironment
+}
+
+// PrimaryEnv is the environment a connected card's main connection belongs to.
+func (c *Component) PrimaryEnv() string {
+	if c.Environment == "" {
+		return EnvDevelopment
+	}
+	return c.Environment
 }

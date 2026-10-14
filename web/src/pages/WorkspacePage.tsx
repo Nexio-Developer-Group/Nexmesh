@@ -11,6 +11,7 @@ import { UserMenu } from '@/layouts/TopBar'
 import { Canvas } from '@/features/canvas/Canvas'
 import { useWires } from '@/features/wires/hooks'
 import { ArchitectureView } from '@/features/architecture/ArchitectureView'
+import { EnvironmentSwitcher } from '@/features/environments/EnvironmentSwitcher'
 import { ConnectionsSection } from '@/features/wires/ConnectionsSection'
 import { NewWireDialog, WireDetailsDialog } from '@/features/wires/WireDialog'
 import { CatalogSidebar } from '@/features/canvas/CatalogSidebar'
@@ -96,6 +97,7 @@ export default function WorkspacePage() {
               className={view === v ? 'rounded-lg bg-raised px-3 py-1 font-semibold text-fg' : 'rounded-lg px-3 py-1 text-muted hover:text-fg'}>{v === 'canvas' ? 'Canvas' : v === 'architecture' ? 'Architecture' : 'Code'}</button>
           ))}
         </div>
+        {ws && ws.status === 'ready' && <EnvironmentSwitcher workspace={ws} />}
         <div className="ml-auto flex items-center gap-3">
           <Button size="sm" onClick={() => setImportOpen(true)} disabled={ws?.status !== 'ready'}>Import connection</Button>
           <Button size="sm" onClick={() => setTemplatesOpen(true)} disabled={ws?.status !== 'ready'}>Templates</Button>
@@ -156,6 +158,7 @@ export default function WorkspacePage() {
               onRetry={(c) => { api.post(`/api/workspaces/${id}/components/${c.id}/retry`).catch(() => setSelectedId(c.id)) }}
               onViewLogs={(c: CanvasComponent) => setSelectedId(c.id)}
               wires={wires}
+              activeEnvironment={ws?.activeEnvironment}
               onConnect={(fromId, toId) => setNewWire({ fromId, toId })}
               onSelectWire={setOpenWire}
             />

@@ -45,6 +45,7 @@ type Service struct {
 	log         *slog.Logger
 	image       string
 	onStart     []func(ctx context.Context, workspaceID string)
+	onEnvChange []func(ctx context.Context, workspaceID string)
 	cleanup     []func(ctx context.Context, w *domain.Workspace)
 	idle        *idleState
 	defaultIdle int

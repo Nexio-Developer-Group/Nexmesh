@@ -17,6 +17,7 @@ const (
 	WireDegraded    = "degraded"
 	WireUnreachable = "unreachable"
 	WirePending     = "pending" // the provider is not installed or connected yet
+	WireInactive    = "inactive" // labelled for an environment that is not the active one
 )
 
 // OnRemoved registers a hook run after a card is deleted, so features that
@@ -57,7 +58,7 @@ func WireState(c *domain.Component) string {
 			return WireHealthy
 		case domain.StateDegraded:
 			return WireDegraded
-		case domain.StateTesting, domain.StateTestPassed:
+		case domain.StateTesting, domain.StateTestPassed, domain.StateDisconnect:
 			return WirePending
 		}
 		return WireUnreachable
@@ -83,8 +84,11 @@ func (s *Service) WireValues(ctx context.Context, c *domain.Component, name stri
 	}
 	if def.Kind == "service" {
 		if c.Mode == domain.ModeConnected {
-			fields, _ := s.storedFields(ctx, c)
-			return connenv.Build(def.ID, name, fields)
+			ac := s.activeConn(ctx, c)
+			if ac == nil {
+				return nil
+			}
+			return connenv.Build(def.ID, name, ac.Fields)
 		}
 		port := firstPort(def, c)
 		host := serviceName(def)

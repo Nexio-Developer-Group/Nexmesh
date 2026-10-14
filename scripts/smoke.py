@@ -378,6 +378,24 @@ def _():
     expect("GET", W("/architecture/export?format=png"), None, 422)
 
 
+@check("environments: switch, production needs confirmation, scoped variables")
+def _():
+    expect("POST", W("/environment"), {"environment": "qa"}, 422)
+    call("POST", W("/environment"), {"environment": "development"})
+    expect("POST", W("/environment"), {"environment": "production"}, 422)  # needs confirm
+    call("PUT", W("/variables/REGION"), {"value": "eu", "environment": "production"})
+    call("PUT", W("/variables/REGION"), {"value": "dev", "environment": "development"})
+    rows = [v for v in call("GET", W("/variables"))["variables"] if v["name"] == "REGION"]
+    assert {v["environment"] for v in rows} == {"production", "development"}, rows
+    call("POST", W("/environment"), {"environment": "production", "confirm": True})
+    assert call("GET", W())["activeEnvironment"] == "production"
+    call("DELETE", W("/variables/REGION?environment=production"))
+    call("DELETE", W("/variables/REGION?environment=development"))
+    call("POST", W("/environment"), {"environment": "development"})
+    ev = json.dumps(call("GET", W("/audit"))["events"])
+    assert "environment.switch" in ev
+
+
 @check("audit: events, filters, CSV export")
 def _():
     ev = call("GET", W("/audit"))["events"]

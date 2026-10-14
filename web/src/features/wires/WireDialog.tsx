@@ -10,6 +10,7 @@ export const WIRE_STATE: Record<WireState, { label: string; cls: string }> = {
   degraded: { label: 'Degraded', cls: 'bg-warn-bg text-warn-fg' },
   unreachable: { label: 'Unreachable', cls: 'bg-err-bg text-err-fg' },
   pending: { label: 'Waiting for provider', cls: 'bg-neutral-bg text-neutral-fg' },
+  inactive: { label: 'Other environment', cls: 'bg-neutral-bg text-neutral-fg' },
 }
 
 export function WireStateBadge({ state }: { state: WireState }) {

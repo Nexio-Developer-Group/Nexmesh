@@ -183,6 +183,22 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 		WriteJSON(w, http.StatusAccepted, op)
 	})
 
+	// Choose which environment's values are injected (PRD F4).
+	s.Handle("POST /api/workspaces/{id}/environment", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Environment string `json:"environment"`
+			Confirm     bool   `json:"confirm"`
+		}
+		if !DecodeJSON(w, r, &in) {
+			return
+		}
+		ws, err := d.Svc.SetActiveEnvironment(r.Context(), Owner(r), r.PathValue("id"), in.Environment, in.Confirm)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, ws)
+	})
 	s.Handle("POST /api/workspaces/{id}/stop", func(w http.ResponseWriter, r *http.Request) {
 		op, err := d.Svc.Stop(r.Context(), Owner(r), r.PathValue("id"))
 		if err != nil {

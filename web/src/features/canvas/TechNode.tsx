@@ -9,6 +9,7 @@ export interface TechNodeData extends Record<string, unknown> {
   selected: boolean
   onRetry?: (c: CanvasComponent) => void
   onViewLogs?: (c: CanvasComponent) => void
+  activeEnvironment?: string
 }
 export type TechNodeType = Node<TechNodeData, 'tech'>
 
@@ -28,7 +29,12 @@ const border: Record<string, string> = {
 
 /** A canvas card: a visual representation of a real configured resource (PRD 7.2). */
 export function TechNode({ data }: NodeProps<TechNodeType>) {
-  const { component: c, def, selected } = data
+  const { component: c, def, selected, activeEnvironment } = data
+  // The badge shows the environment whose connection is in use. Once an environment is active, a
+  // card without a connection for it says so instead of showing another environment's label.
+  const mainEnv = c.environment || 'development'
+  const hasActive = !activeEnvironment || activeEnvironment === mainEnv || !!c.profiles?.[activeEnvironment]
+  const envLabel = c.mode !== 'connected' ? c.environment : activeEnvironment && hasActive ? activeEnvironment : activeEnvironment ? `no ${activeEnvironment}` : c.environment
   const port = def.ports?.[0] ?? def.install?.ports?.[0]
   const conn = c.mode === 'connected' ? c.connection : undefined
   const sub = conn
@@ -55,8 +61,8 @@ export function TechNode({ data }: NodeProps<TechNodeType>) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-1">
             <p className="truncate text-[15px] font-bold">{c.connName || def.name}</p>
-            {c.environment && (
-              <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold', c.environment === 'production' ? 'bg-warn-bg text-warn-fg' : 'bg-neutral-bg text-neutral-fg')}>{c.environment}</span>
+            {envLabel && (
+              <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold', envLabel === 'production' ? 'bg-warn-bg text-warn-fg' : 'bg-neutral-bg text-neutral-fg')}>{envLabel === 'production' && <span aria-hidden>▲ </span>}{envLabel}</span>
             )}
           </div>
           <p className="truncate font-mono text-[11px] text-muted">{sub || def.kind}</p>

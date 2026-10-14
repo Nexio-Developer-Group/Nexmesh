@@ -10,7 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { relativeTime } from '@/lib/format'
 import { TestResultList } from './TestResultList'
 import {
-  useConnections, useDisconnect, useEditConnection, useParseConnectionString, useRetest, useRotate, useSaveConnection, useTestConnection,
+  useConnections, useDisconnect, useEditConnection, useParseConnectionString, useRemoveProfile, useRetest, useRotate, useSaveConnection, useTestConnection,
   type ConnectionBody, type ImportCandidate,
 } from './hooks'
 
@@ -24,29 +24,38 @@ export function maskConnectionString(uri: string): string {
 
 export function ConnectTab({ workspaceId, component: c, def }: { workspaceId: string; component: CanvasComponent; def: CatalogComponent }) {
   const [editing, setEditing] = useState(false)
-  useEffect(() => setEditing(false), [c.id, c.mode])
-  if (c.mode === 'connected' && !editing) return <ConnectedView workspaceId={workspaceId} component={c} def={def} onEdit={() => setEditing(true)} />
+  // A connection for another environment (PRD F4) is edited in the same form, with the environment fixed.
+  const [profileEnv, setProfileEnv] = useState<string | null>(null)
+  useEffect(() => { setEditing(false); setProfileEnv(null) }, [c.id, c.mode])
+  if (c.mode === 'connected' && profileEnv) {
+    return <ConnectForm key={profileEnv} workspaceId={workspaceId} component={c} def={def} editing={!!c.profiles?.[profileEnv]} profileEnv={profileEnv}
+      onCancel={() => setProfileEnv(null)} onSaved={() => setProfileEnv(null)} />
+  }
+  if (c.mode === 'connected' && !editing) return <ConnectedView workspaceId={workspaceId} component={c} def={def} onEdit={() => setEditing(true)} onProfile={setProfileEnv} />
   return <ConnectForm workspaceId={workspaceId} component={c} def={def} editing={c.mode === 'connected'} onCancel={() => setEditing(false)} onSaved={() => setEditing(false)} />
 }
 
-function initialFields(def: CatalogComponent, c: CanvasComponent): Record<string, unknown> {
+function initialFields(def: CatalogComponent, c: CanvasComponent, profileEnv?: string): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const f of def.connection?.fields ?? []) {
     if (f.type === 'password') continue
     if (f.default !== undefined) out[f.name] = f.default
   }
+  // A new environment starts blank: another environment's host is never copied across.
+  if (profileEnv) return { ...out, ...(c.profiles?.[profileEnv]?.connection ?? {}) }
   return { ...out, ...(c.connection ?? {}) }
 }
 
-function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSaved }: {
-  workspaceId: string; component: CanvasComponent; def: CatalogComponent; editing: boolean; onCancel: () => void; onSaved: () => void
+function ConnectForm({ workspaceId, component: c, def, editing, profileEnv, onCancel, onSaved }: {
+  workspaceId: string; component: CanvasComponent; def: CatalogComponent; editing: boolean; profileEnv?: string; onCancel: () => void; onSaved: () => void
 }) {
   const fieldsDef = def.connection?.fields ?? []
   // Values imported from a .env/compose file wait in memory for this form to open.
   const [pre] = useState(() => usePrefill.getState().take(c.id))
-  const [connName, setConnName] = useState(pre?.connName || c.connName || '')
-  const [environment, setEnvironment] = useState<string>(c.environment || 'development')
-  const [fields, setFields] = useState<Record<string, unknown>>(() => ({ ...initialFields(def, c), ...(pre?.fields ?? {}) }))
+  const [connName, setConnName] = useState(profileEnv ? c.connName || '' : pre?.connName || c.connName || '')
+  const [environment, setEnvironment] = useState<string>(profileEnv ?? (c.environment || 'development'))
+  const envLocked = editing || !!profileEnv
+  const [fields, setFields] = useState<Record<string, unknown>>(() => ({ ...initialFields(def, c, profileEnv), ...(pre?.fields ?? {}) }))
   const [secrets, setSecrets] = useState<Record<string, string>>(pre?.secrets ?? {})
   const [importing, setImporting] = useState(false)
   const defs = useMemo(() => new Map([[def.id, def]]), [def])
@@ -59,7 +68,7 @@ function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSave
 
   const body = useMemo<ConnectionBody>(() => ({ connName, environment, fields: { ...fields, ...Object.fromEntries(Object.entries(secrets).filter(([, v]) => v !== '')) } }), [connName, environment, fields, secrets])
   const key = JSON.stringify(body)
-  const heldSecret = !!c.lastTest?.passed && c.observedState === 'test_passed'
+  const heldSecret = !profileEnv && !!c.lastTest?.passed && c.observedState === 'test_passed'
   const [passedKey, setPassedKey] = useState<string | null>(() => (!editing && heldSecret ? key : null))
   const canAdd = passedKey === key && !save.isPending && !edit.isPending
 
@@ -109,7 +118,8 @@ function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSave
   const testErr = test.error instanceof ApiError ? test.error : null
   const saveErr = (save.error ?? edit.error) as ApiError | null
   const running = test.isPending
-  const result = running ? c.lastTest : (test.data ?? c.lastTest)
+  const lastKnown = profileEnv ? c.profiles?.[profileEnv]?.lastTest : c.lastTest
+  const result = running ? lastKnown : (test.data ?? lastKnown)
 
   const runTest = () => test.mutate(body, { onSuccess: (r) => setPassedKey(r.passed ? key : null) })
   const submit = () => (editing ? edit : save).mutate(body, { onSuccess: onSaved })
@@ -126,22 +136,23 @@ function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSave
             <strong>▲ Production label.</strong> Use a dedicated least-privilege user limited to this project's database.
           </div>
         )}
-        {editing && <p className="rounded-lg bg-info-bg p-2.5 text-xs text-info-fg">Editing a live connection. Changes apply only after Test Connection passes.</p>}
+        {profileEnv && <p className="rounded-lg bg-info-bg p-2.5 text-xs text-info-fg">{editing ? 'Editing' : 'Adding'} the <strong>{profileEnv}</strong> connection for this card. It has its own host and credentials; nothing is copied from another environment.</p>}
+        {editing && !profileEnv && <p className="rounded-lg bg-info-bg p-2.5 text-xs text-info-fg">Editing a live connection. Changes apply only after Test Connection passes.</p>}
 
-        <Field label="Connection name" mono value={connName} onChange={(e) => setConnName(e.target.value.toLowerCase())} placeholder={`prod-${def.id}`} disabled={editing}
-          error={saveErr?.field === 'connName' ? saveErr.message : undefined} hint={editing ? 'The name cannot change after it is added.' : 'Lowercase letters, digits, hyphens. Used to name the variables projects receive.'} />
+        <Field label="Connection name" mono value={connName} onChange={(e) => setConnName(e.target.value.toLowerCase())} placeholder={`prod-${def.id}`} disabled={editing || !!profileEnv}
+          error={saveErr?.field === 'connName' ? saveErr.message : undefined} hint={editing || profileEnv ? 'The name cannot change after it is added.' : 'Lowercase letters, digits, hyphens. Used to name the variables projects receive.'} />
 
         <fieldset>
           <legend className="mb-1.5 text-[13px] font-semibold">Environment</legend>
           <div role="radiogroup" aria-label="Environment" className="grid grid-cols-3 rounded-[10px] border border-line-strong bg-field p-1">
             {ENVS.map((e) => (
-              <button key={e} type="button" role="radio" aria-checked={environment === e} onClick={() => setEnvironment(e)}
-                className={clsx('rounded-md py-1.5 text-[13px] font-semibold', environment === e ? (e === 'production' ? 'bg-warn-bg text-warn-fg' : 'bg-raised text-fg') : 'text-muted hover:text-fg')}>{e}</button>
+              <button key={e} type="button" role="radio" aria-checked={environment === e} aria-disabled={envLocked || undefined} onClick={() => !envLocked && setEnvironment(e)}
+                className={clsx('rounded-md py-1.5 text-[13px] font-semibold', environment === e ? (e === 'production' ? 'bg-warn-bg text-warn-fg' : 'bg-raised text-fg') : 'text-muted hover:text-fg', envLocked && 'cursor-not-allowed opacity-70')}>{e}</button>
             ))}
           </div>
         </fieldset>
 
-        {!editing && (
+        {!editing && !profileEnv && (
           <div className="-mb-2 flex items-center justify-between rounded-lg border border-dashed border-line-strong px-3 py-2 text-[13px]">
             <span className="text-muted">Have a .env file, connection string or compose file?</span>
             <button type="button" className="font-semibold text-link hover:underline" onClick={() => setImporting(true)}>Import…</button>
@@ -186,12 +197,12 @@ function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSave
       <div className="sticky bottom-0 border-t border-line bg-panel p-4">
         <div className="grid grid-cols-2 gap-3">
           <Button onClick={runTest} loading={running}>{result?.at ? 'Retest' : 'Test Connection'}</Button>
-          <Button variant="primary" disabled={!canAdd} loading={save.isPending || edit.isPending} onClick={submit}>{editing ? 'Save changes' : 'Add to Workspace'}</Button>
+          <Button variant="primary" disabled={!canAdd} loading={save.isPending || edit.isPending} onClick={submit}>{editing ? 'Save changes' : profileEnv ? `Add ${profileEnv} connection` : 'Add to Workspace'}</Button>
         </div>
         <p className="mt-2 text-center text-xs text-muted">
           {canAdd ? 'Test passed for these exact values.' : passedKey ? 'Values changed since the last test. Test again to continue.' : 'Test Connection must pass before you can add this.'}
         </p>
-        {editing && <button className="mx-auto mt-2 block text-xs text-muted hover:text-fg" onClick={onCancel}>Cancel editing</button>}
+        {(editing || profileEnv) && <button className="mx-auto mt-2 block text-xs text-muted hover:text-fg" onClick={onCancel}>Cancel editing</button>}
       </div>
       {importing && <ImportConnectionDialog catalogId={def.id} defs={defs} onPick={applyImport} onClose={() => setImporting(false)} />}
     </div>
@@ -240,7 +251,7 @@ function FormField({ f, value, onChange, stored }: { f: CatalogField; value: unk
   )
 }
 
-function ConnectedView({ workspaceId, component: c, def, onEdit }: { workspaceId: string; component: CanvasComponent; def: CatalogComponent; onEdit: () => void }) {
+function ConnectedView({ workspaceId, component: c, def, onEdit, onProfile }: { workspaceId: string; component: CanvasComponent; def: CatalogComponent; onEdit: () => void; onProfile: (env: string) => void }) {
   const retest = useRetest(workspaceId, c.id)
   const disconnect = useDisconnect(workspaceId, c.id)
   const conns = useConnections(workspaceId, true, [c.connName, c.observedState])
@@ -271,6 +282,7 @@ function ConnectedView({ workspaceId, component: c, def, onEdit }: { workspaceId
           <p className="mt-2 text-[11px] text-muted">Set only on processes started through the workspace agent. Variable naming is provisional.</p>
         </div>
       )}
+      <EnvironmentProfiles workspaceId={workspaceId} component={c} onProfile={onProfile} />
       {c.lastTest && <TestResultList result={retest.data ?? c.lastTest} running={retest.isPending} />}
       {retest.error && <p role="alert" className="text-sm text-err-fg">{retest.error.message}</p>}
       <div className="grid grid-cols-2 gap-2">
@@ -307,5 +319,38 @@ function RotateDialog({ workspaceId, component: c, def, onClose }: { workspaceId
       </div>
       {rotate.error && <p role="alert" className="mt-3 rounded-lg bg-err-bg p-2.5 text-err-fg">{rotate.error.message}</p>}
     </Modal>
+  )
+}
+
+/** One connection per environment (PRD F4). Each has its own host and credentials. */
+function EnvironmentProfiles({ workspaceId, component: c, onProfile }: { workspaceId: string; component: CanvasComponent; onProfile: (env: string) => void }) {
+  const remove = useRemoveProfile(workspaceId, c.id)
+  const main = c.environment || 'development'
+  return (
+    <section aria-label="Environments" className="rounded-xl border border-line p-3">
+      <h3 className="text-[13px] font-bold">Environments</h3>
+      <p className="mt-0.5 text-xs text-muted">Add a connection for each environment this card is used in. The active environment decides which one is used.</p>
+      <ul className="mt-2.5 space-y-1.5">
+        {ENVS.map((e) => {
+          const isMain = e === main
+          const has = isMain || !!c.profiles?.[e]
+          return (
+            <li key={e} className="flex items-center justify-between gap-2 text-[13px]">
+              <span className="flex items-center gap-2">
+                <span className={clsx('font-semibold', e === 'production' && 'text-warn-fg')}>{e === 'production' && '▲ '}{e}</span>
+                <span className="text-xs text-muted">{isMain ? 'main connection' : has ? 'connection set' : 'not set'}</span>
+              </span>
+              {!isMain && (
+                <span className="flex gap-1.5">
+                  <Button size="sm" aria-label={`${has ? 'Edit' : 'Add'} ${e} connection`} onClick={() => onProfile(e)}>{has ? 'Edit' : 'Add'}</Button>
+                  {has && <Button size="sm" variant="ghost" aria-label={`Remove ${e} connection`} loading={remove.isPending && remove.variables === e} onClick={() => remove.mutate(e)}>Remove</Button>}
+                </span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      {remove.error && <p role="alert" className="mt-2 text-xs text-err-fg">{remove.error.message}</p>}
+    </section>
   )
 }

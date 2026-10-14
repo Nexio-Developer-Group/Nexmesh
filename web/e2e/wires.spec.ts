@@ -121,3 +121,71 @@ test.describe('Phase 3: connection lines', () => {
     expect(text).not.toMatch(/password|secret/i)
   })
 })
+
+// Per-environment connections need two reachable services (see scripts/it/start-services.sh);
+// the second port is a second Redis with the same password.
+const dev = process.env.NX_IT_REDIS_PORT
+const stg = process.env.NX_IT_REDIS_PORT2
+const pass = process.env.NX_IT_PASS
+test.describe('Phase 3: canvas environments', () => {
+  test.skip(!dev || !stg || !pass, 'set NX_IT_REDIS_PORT, NX_IT_REDIS_PORT2 and NX_IT_PASS to run')
+
+  test('a card has one connection per environment and switching changes which one is used', async ({ page }) => {
+    await createWorkspace(page, unique('env'))
+    await page.getByRole('button', { name: 'Add Redis to canvas' }).click()
+    await page.getByRole('tab', { name: 'connect' }).click()
+    await page.getByLabel('Connection name').fill('orders-cache')
+    await page.getByLabel(/^Host/).fill('127.0.0.1')
+    await page.getByLabel(/^Port/).fill(dev!)
+    await page.getByText('Advanced').click()
+    await page.getByRole('switch', { name: /^TLS/ }).uncheck()
+    await page.getByLabel(/^Password/).fill(pass!)
+    await page.getByRole('button', { name: 'Test Connection' }).click()
+    await expect(page.getByRole('status').filter({ hasText: /Passed/ })).toBeVisible()
+    await page.getByRole('button', { name: 'Add to Workspace' }).click()
+    const card = page.getByRole('group', { name: /Redis card/ })
+    await expect(card.getByText('Connected').first()).toBeVisible()
+
+    // Add a staging connection. Nothing is copied from development: the password must be entered again.
+    await page.getByRole('button', { name: 'Add staging connection' }).click()
+    await expect(page.getByLabel(/^Host/)).toHaveValue('')
+    await page.getByLabel(/^Host/).fill('127.0.0.1')
+    await page.getByLabel(/^Port/).fill(stg!)
+    await page.getByText('Advanced').click()
+    await page.getByRole('switch', { name: /^TLS/ }).uncheck()
+    await page.waitForTimeout(1100) // the test rate limit is one per second per card
+    await page.getByRole('button', { name: 'Test Connection' }).click()
+    await expect(page.getByText(/authentication failed|Password/i).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add staging connection' })).toBeDisabled()
+    await page.getByLabel(/^Password/).fill(pass!)
+    await page.waitForTimeout(1100)
+    await page.getByRole('button', { name: 'Retest' }).click()
+    await expect(page.getByRole('status').filter({ hasText: /Passed/ })).toBeVisible()
+    await page.getByRole('button', { name: 'Add staging connection' }).click()
+    await expect(page.getByRole('region', { name: 'Environments' }).getByText('connection set')).toBeVisible()
+
+    const env = page.getByRole('radiogroup', { name: 'Active environment' })
+    await env.getByRole('radio', { name: 'Staging' }).click()
+    await expect(card.getByText('staging', { exact: true })).toBeVisible()
+    await env.getByRole('radio', { name: 'Development' }).click()
+    await expect(card.getByText('development', { exact: true })).toBeVisible()
+
+    // Production has no connection: confirmation first, then the card says so and nothing is injected.
+    await env.getByRole('radio', { name: 'Production' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Switch to Production' }).click()
+    await expect(card.getByText('no production', { exact: true })).toBeVisible()
+    await expect(card.getByText('Disconnected').first()).toBeVisible()
+    await expect(page.getByText(/No production connection/).first()).toBeVisible()
+    await expect(page.locator('body')).not.toContainText(pass!)
+
+    // Variables carry an environment too.
+    await page.goto(page.url().replace(/\/?$/, '') + '/settings?tab=variables')
+    await page.getByRole('button', { name: 'Add variable' }).click()
+    await page.getByLabel('Name').fill('API_URL')
+    await page.getByLabel('Value', { exact: true }).fill('https://staging.example')
+    await page.getByLabel('Environment').selectOption('staging')
+    await page.getByRole('button', { name: 'Save variable' }).click()
+    const row = page.getByRole('row', { name: /API_URL/ })
+    await expect(row.getByText('staging', { exact: true })).toBeVisible()
+  })
+})

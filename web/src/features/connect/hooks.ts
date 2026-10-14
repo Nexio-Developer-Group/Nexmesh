@@ -29,6 +29,9 @@ export const useSaveConnection = (ws: string, cid: string) =>
 export const useEditConnection = (ws: string, cid: string) =>
   useMutation({ mutationFn: (b: ConnectionBody) => api.put<CanvasComponent & { exposedAs?: string[] }>(base(ws, cid), b) })
 
+export const useRemoveProfile = (ws: string, cid: string) =>
+  useMutation({ mutationFn: (env: string) => api.del<unknown>(`${base(ws, cid)}/profiles/${env}`) })
+
 export const useRetest = (ws: string, cid: string) => useMutation({ mutationFn: () => api.post<TestResult>(`${base(ws, cid)}/retest`) })
 
 export const useDisconnect = (ws: string, cid: string) => useMutation({ mutationFn: () => api.del<void>(base(ws, cid)) })

@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"strings"
@@ -195,5 +196,52 @@ func TestOnStartHookRunsWhenWorkspaceResumes(t *testing.T) {
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("on-start hook never ran")
+	}
+}
+
+func TestSwitchingEnvironmentNeedsConfirmationForProductionAndIsAudited(t *testing.T) {
+	r := newIdleRig(t)
+	changed := make(chan string, 4)
+	r.svc.WithOnEnvChange(func(_ context.Context, id string) { changed <- id })
+
+	if _, err := r.svc.SetActiveEnvironment(r.ctx, "u1", "ws1", "qa", false); err == nil {
+		t.Fatal("unknown environments are rejected")
+	}
+	if w, _ := r.st.GetWorkspace(r.ctx, "ws1"); w.UsesEnvironments() {
+		t.Fatal("a workspace starts without environments in use")
+	}
+	_, err := r.svc.SetActiveEnvironment(r.ctx, "u1", "ws1", "production", false)
+	var ve *runtime.ValidationError
+	if !errors.As(err, &ve) || ve.Code != "confirmation_required" {
+		t.Fatalf("production without confirmation: %v", err)
+	}
+	if w, _ := r.st.GetWorkspace(r.ctx, "ws1"); w.ActiveEnvironment != "" {
+		t.Fatal("nothing may change without confirmation")
+	}
+	if _, err := r.svc.SetActiveEnvironment(r.ctx, "u1", "ws1", "staging", false); err != nil {
+		t.Fatal(err)
+	}
+	if w, err := r.svc.SetActiveEnvironment(r.ctx, "u1", "ws1", "production", true); err != nil || w.ActiveEnv() != "production" {
+		t.Fatalf("%v", err)
+	}
+	for i := 0; i < 2; i++ {
+		select {
+		case <-changed:
+		case <-time.After(2 * time.Second):
+			t.Fatal("environment change hook did not run")
+		}
+	}
+	evs, _ := r.st.ListAudit(r.ctx, "ws1", 10)
+	n := 0
+	for _, e := range evs {
+		if e.Action == "environment.switch" && e.Detail["to"] != nil {
+			n++
+		}
+	}
+	if n != 2 {
+		t.Fatalf("each switch should be audited, saw %d: %+v", n, evs)
+	}
+	if _, err := r.svc.SetActiveEnvironment(r.ctx, "intruder", "ws1", "development", false); err == nil {
+		t.Fatal("another owner cannot switch")
 	}
 }

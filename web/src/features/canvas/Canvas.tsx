@@ -21,6 +21,8 @@ interface Props {
   onRetry: (c: CanvasComponent) => void
   onViewLogs: (c: CanvasComponent) => void
   wires?: Wire[]
+  /** The workspace's active environment, once someone has chosen one. */
+  activeEnvironment?: string
   /** The user dragged a line from a consumer to a provider (nothing is created yet). */
   onConnect?: (fromId: string, toId: string) => void
   onSelectWire?: (w: Wire) => void
@@ -31,8 +33,9 @@ const WIRE_STYLE: Record<string, { stroke: string; dash?: string }> = {
   degraded: { stroke: '#e0a526', dash: '6 4' },
   unreachable: { stroke: '#e5484d', dash: '2 5' },
   pending: { stroke: '#7a86a8', dash: '4 4' },
+  inactive: { stroke: '#4a5578', dash: '1 6' },
 }
-const WIRE_WORD: Record<string, string> = { healthy: 'healthy', degraded: 'degraded', unreachable: 'unreachable', pending: 'waiting' }
+const WIRE_WORD: Record<string, string> = { healthy: 'healthy', degraded: 'degraded', unreachable: 'unreachable', pending: 'waiting', inactive: 'other environment' }
 
 function Zoom() {
   const rf = useReactFlow()
@@ -51,7 +54,7 @@ function Zoom() {
   )
 }
 
-function Inner({ components, catalog, selectedId, onSelect, onDropComponent, onMove, onRetry, onViewLogs, wires = [], onConnect, onSelectWire }: Props) {
+function Inner({ components, catalog, selectedId, onSelect, onDropComponent, onMove, onRetry, onViewLogs, wires = [], onConnect, onSelectWire, activeEnvironment }: Props) {
   const rf = useReactFlow()
   const [pos, setPos] = useState<Record<string, { x: number; y: number }>>({})
   const [dragOver, setDragOver] = useState(false)
@@ -63,10 +66,10 @@ function Inner({ components, catalog, selectedId, onSelect, onDropComponent, onM
         if (!def) return []
         return [{
           id: c.id, type: 'tech' as const, position: pos[c.id] ?? { x: c.x, y: c.y }, selected: c.id === selectedId,
-          data: { component: c, def, selected: c.id === selectedId, onRetry, onViewLogs },
+          data: { component: c, def, selected: c.id === selectedId, onRetry, onViewLogs, activeEnvironment },
         }]
       }),
-    [components, catalog, pos, selectedId, onRetry, onViewLogs],
+    [components, catalog, pos, selectedId, onRetry, onViewLogs, activeEnvironment],
   )
 
   // A line's colour comes with a word and a dash pattern, never colour alone (PRD 19.4).

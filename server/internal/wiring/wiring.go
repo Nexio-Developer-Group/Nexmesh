@@ -284,8 +284,19 @@ func (s *Service) changed(wsID string) {
 	s.bus.Publish(wsID, events.Event{Type: "wires_changed", Data: map[string]string{}})
 }
 
+// active reports whether a line applies in the workspace's active environment.
+// Lines with no environment label always apply, and so does everything until
+// someone chooses an active environment.
+func active(ws *domain.Workspace, w *domain.Wire) bool {
+	return !ws.UsesEnvironments() || w.Environment == "" || w.Environment == ws.ActiveEnv()
+}
+
 func (s *Service) view(ctx context.Context, w *domain.Wire) *View {
 	v := &View{Wire: w, State: component.WirePending}
+	if ws, err := s.st.GetWorkspace(ctx, w.WorkspaceID); err == nil && !active(ws, w) {
+		v.State, v.Message = component.WireInactive, "Labelled "+w.Environment+"; the active environment is "+ws.ActiveEnv()+"."
+		return v
+	}
 	to, err := s.st.GetComponent(ctx, w.ToID)
 	if err != nil {
 		v.State, v.Message = component.WireUnreachable, "The provider card no longer exists."
@@ -330,7 +341,14 @@ func (s *Service) Env(ctx context.Context, wsID string) (map[string]string, erro
 		return nil, err
 	}
 	out := map[string]string{}
+	ws, err := s.st.GetWorkspace(ctx, wsID)
+	if err != nil {
+		return nil, err
+	}
 	for _, w := range list {
+		if !active(ws, w) {
+			continue
+		}
 		to, err := s.st.GetComponent(ctx, w.ToID)
 		if err != nil {
 			continue
@@ -348,9 +366,13 @@ func (s *Service) ExposedFor(ctx context.Context, wsID, consumerID string) []str
 	if err != nil {
 		return nil
 	}
+	ws, err := s.st.GetWorkspace(ctx, wsID)
+	if err != nil {
+		return nil
+	}
 	var out []string
 	for _, w := range list {
-		if w.FromID == consumerID {
+		if w.FromID == consumerID && active(ws, w) {
 			out = append(out, w.Variables...)
 		}
 	}

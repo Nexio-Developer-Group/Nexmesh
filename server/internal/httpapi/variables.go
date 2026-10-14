@@ -27,6 +27,7 @@ func (s *Server) RegisterVariables(svc *envvars.Service) {
 	s.Handle("PUT /api/workspaces/{id}/variables/{name}", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
 			ComponentID string  `json:"componentId"`
+			Environment string  `json:"environment"`
 			Secret      bool    `json:"secret"`
 			Value       *string `json:"value"`
 			Description string  `json:"description"`
@@ -36,7 +37,7 @@ func (s *Server) RegisterVariables(svc *envvars.Service) {
 			return
 		}
 		row, err := svc.Set(r.Context(), Owner(r), r.PathValue("id"), envvars.SetInput{
-			Name: r.PathValue("name"), ComponentID: in.ComponentID, Secret: in.Secret, Value: in.Value, Description: in.Description})
+			Name: r.PathValue("name"), ComponentID: in.ComponentID, Environment: in.Environment, Secret: in.Secret, Value: in.Value, Description: in.Description})
 		if err != nil {
 			fail(w, err)
 			return
@@ -44,7 +45,7 @@ func (s *Server) RegisterVariables(svc *envvars.Service) {
 		WriteJSON(w, http.StatusOK, row)
 	})
 	s.Handle("DELETE /api/workspaces/{id}/variables/{name}", func(w http.ResponseWriter, r *http.Request) {
-		if err := svc.Delete(r.Context(), Owner(r), r.PathValue("id"), r.URL.Query().Get("componentId"), r.PathValue("name")); err != nil {
+		if err := svc.Delete(r.Context(), Owner(r), r.PathValue("id"), r.URL.Query().Get("componentId"), r.PathValue("name"), r.URL.Query().Get("environment")); err != nil {
 			fail(w, err)
 			return
 		}

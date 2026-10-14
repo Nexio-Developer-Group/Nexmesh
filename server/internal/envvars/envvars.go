@@ -58,11 +58,15 @@ func NewService(st store.Store, sec *secrets.Service, aud *audit.Recorder, src S
 	return &Service{st: st, sec: sec, aud: aud, src: src}
 }
 
-func secretID(wsID, scope, name string) string {
+func secretID(wsID, scope, name, env string) string {
 	if scope == "" {
 		scope = "workspace"
 	}
-	return "var_" + wsID + "_" + scope + "_" + name
+	id := "var_" + wsID + "_" + scope + "_" + name
+	if env != "" {
+		id += "@" + env // a variable per environment keeps its own secret
+	}
+	return id
 }
 
 func (s *Service) workspace(ctx context.Context, owner, id string) (*domain.Workspace, error) {
@@ -77,6 +81,7 @@ func (s *Service) workspace(ctx context.Context, owner, id string) (*domain.Work
 type Row struct {
 	Name        string    `json:"name"`
 	ComponentID string    `json:"componentId,omitempty"`
+	Environment string    `json:"environment,omitempty"`
 	Secret      bool      `json:"secret"`
 	Value       string    `json:"value,omitempty"`
 	Description string    `json:"description,omitempty"`
@@ -118,7 +123,7 @@ func (s *Service) List(ctx context.Context, owner, wsID string) (*Listing, error
 	rows := make([]Row, 0, len(w.Variables))
 	for _, v := range w.Variables {
 		user[v.Name] = true
-		rows = append(rows, Row{Name: v.Name, ComponentID: v.ComponentID, Secret: v.Secret, Value: v.Value, Description: v.Description,
+		rows = append(rows, Row{Name: v.Name, ComponentID: v.ComponentID, Environment: v.Environment, Secret: v.Secret, Value: v.Value, Description: v.Description,
 			Overrides: genNames[v.Name], UpdatedAt: v.UpdatedAt})
 	}
 	for i := range gen {
@@ -128,7 +133,10 @@ func (s *Service) List(ctx context.Context, owner, wsID string) (*Listing, error
 		if rows[i].Name != rows[j].Name {
 			return rows[i].Name < rows[j].Name
 		}
-		return rows[i].ComponentID < rows[j].ComponentID
+		if rows[i].ComponentID != rows[j].ComponentID {
+			return rows[i].ComponentID < rows[j].ComponentID
+		}
+		return rows[i].Environment < rows[j].Environment
 	})
 	sort.Slice(gen, func(i, j int) bool { return gen[i].Name < gen[j].Name })
 	return &Listing{Variables: rows, Generated: gen}, nil
@@ -137,6 +145,9 @@ func (s *Service) List(ctx context.Context, owner, wsID string) (*Listing, error
 type SetInput struct {
 	Name        string
 	ComponentID string
+	// Environment limits the variable to development, staging or production
+	// (PRD F4). Empty applies to every environment.
+	Environment string
 	Secret      bool
 	// Value nil keeps the stored value (editing a secret's description or
 	// flipping nothing); non-nil replaces it.
@@ -168,6 +179,9 @@ func (s *Service) set(ctx context.Context, owner, wsID string, in SetInput, quie
 	if strings.ContainsRune(in.Description, 0) || len(in.Description) > 300 {
 		return nil, bad("description", "Description must be under 300 characters.")
 	}
+	if in.Environment != "" && !domain.ValidEnvironment(in.Environment) {
+		return nil, bad("environment", "Environment must be development, staging or production.")
+	}
 	w, err := s.workspace(ctx, owner, wsID)
 	if err != nil {
 		return nil, err
@@ -178,7 +192,7 @@ func (s *Service) set(ctx context.Context, owner, wsID string, in SetInput, quie
 			return nil, bad("componentId", "That component is not in this workspace.")
 		}
 	}
-	existing := find(w.Variables, in.Name, in.ComponentID)
+	existing := find(w.Variables, in.Name, in.ComponentID, in.Environment)
 	if existing == nil && in.Value == nil {
 		return nil, bad("value", "Enter a value.")
 	}
@@ -191,8 +205,8 @@ func (s *Service) set(ctx context.Context, owner, wsID string, in SetInput, quie
 		return nil, bad("value", "Enter the value again when changing between secret and plain.")
 	}
 
-	sid := secretID(wsID, in.ComponentID, in.Name)
-	v := domain.Variable{Name: in.Name, ComponentID: in.ComponentID, Secret: in.Secret, Description: in.Description, UpdatedAt: time.Now().UTC(), UpdatedBy: owner}
+	sid := secretID(wsID, in.ComponentID, in.Name, in.Environment)
+	v := domain.Variable{Name: in.Name, ComponentID: in.ComponentID, Environment: in.Environment, Secret: in.Secret, Description: in.Description, UpdatedAt: time.Now().UTC(), UpdatedBy: owner}
 	switch {
 	case in.Secret && in.Value != nil:
 		if err := s.sec.Put(ctx, sid, map[string]string{"value": *in.Value}); err != nil {
@@ -208,7 +222,7 @@ func (s *Service) set(ctx context.Context, owner, wsID string, in SetInput, quie
 	}
 	if _, err := s.st.UpdateWorkspace(ctx, wsID, func(w *domain.Workspace) error {
 		for i := range w.Variables {
-			if w.Variables[i].Name == v.Name && w.Variables[i].ComponentID == v.ComponentID {
+			if w.Variables[i].Name == v.Name && w.Variables[i].ComponentID == v.ComponentID && w.Variables[i].Environment == v.Environment {
 				w.Variables[i] = v
 				return nil
 			}
@@ -223,36 +237,36 @@ func (s *Service) set(ctx context.Context, owner, wsID string, in SetInput, quie
 		action = "variable.updated"
 	}
 	if !quiet {
-		s.aud.User(ctx, owner, wsID, action, in.Name, map[string]any{"secret": in.Secret, "componentId": in.ComponentID, "valueChanged": in.Value != nil})
+		s.aud.User(ctx, owner, wsID, action, in.Name, map[string]any{"secret": in.Secret, "componentId": in.ComponentID, "environment": in.Environment, "valueChanged": in.Value != nil})
 	}
-	return &Row{Name: v.Name, ComponentID: v.ComponentID, Secret: v.Secret, Value: v.Value, Description: v.Description, UpdatedAt: v.UpdatedAt}, nil
+	return &Row{Name: v.Name, ComponentID: v.ComponentID, Environment: v.Environment, Secret: v.Secret, Value: v.Value, Description: v.Description, UpdatedAt: v.UpdatedAt}, nil
 }
 
-func find(vs []domain.Variable, name, comp string) *domain.Variable {
+func find(vs []domain.Variable, name, comp, env string) *domain.Variable {
 	for i := range vs {
-		if vs[i].Name == name && vs[i].ComponentID == comp {
+		if vs[i].Name == name && vs[i].ComponentID == comp && vs[i].Environment == env {
 			return &vs[i]
 		}
 	}
 	return nil
 }
 
-func (s *Service) Delete(ctx context.Context, owner, wsID, componentID, name string) error {
+func (s *Service) Delete(ctx context.Context, owner, wsID, componentID, name, env string) error {
 	w, err := s.workspace(ctx, owner, wsID)
 	if err != nil {
 		return err
 	}
-	v := find(w.Variables, name, componentID)
+	v := find(w.Variables, name, componentID, env)
 	if v == nil {
 		return store.ErrNotFound
 	}
 	if v.Secret {
-		_ = s.sec.Delete(ctx, secretID(wsID, componentID, name))
+		_ = s.sec.Delete(ctx, secretID(wsID, componentID, name, env))
 	}
 	if _, err := s.st.UpdateWorkspace(ctx, wsID, func(w *domain.Workspace) error {
 		out := w.Variables[:0]
 		for _, x := range w.Variables {
-			if !(x.Name == name && x.ComponentID == componentID) {
+			if !(x.Name == name && x.ComponentID == componentID && x.Environment == env) {
 				out = append(out, x)
 			}
 		}
@@ -261,7 +275,7 @@ func (s *Service) Delete(ctx context.Context, owner, wsID, componentID, name str
 	}); err != nil {
 		return err
 	}
-	s.aud.User(ctx, owner, wsID, "variable.deleted", name, map[string]any{"secret": v.Secret, "componentId": componentID})
+	s.aud.User(ctx, owner, wsID, "variable.deleted", name, map[string]any{"secret": v.Secret, "componentId": componentID, "environment": env})
 	return nil
 }
 
@@ -279,14 +293,19 @@ func (s *Service) Environment(ctx context.Context, wsID string) (map[string]stri
 	if env == nil {
 		env = map[string]string{}
 	}
-	apply := func(wantComponent bool) error {
+	// Within a scope, an all-environments variable is applied first and the
+	// active environment's variable of the same name overrides it. Variables
+	// labelled for another environment are never injected (PRD F4). Until
+	// someone chooses an active environment, development applies.
+	active := w.ActiveEnv()
+	apply := func(wantComponent bool, wantEnv string) error {
 		for _, v := range w.Variables {
-			if (v.ComponentID != "") != wantComponent {
+			if (v.ComponentID != "") != wantComponent || v.Environment != wantEnv {
 				continue
 			}
 			val := v.Value
 			if v.Secret {
-				m, err := s.sec.Get(ctx, secretID(wsID, v.ComponentID, v.Name))
+				m, err := s.sec.Get(ctx, secretID(wsID, v.ComponentID, v.Name, v.Environment))
 				if err != nil {
 					if errors.Is(err, store.ErrNotFound) {
 						continue
@@ -299,11 +318,13 @@ func (s *Service) Environment(ctx context.Context, wsID string) (map[string]stri
 		}
 		return nil
 	}
-	if err := apply(false); err != nil {
-		return nil, err
-	}
-	if err := apply(true); err != nil {
-		return nil, err
+	for _, step := range []struct {
+		comp bool
+		env  string
+	}{{false, ""}, {false, active}, {true, ""}, {true, active}} {
+		if err := apply(step.comp, step.env); err != nil {
+			return nil, err
+		}
 	}
 	return env, nil
 }
@@ -312,7 +333,7 @@ func (s *Service) Environment(ctx context.Context, wsID string) (map[string]stri
 func (s *Service) DeleteAllSecrets(ctx context.Context, w *domain.Workspace) {
 	for _, v := range w.Variables {
 		if v.Secret {
-			_ = s.sec.Delete(ctx, secretID(w.ID, v.ComponentID, v.Name))
+			_ = s.sec.Delete(ctx, secretID(w.ID, v.ComponentID, v.Name, v.Environment))
 		}
 	}
 }
@@ -342,7 +363,7 @@ func (s *Service) Import(ctx context.Context, owner, wsID, content, secretMode s
 	}
 	for _, v := range vars {
 		secret := secretMode == "all" || (secretMode != "none" && LooksSecret(v.Name))
-		exists := find(w.Variables, v.Name, "") != nil
+		exists := find(w.Variables, v.Name, "", "") != nil
 		if exists && !overwrite {
 			res.Skipped = append(res.Skipped, v.Name)
 			continue

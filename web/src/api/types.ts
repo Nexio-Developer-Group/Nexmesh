@@ -1,5 +1,7 @@
 export type WorkspaceStatus = 'allocating' | 'preparing' | 'starting' | 'ready' | 'stopped' | 'failed'
 
+export type Environment = 'development' | 'staging' | 'production'
+
 export interface Workspace {
   id: string
   name: string
@@ -20,6 +22,8 @@ export interface Workspace {
   /** Minutes of inactivity before the workspace stops itself; 0 = never. */
   idleStopMinutes: number
   stopReason?: 'user' | 'idle'
+  /** Which environment's values are injected. Absent until someone chooses one. */
+  activeEnvironment?: Environment
   /** Optional component summary, e.g. "6 components · 2 connected". */
   summary?: string
 }
@@ -94,7 +98,9 @@ export interface CanvasComponent {
   connName?: string
   /** Hint from a stack template; nothing happens until the user confirms. */
   suggestedMode?: 'install' | 'connect'
-  environment?: 'development' | 'staging' | 'production' | ''
+  environment?: Environment | ''
+  /** Connections for the other environments (PRD F4). Credentials are never included. */
+  profiles?: Record<string, { connection: Record<string, unknown>; lastTest?: TestResult; updatedAt: string }>
   lastTest?: TestResult
   desiredState: string
   observedState: ComponentState
@@ -153,7 +159,7 @@ export interface SettingsPreview {
 
 // ---- connection lines (PRD F1)
 
-export type WireState = 'healthy' | 'degraded' | 'unreachable' | 'pending'
+export type WireState = 'healthy' | 'degraded' | 'unreachable' | 'pending' | 'inactive'
 
 export interface Wire {
   id: string

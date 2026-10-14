@@ -41,14 +41,14 @@ export function VariablesTab({ workspaceId }: { workspaceId: string }) {
           <table className="w-full text-left text-[13px]">
             <caption className="sr-only">Environment variables</caption>
             <thead className="border-b border-line text-[11px] uppercase tracking-wider text-faint">
-              <tr><th scope="col" className="px-4 py-2.5">Name</th><th scope="col" className="px-4 py-2.5">Value</th><th scope="col" className="px-4 py-2.5">Scope</th><th scope="col" className="px-4 py-2.5"><span className="sr-only">Actions</span></th></tr>
+              <tr><th scope="col" className="px-4 py-2.5">Name</th><th scope="col" className="px-4 py-2.5">Value</th><th scope="col" className="px-4 py-2.5">Scope</th><th scope="col" className="px-4 py-2.5">Environment</th><th scope="col" className="px-4 py-2.5"><span className="sr-only">Actions</span></th></tr>
             </thead>
             <tbody>
               {data.variables.length === 0 && data.generated.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-muted">No variables yet. Add one, or import a .env file.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-muted">No variables yet. Add one, or import a .env file.</td></tr>
               )}
               {data.variables.map((v) => (
-                <tr key={v.name + '|' + (v.componentId ?? '')} className="border-b border-line last:border-0">
+                <tr key={v.name + '|' + (v.componentId ?? '') + '|' + (v.environment ?? '')} className="border-b border-line last:border-0">
                   <td className="px-4 py-3">
                     <span className="font-mono text-[12.5px] font-semibold">{v.name}</span>
                     {v.overridesGenerated && <span className="ml-2 rounded bg-warn-bg px-1.5 py-0.5 text-[10.5px] font-semibold text-warn-fg">Overrides generated</span>}
@@ -58,6 +58,9 @@ export function VariablesTab({ workspaceId }: { workspaceId: string }) {
                     {v.secret ? <span><span aria-hidden>••••••••</span> <span className="ml-1 rounded bg-neutral-bg px-1.5 py-0.5 font-sans text-[10.5px] font-semibold text-muted">Secret</span></span> : v.value || <span className="text-faint">empty</span>}
                   </td>
                   <td className="px-4 py-3 text-muted">{v.componentId ? names.get(v.componentId) ?? 'Component' : 'Workspace'}</td>
+                  <td className="px-4 py-3">{v.environment
+                    ? <span className={v.environment === 'production' ? 'font-semibold text-warn-fg' : 'text-fg'}>{v.environment === 'production' && <span aria-hidden>▲ </span>}{v.environment}</span>
+                    : <span className="text-muted">All</span>}</td>
                   <td className="px-4 py-3 text-right">
                     <Button size="sm" variant="ghost" aria-label={`Edit ${v.name}`} onClick={() => setEditing({ row: v })}>Edit</Button>
                     <Button size="sm" variant="ghost" aria-label={`Delete ${v.name}`} onClick={() => setConfirmDel(v)}>Delete</Button>
@@ -69,6 +72,7 @@ export function VariablesTab({ workspaceId }: { workspaceId: string }) {
                   <td className="px-4 py-3 font-mono text-[12.5px] text-muted"><span aria-hidden>🔒 </span>{g.name}</td>
                   <td className="px-4 py-3 text-muted">{g.overridden ? 'Overridden by a variable above' : 'Generated from the connection'}</td>
                   <td className="px-4 py-3 text-muted">From {g.componentName || 'connection'}</td>
+                  <td className="px-4 py-3 text-muted">Active</td>
                   <td className="px-4 py-3 text-right text-xs text-faint">Read-only</td>
                 </tr>
               ))}
@@ -82,7 +86,7 @@ export function VariablesTab({ workspaceId }: { workspaceId: string }) {
       {confirmDel && (
         <Modal title={`Delete ${confirmDel.name}?`} onClose={() => setConfirmDel(null)}
           footer={<><Button onClick={() => setConfirmDel(null)}>Cancel</Button>
-            <Button variant="danger" loading={del.isPending} onClick={() => del.mutate({ name: confirmDel.name, componentId: confirmDel.componentId }, { onSuccess: () => setConfirmDel(null) })}>Delete variable</Button></>}>
+            <Button variant="danger" loading={del.isPending} onClick={() => del.mutate({ name: confirmDel.name, componentId: confirmDel.componentId, environment: confirmDel.environment }, { onSuccess: () => setConfirmDel(null) })}>Delete variable</Button></>}>
           Processes already running keep their copy; new ones will no longer see it.
         </Modal>
       )}
@@ -97,6 +101,7 @@ function VariableDialog({ workspaceId, row, components, onClose }: { workspaceId
   const [value, setValue] = useState(row && !row.secret ? row.value ?? '' : '')
   const [description, setDescription] = useState(row?.description ?? '')
   const [componentId, setComponentId] = useState(row?.componentId ?? '')
+  const [environment, setEnvironment] = useState(row?.environment ?? '')
   const editing = !!row
   const err = save.error instanceof ApiError ? save.error : null
   // A secret's stored value is write-only: leaving the box empty keeps it.
@@ -105,7 +110,7 @@ function VariableDialog({ workspaceId, row, components, onClose }: { workspaceId
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    save.mutate({ name, componentId, secret, description, ...(keepsValue ? {} : { value }) }, { onSuccess: onClose })
+    save.mutate({ name, componentId, environment, secret, description, ...(keepsValue ? {} : { value }) }, { onSuccess: onClose })
   }
 
   return (
@@ -129,6 +134,17 @@ function VariableDialog({ workspaceId, row, components, onClose }: { workspaceId
             {components.map((c) => <option key={c.id} value={c.id}>{c.connName || c.catalogId}</option>)}
           </select>
           <p className="mt-1.5 text-xs text-muted">Component-scoped values win over workspace values with the same name.</p>
+        </div>
+        <div>
+          <label htmlFor="var-env" className="mb-1.5 block text-[13px] font-semibold">Environment</label>
+          <select id="var-env" value={environment} disabled={editing} onChange={(e) => setEnvironment(e.target.value)}
+            className="h-10 w-full rounded-[10px] border border-line-strong bg-field px-3 text-sm">
+            <option value="">All environments</option>
+            <option value="development">Development only</option>
+            <option value="staging">Staging only</option>
+            <option value="production">Production only</option>
+          </select>
+          <p className="mt-1.5 text-xs text-muted">A variable for one environment is injected only while that environment is active, and overrides an all-environments variable with the same name.</p>
         </div>
         <Field label="Description" optional value={description} onChange={(e) => setDescription(e.target.value)} error={err?.field === 'description' ? err.message : undefined} />
         {err && !err.field && <p role="alert" className="rounded-lg bg-err-bg p-3 text-sm text-err-fg">{err.message}</p>}
