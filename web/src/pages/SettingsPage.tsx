@@ -12,8 +12,10 @@ import { ActivityTab } from '@/features/activity/ActivityTab'
 import { GitCredentialsTab } from '@/features/git/GitCredentialsTab'
 import { VariablesTab } from '@/features/variables/VariablesTab'
 import { ResourcesTab } from '@/features/settings/ResourcesTab'
+import { RulesTab } from '@/features/codeagent/RulesTab'
+import { GatesTab } from '@/features/codeagent/GatesTab'
 
-const TABS = [['general', 'General'], ['resources', 'Resources'], ['variables', 'Variables'], ['git', 'Git credentials'], ['snapshots', 'Snapshots'], ['definition', 'Definition'], ['agent', 'Code Agent'], ['activity', 'Activity']] as const
+const TABS = [['general', 'General'], ['resources', 'Resources'], ['variables', 'Variables'], ['git', 'Git credentials'], ['snapshots', 'Snapshots'], ['definition', 'Definition'], ['agent', 'Code Agent'], ['rules', 'Agent rules'], ['gates', 'Quality gates'], ['activity', 'Activity']] as const
 type Tab = (typeof TABS)[number][0]
 
 export default function SettingsPage() {
@@ -48,7 +50,7 @@ export default function SettingsPage() {
           </ul>
         </nav>
         <main className="min-w-0 flex-1 overflow-y-auto bg-bg p-8">
-          {!ws ? <p className="text-muted">Loading…</p> : tab === 'general' ? <GeneralTab key={`${ws.name}|${ws.description}`} workspace={ws} /> : tab === 'resources' ? <ResourcesTab workspace={ws} /> : tab === 'variables' ? <VariablesTab workspaceId={ws.id} /> : tab === 'git' ? <GitCredentialsTab workspaceId={ws.id} /> : tab === 'activity' ? <ActivityTab workspaceId={ws.id} /> : tab === 'snapshots' ? <SnapshotsTab workspace={ws} /> : tab === 'definition' ? <DefinitionTab workspace={ws} /> : <CodeAgentTab workspaceId={ws.id} />}
+          {!ws ? <p className="text-muted">Loading…</p> : tab === 'general' ? <GeneralTab key={`${ws.name}|${ws.description}`} workspace={ws} /> : tab === 'resources' ? <ResourcesTab workspace={ws} /> : tab === 'variables' ? <VariablesTab workspaceId={ws.id} /> : tab === 'git' ? <GitCredentialsTab workspaceId={ws.id} /> : tab === 'activity' ? <ActivityTab workspaceId={ws.id} /> : tab === 'snapshots' ? <SnapshotsTab workspace={ws} /> : tab === 'definition' ? <DefinitionTab workspace={ws} /> : tab === 'rules' ? <RulesTab workspaceId={ws.id} /> : tab === 'gates' ? <GatesTab workspaceId={ws.id} /> : <CodeAgentTab workspaceId={ws.id} />}
         </main>
       </div>
     </div>

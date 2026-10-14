@@ -32,7 +32,7 @@ export function mockApi(routes: Record<string, Handler>) {
     })
     if (!key) return new Response(JSON.stringify({ error: { code: 'not_mocked', message: `no mock for ${method} ${url}` } }), { status: 500 })
     const out = (await routes[key](url, init)) as { status?: number; body?: unknown } | unknown
-    if (out && typeof out === 'object' && 'status' in out) {
+    if (out && typeof out === 'object' && 'status' in out && typeof (out as { status: unknown }).status === 'number') {
       const o = out as { status: number; body?: unknown }
       return new Response(o.body === undefined ? null : JSON.stringify(o.body), { status: o.status })
     }

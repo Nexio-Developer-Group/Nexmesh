@@ -26,6 +26,8 @@ import { ImportConnectionDialog } from '@/features/connect/ImportConnectionDialo
 import { usePrefill } from '@/features/connect/prefill'
 import { TemplatesDialog } from '@/features/templates/TemplatesDialog'
 import { CodeView } from '@/features/code/CodeView'
+import { AgentPanel } from '@/features/codeagent/AgentPanel'
+import { AssistDialog } from '@/features/codeagent/AssistDialog'
 
 export default function WorkspacePage() {
   const { id } = useParams()
@@ -45,6 +47,10 @@ export default function WorkspacePage() {
   const [params, setParams] = useSearchParams()
   const view = params.get('view') === 'code' ? 'code' : params.get('view') === 'architecture' ? 'architecture' : 'canvas'
   const setView = (v: 'canvas' | 'architecture' | 'code') => setParams(v === 'canvas' ? {} : { view: v }, { replace: true })
+  const highlight = (params.get('highlight') ?? '').split(',').filter(Boolean)
+  const [agentOpen, setAgentOpen] = useState(params.get('agent') === '1')
+  const [agentSession, setAgentSession] = useState<string | null>(null)
+  const [assist, setAssist] = useState<{ id: string; name: string; kind: 'explain' | 'diagnose' } | null>(null)
 
   useWorkspaceEvents(id, (type, data) => {
     if (!id) return
@@ -99,6 +105,7 @@ export default function WorkspacePage() {
         </div>
         {ws && ws.status === 'ready' && <EnvironmentSwitcher workspace={ws} />}
         <div className="ml-auto flex items-center gap-3">
+          <Button size="sm" variant={agentOpen ? 'primary' : 'secondary'} aria-pressed={agentOpen} onClick={() => setAgentOpen((o) => !o)}>Code Agent</Button>
           <Button size="sm" onClick={() => setImportOpen(true)} disabled={ws?.status !== 'ready'}>Import connection</Button>
           <Button size="sm" onClick={() => setTemplatesOpen(true)} disabled={ws?.status !== 'ready'}>Templates</Button>
           <Button size="sm" onClick={() => setRuntimesOpen(true)}>Runtimes</Button>
@@ -107,8 +114,10 @@ export default function WorkspacePage() {
         </div>
       </header>
 
+      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {view === 'code' && ws && <CodeView workspace={ws} />}
-      {view === 'architecture' && id && <ArchitectureView workspaceId={id} />}
+      {view === 'architecture' && id && <ArchitectureView workspaceId={id} highlight={highlight} />}
       {importOpen && <ImportConnectionDialog defs={defs} onClose={() => setImportOpen(false)} onPick={(cand) => {
         // A Draft card is created and the values wait in memory for its Connect form; nothing is saved or tested yet.
         const n = comps.length
@@ -177,11 +186,22 @@ export default function WorkspacePage() {
               <ConnectionsSection component={c} def={def} components={comps} defs={defs} wires={wires}
                 onNew={(from, to) => setNewWire({ fromId: from.id, toId: to.id })} onOpen={setOpenWire} />
             )}
+            onAssist={(c, kind) => setAssist({ id: c.id, name: c.connName || defs.get(c.catalogId)?.name || c.catalogId, kind })}
             renderActivity={(c, def) => def.supportedModes.includes('connect') || def.supportedModes.includes('install') && def.kind === 'service'
               ? <ComponentActivity workspaceId={id!} component={c} hasLogs={c.mode === 'installed' && def.kind === 'service'} /> : null}
           />
         )}
       </div>
+      </div>
+      {agentOpen && id && (
+        <AgentPanel workspaceId={id} focusSession={agentSession} onClose={() => setAgentOpen(false)}
+          onHighlight={(ids) => setParams({ view: 'architecture', highlight: ids.join(',') }, { replace: true })} />
+      )}
+      </div>
+      {assist && id && (
+        <AssistDialog workspaceId={id} componentId={assist.id} cardName={assist.name} kind={assist.kind} onClose={() => setAssist(null)}
+          onSent={(sid) => { setAssist(null); setAgentSession(sid); setAgentOpen(true) }} />
+      )}
     </div>
   )
 }

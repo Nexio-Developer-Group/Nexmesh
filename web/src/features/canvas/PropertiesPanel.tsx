@@ -15,13 +15,15 @@ interface Props {
   renderActivity?: (c: CanvasComponent, def: CatalogComponent) => React.ReactNode
   /** Connection lines for this card (PRD F1). */
   renderConnections?: (c: CanvasComponent, def: CatalogComponent) => React.ReactNode
+  /** Explain and Diagnose with the Code Agent (PRD F19). */
+  onAssist?: (c: CanvasComponent, kind: 'explain' | 'diagnose') => void
 }
 
 /**
  * Properties panel. Service-type components get Install and Connect tabs
  * (catalog supportedModes); install-only components show no tabs (PRD 11.3).
  */
-export function PropertiesPanel({ component: c, def, onClose, renderInstall, renderConnect, renderActivity, renderConnections }: Props) {
+export function PropertiesPanel({ component: c, def, onClose, renderInstall, renderConnect, renderActivity, renderConnections, onAssist }: Props) {
   const both = def.supportedModes.includes('install') && def.supportedModes.includes('connect')
   const initialTab = (): 'install' | 'connect' =>
     c.mode === 'connected' || (c.mode === '' && (c.suggestedMode === 'connect' || !!usePrefill.getState().byComponent[c.id])) ? 'connect' : 'install'
@@ -46,6 +48,12 @@ export function PropertiesPanel({ component: c, def, onClose, renderInstall, ren
           <ModeBadge mode={c.mode} />
           {c.mode === '' && c.suggestedMode && <span className="text-xs text-muted">Template suggests <strong>{c.suggestedMode === 'install' ? 'Install' : 'Connect'}</strong></span>}
         </div>
+        {onAssist && (
+          <div className="mt-3 flex gap-2" role="group" aria-label="Ask the Code Agent about this card">
+            <button onClick={() => onAssist(c, 'explain')} className="rounded-lg border border-line-strong px-3 py-1 text-xs font-semibold text-fg hover:border-blue">Explain</button>
+            <button onClick={() => onAssist(c, 'diagnose')} className="rounded-lg border border-line-strong px-3 py-1 text-xs font-semibold text-fg hover:border-blue">Diagnose</button>
+          </div>
+        )}
       </div>
       {both && (
         <div role="tablist" aria-label="Provisioning mode" className="flex border-b border-line px-5">
