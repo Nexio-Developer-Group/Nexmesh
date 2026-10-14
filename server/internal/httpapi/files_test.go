@@ -14,6 +14,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/ports"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/runner"
+	"github.com/nexio-developer-group/nexmesh/server/internal/agent/terminal"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/workfs"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agentapi"
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
@@ -43,6 +44,7 @@ func filesRig(t *testing.T, status string) (*httptest.Server, store.Store, strin
 	api := httpapi.New(log)
 	reg.Register(api)
 	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud})
+	api.RegisterTerminal(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud})
 	ts := httptest.NewServer(api.Handler())
 	t.Cleanup(ts.Close)
 
@@ -56,6 +58,9 @@ func filesRig(t *testing.T, status string) (*httptest.Server, store.Store, strin
 	fsys.Install(ag)
 	(&runner.Runner{Root: root}).Install(ag)
 	ports.NewScanner().Install(ag)
+	tm := terminal.NewManager(root, ag.Emit, nil)
+	tm.Install(ag)
+	t.Cleanup(tm.CloseAll)
 	go func() { _ = ag.Run(ctx) }()
 	for i := 0; i < 200 && !reg.Online("ws1"); i++ {
 		time.Sleep(20 * time.Millisecond)

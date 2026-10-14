@@ -18,7 +18,7 @@ import (
 var ErrOffline = errors.New("The workspace agent is not connected. Start the workspace and wait for it to report ready.")
 
 // Subscriber receives events the agent emits (pty output, port changes, ...).
-type Subscriber func(method string, params json.RawMessage)
+type Subscriber = func(method string, params json.RawMessage)
 
 type link struct {
 	peer  *agentproto.Peer

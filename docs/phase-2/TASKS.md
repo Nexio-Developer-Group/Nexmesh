@@ -14,7 +14,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T1.2** Agent terminals: PTY sessions that outlive the browser, scrollback buffer, resize, attach
 - [x] **T1.3** Agent command execution with limits, and listening-port detection
 - [x] **T1.4** Control-plane file/exec API with ownership checks and audit
-- [ ] **T1.5** Browser terminal WebSocket bridge (reconnectable)
+- [x] **T1.5** Browser terminal WebSocket bridge (reconnectable)
 - [ ] **T1.6** Local agent for the fake driver so development and E2E use real files and shells
 
 ## M2 — Secrets and environment variables (F11)

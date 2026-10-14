@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -17,6 +18,7 @@ import (
 type AgentCaller interface {
 	Call(ctx context.Context, wsID, method string, params, out any) error
 	Online(wsID string) bool
+	Subscribe(wsID string, fn func(method string, params json.RawMessage)) (cancel func())
 }
 
 type FilesDeps struct {
