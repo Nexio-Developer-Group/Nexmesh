@@ -47,16 +47,25 @@ type Agent struct {
 
 	mu       sync.Mutex
 	handlers map[string]agentproto.Handler
+	events   map[string]func(params json.RawMessage)
 	peer     *agentproto.Peer
 	onConn   []func()
+	onDisc   []func()
 }
 
 func New(cfg Config, log *slog.Logger) *Agent {
-	return &Agent{cfg: cfg, log: log, handlers: map[string]agentproto.Handler{}}
+	return &Agent{cfg: cfg, log: log, handlers: map[string]agentproto.Handler{}, events: map[string]func(json.RawMessage){}}
 }
 
 // Handle registers a request handler (before Run).
 func (a *Agent) Handle(method string, h agentproto.Handler) { a.handlers[method] = h }
+
+// OnDisconnect registers a callback run each time the link drops.
+func (a *Agent) OnDisconnect(fn func()) { a.onDisc = append(a.onDisc, fn) }
+
+// OnEvent registers a handler for events sent by the control plane (before Run).
+// Handlers run on the link's read loop and must not block.
+func (a *Agent) OnEvent(method string, fn func(params json.RawMessage)) { a.events[method] = fn }
 
 // OnConnect registers a callback run after every (re)connection, e.g. to
 // re-announce listening ports.
@@ -131,6 +140,11 @@ func (a *Agent) session(ctx context.Context, target, host string) error {
 	for m, h := range a.handlers {
 		peer.Handle(m, h)
 	}
+	peer.OnEvent(func(method string, params json.RawMessage) {
+		if fn := a.events[method]; fn != nil {
+			fn(params)
+		}
+	})
 	peer.Handle("ping", func(context.Context, json.RawMessage) (any, error) { return map[string]string{"version": Version}, nil })
 	a.mu.Lock()
 	a.peer = peer
@@ -142,5 +156,9 @@ func (a *Agent) session(ctx context.Context, target, host string) error {
 	for _, f := range a.onConn {
 		go f()
 	}
-	return peer.Serve(ctx)
+	err = peer.Serve(ctx)
+	for _, f := range a.onDisc {
+		f()
+	}
+	return err
 }

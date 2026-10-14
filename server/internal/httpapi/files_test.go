@@ -30,9 +30,11 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/httpapi"
 	"github.com/nexio-developer-group/nexmesh/server/internal/ops"
+	"github.com/nexio-developer-group/nexmesh/server/internal/preview"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
 	"github.com/nexio-developer-group/nexmesh/server/internal/secrets"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
+	"github.com/nexio-developer-group/nexmesh/server/internal/tunnel"
 	"github.com/nexio-developer-group/nexmesh/server/internal/workspace"
 )
 
@@ -54,6 +56,7 @@ func filesRig(t *testing.T, status string) (*httptest.Server, store.Store, strin
 	reg.Register(api)
 	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud})
 	api.RegisterTerminal(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud})
+	api.RegisterPorts(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud}, st, preview.NewService(preview.Config{Key: make([]byte, 32)}, st, tunnel.NewDialer(reg)))
 	be, _ := secrets.NewStoreBackend(st, make([]byte, 32))
 	creds := gitcred.NewService(st, secrets.New(be), aud)
 	api.RegisterGitCredentials(creds)

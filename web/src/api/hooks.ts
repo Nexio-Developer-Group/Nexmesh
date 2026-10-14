@@ -97,7 +97,7 @@ export function useWorkspaceEvents(id: string | undefined, onEvent?: (type: stri
       }
       onEvent?.(type, data)
     }
-    for (const t of ['workspace', 'component', 'component_removed', 'operation']) es.addEventListener(t, handle(t))
+    for (const t of ['workspace', 'component', 'component_removed', 'operation', 'ports']) es.addEventListener(t, handle(t))
     return () => es.close()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, qc])

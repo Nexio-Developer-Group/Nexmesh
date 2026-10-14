@@ -34,7 +34,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T4.3** Git panel UI and "open pull request" link
 
 ## M5 — Ports and previews (F8)
-- [ ] **T5.1** Ports panel from detection plus declared ports; per-port authenticated preview proxy
+- [x] **T5.1** Ports panel from detection plus declared ports; per-port authenticated preview proxy
 - [ ] **T5.2** Expiring, revocable share links (off by default)
 
 ## M6 — Resume, reproducibility, visibility

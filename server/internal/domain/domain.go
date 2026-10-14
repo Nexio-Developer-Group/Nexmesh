@@ -48,6 +48,29 @@ type Workspace struct {
 	// GitCredentials are metadata for Git tokens; the token itself lives in
 	// the secrets service.
 	GitCredentials []GitCredential `json:"gitCredentials,omitempty"`
+	// Ports are ports the user declared (named) for previews; detection adds the rest.
+	Ports []DeclaredPort `json:"ports,omitempty"`
+	// ShareLinks are expiring, revocable public preview links (off by default).
+	ShareLinks []ShareLink `json:"shareLinks,omitempty"`
+}
+
+type DeclaredPort struct {
+	Port  int    `json:"port"`
+	Label string `json:"label"`
+}
+
+// ShareLink lets anyone holding the link open one workspace port until it
+// expires or is revoked. Only a hash of the secret is stored.
+type ShareLink struct {
+	ID        string    `json:"id"`
+	Port      int       `json:"port"`
+	Label     string    `json:"label,omitempty"`
+	SecretSHA string    `json:"secretSha"`
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	CreatedBy string    `json:"createdBy"`
+	Revoked   bool      `json:"revoked"`
+	Hits      int       `json:"hits"`
 }
 
 // GitCredential grants the workspace access to one Git host over HTTPS.

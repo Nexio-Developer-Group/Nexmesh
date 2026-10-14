@@ -7,11 +7,14 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
 	"github.com/nexio-developer-group/nexmesh/server/internal/envvars"
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitcred"
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitops"
+	"github.com/nexio-developer-group/nexmesh/server/internal/preview"
+	"github.com/nexio-developer-group/nexmesh/server/internal/tunnel"
 	"log/slog"
 	"net/http"
 	"os"
@@ -161,17 +164,38 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterComponents(compSvc)
 	api.RegisterVariables(envSvc)
 	api.RegisterGitCredentials(gitSvc)
+	pv := preview.NewService(preview.Config{Domain: cfg.PreviewDomain, Key: fpKey}, st, tunnel.NewDialer(agents))
+	api.RegisterPorts(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud}, st, pv)
+	agents.Tap(func(ws, method string, params json.RawMessage) {
+		if method == "ports.changed" {
+			var p any
+			_ = json.Unmarshal(params, &p)
+			bus.Publish(ws, events.Event{Type: "ports", Data: p})
+		}
+	})
 	api.RegisterGit(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud}, gitops.NewService(agents, gitSvc, aud))
 	api.RegisterConnections(compSvc)
 	api.RegisterAgent(agentSvc)
 	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	api.RegisterTerminal(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	var h http.Handler = api.Handler()
+	h = withPreviewHost(h, pv)
 	if opt.WithUI {
-		h = withUI(h, webui.Handler())
+		h = withPreviewHost(withUI(api.Handler(), webui.Handler()), pv)
 	}
 	return &App{Handler: h, Store: st, Driver: drv, Bus: bus, Workspaces: wsSvc, Components: compSvc, Agents: agentSvc, Secrets: sec,
 		engine: eng, agent: agents, log: log, closer: closer}, nil
+}
+
+// withPreviewHost sends requests for preview origins straight to the preview
+// proxy; everything else continues to the normal handler.
+func withPreviewHost(next http.Handler, pv *preview.Service) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if pv.ServeHost(w, r) {
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // withUI routes /api, /agent and /healthz to the API and everything else to the UI.

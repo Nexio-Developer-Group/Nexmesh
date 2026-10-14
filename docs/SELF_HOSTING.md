@@ -87,3 +87,10 @@ make it-services && make it   # probe integration tests against real services
 ## Accounts and sign-in
 
 Nexmesh requires sign-in. On a fresh instance the first visit offers **Create owner account**; that account owns the instance. Additional accounts can register only when `NEXMESH_ALLOW_SIGNUP=true`. Sessions are 14-day HttpOnly, SameSite=Lax cookies (marked `Secure` when `NEXMESH_PUBLIC_URL` is https or a proxy sets `X-Forwarded-Proto: https`); state-changing requests with a foreign `Origin` are rejected. `NEXMESH_AUTH=disabled` skips sign-in and acts as one local user. Use it for local development and automated tests only, never on a network others can reach.
+
+## Port previews
+
+Servers you start inside a workspace appear in **Code → Ports** and open through the control plane (an encrypted tunnel over the agent link; no inbound ports are published, and servers bound to 127.0.0.1 work). Previews run untrusted code, so they never share an origin with the Nexmesh UI:
+
+- **Default (path mode):** `/api/preview/<workspace>/<port>/…`, served with a `Content-Security-Policy: sandbox` that gives the page an opaque origin (no Nexmesh cookies, no local storage). Fine for static sites and many dev servers; apps that need cookies or `localStorage`, or that use root-absolute asset paths, need subdomain mode.
+- **Subdomain mode:** set `NEXMESH_PREVIEW_DOMAIN` (e.g. `preview.example.com`) and point a wildcard DNS record `*.preview.example.com` at Nexmesh. Each port gets its own origin, `p<port>-ws-<id>.preview.example.com`, with full browser behaviour including hot-reload WebSockets. For local development use `NEXMESH_PREVIEW_DOMAIN=localhost` (browsers resolve `*.localhost` to loopback). Terminate TLS for the wildcard in your reverse proxy and forward the `Host` header.

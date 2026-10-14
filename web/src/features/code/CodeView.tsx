@@ -1,5 +1,6 @@
 import type { Workspace } from '@/api/types'
 import { useState } from 'react'
+import { PortsPanel } from '@/features/ports/PortsPanel'
 import { GitPanel } from '@/features/git/GitPanel'
 import { EditorPane } from './EditorPane'
 import { FileTree } from './FileTree'
@@ -9,7 +10,7 @@ import { useOpenFiles } from './useOpenFiles'
 /** Code view: file tree, editor and terminal for a running workspace. */
 export function CodeView({ workspace }: { workspace: Workspace }) {
   const files = useOpenFiles(workspace.id)
-  const [side, setSide] = useState<'files' | 'git'>('files')
+  const [side, setSide] = useState<'files' | 'git' | 'ports'>('files')
 
   if (workspace.status !== 'ready') {
     return <Notice title="This workspace is stopped" body="Start the workspace from the dashboard to browse files and open terminals." />
@@ -22,13 +23,13 @@ export function CodeView({ workspace }: { workspace: Workspace }) {
     <div className="flex min-h-0 flex-1" aria-label="Code view">
       <aside className="flex w-[300px] shrink-0 flex-col border-r border-line bg-panel">
         <div role="tablist" aria-label="Sidebar" className="flex shrink-0 border-b border-line text-[13px]">
-          {(['files', 'git'] as const).map((t) => (
-            <button key={t} role="tab" aria-selected={side === t} onClick={() => setSide(t)}
-              className={side === t ? 'flex-1 border-b-2 border-blue py-2 font-semibold text-fg' : 'flex-1 py-2 text-muted hover:text-fg'}>{t === 'files' ? 'Files' : 'Source control'}</button>
+          {(['files', 'git', 'ports'] as const).map((t) => (
+            <button key={t} role="tab" aria-selected={side === t} aria-label={t === 'git' ? 'Source control' : undefined} onClick={() => setSide(t)}
+              className={side === t ? 'flex-1 border-b-2 border-blue py-2 font-semibold text-fg' : 'flex-1 py-2 text-muted hover:text-fg'}>{t === 'files' ? 'Files' : t === 'git' ? 'Git' : 'Ports'}</button>
           ))}
         </div>
         <div className="min-h-0 flex-1">
-        {side === 'git' ? <GitPanel workspaceId={workspace.id} onOpenFile={(repo, path) => files.open(repo ? `${repo}/${path}` : path)} /> :
+        {side === 'ports' ? <PortsPanel workspaceId={workspace.id} /> : side === 'git' ? <GitPanel workspaceId={workspace.id} onOpenFile={(repo, path) => files.open(repo ? `${repo}/${path}` : path)} /> :
         <FileTree
           workspaceId={workspace.id}
           activePath={files.active}

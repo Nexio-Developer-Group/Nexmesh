@@ -222,10 +222,4 @@ func (s *Server) RegisterFiles(d FilesDeps) {
 		}
 		WriteJSON(w, http.StatusOK, out)
 	})
-	s.Handle("GET /api/workspaces/{id}/ports", func(w http.ResponseWriter, r *http.Request) {
-		var out map[string]any
-		if call(w, r, "ports.list", struct{}{}, &out, "", nil) {
-			WriteJSON(w, http.StatusOK, out)
-		}
-	})
 }

@@ -36,6 +36,7 @@ export default function WorkspacePage() {
     if (!id) return
     applyComponentEvent(qc, id, type, data)
     if (type === 'operation') applyOperationEvent(qc, id, data)
+    if (type === 'ports') qc.invalidateQueries({ queryKey: ['ports', id] })
   })
 
   const defs = useMemo(() => new Map((catalog?.components ?? []).map((c) => [c.id, c])), [catalog])

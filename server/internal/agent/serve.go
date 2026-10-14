@@ -11,6 +11,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/ports"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/runner"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/terminal"
+	"github.com/nexio-developer-group/nexmesh/server/internal/agent/tunnel"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/workfs"
 )
 
@@ -57,11 +58,16 @@ func (a *Agent) Serve(ctx context.Context, root string) (stop func(), err error)
 	sc := ports.NewScanner()
 	sc.Install(a)
 
+	tun := tunnel.NewManager(a.Emit)
+	tun.Install(a)
+	a.OnDisconnect(tun.CloseAll)
+
 	pctx, cancel := context.WithCancel(ctx)
 	go sc.Watch(pctx, 2*time.Second, func(p []ports.Port) { a.Emit("ports.changed", map[string]any{"ports": p}) })
 	a.OnConnect(func() { a.Emit("ports.changed", map[string]any{"ports": sc.Scan()}) })
 	return func() {
 		cancel()
+		tun.CloseAll()
 		tm.CloseAll()
 		_ = fsys.Close()
 	}, nil

@@ -29,6 +29,7 @@ type linkState struct {
 	mu    sync.Mutex
 	links map[string]*link
 	subs  map[string]map[int]Subscriber
+	taps  []func(wsID, method string, params json.RawMessage)
 	next  int
 }
 
@@ -71,6 +72,14 @@ func (r *Registry) Subscribe(wsID string, fn Subscriber) (cancel func()) {
 	return func() { s.mu.Lock(); delete(s.subs[wsID], id); s.mu.Unlock() }
 }
 
+// Tap registers a listener for every agent event of every workspace.
+func (r *Registry) Tap(fn func(wsID, method string, params json.RawMessage)) {
+	s := r.ls()
+	s.mu.Lock()
+	s.taps = append(s.taps, fn)
+	s.mu.Unlock()
+}
+
 func (r *Registry) dispatch(wsID, method string, params json.RawMessage) {
 	s := r.ls()
 	s.mu.Lock()
@@ -81,6 +90,12 @@ func (r *Registry) dispatch(wsID, method string, params json.RawMessage) {
 	s.mu.Unlock()
 	for _, f := range fns {
 		f(method, params)
+	}
+	s.mu.Lock()
+	taps := append([]func(string, string, json.RawMessage){}, s.taps...)
+	s.mu.Unlock()
+	for _, t := range taps {
+		t(wsID, method, params)
 	}
 }
 
@@ -160,4 +175,16 @@ func (r *Registry) Drop(wsID string) {
 	if l != nil {
 		l.peer.Close()
 	}
+}
+
+// Emit sends a one-way event to a workspace's agent.
+func (r *Registry) Emit(ctx context.Context, wsID, method string, params any) error {
+	s := r.ls()
+	s.mu.Lock()
+	l := s.links[wsID]
+	s.mu.Unlock()
+	if l == nil {
+		return ErrOffline
+	}
+	return l.peer.Emit(ctx, method, params)
 }

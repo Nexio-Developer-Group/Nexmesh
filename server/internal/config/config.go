@@ -25,6 +25,11 @@ type Config struct {
 	// addresses (self-hosted deployments). Metadata and link-local stay blocked.
 	AllowPrivateEgress bool
 
+	// PreviewDomain (NEXMESH_PREVIEW_DOMAIN) gives every previewed port its own
+	// origin, p<port>-ws-<id>.<domain>, which needs wildcard DNS (use "localhost"
+	// for local development). Empty serves previews sandboxed under /api/preview.
+	PreviewDomain string
+
 	// AuthDisabled (NEXMESH_AUTH=disabled) skips sign-in; every request acts as one local user. Development and tests only.
 	AuthDisabled bool
 	// AllowSignup lets additional users register after the first (owner) account.
@@ -51,6 +56,7 @@ func Load() Config {
 		MasterKey:           os.Getenv("NEXMESH_MASTER_KEY"),
 		MasterKeyFile:       env("NEXMESH_MASTER_KEY_FILE", "nexmesh-master.key"),
 		AllowPrivateEgress:  os.Getenv("NEXMESH_ALLOW_PRIVATE_EGRESS") == "true",
+		PreviewDomain:       os.Getenv("NEXMESH_PREVIEW_DOMAIN"),
 		AuthDisabled:        os.Getenv("NEXMESH_AUTH") == "disabled",
 		AllowSignup:         os.Getenv("NEXMESH_ALLOW_SIGNUP") == "true",
 		AllowLoopbackEgress: os.Getenv("NEXMESH_DEV_ALLOW_LOOPBACK_EGRESS") == "true",

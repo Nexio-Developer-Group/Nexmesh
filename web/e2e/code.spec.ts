@@ -69,4 +69,31 @@ test.describe('Phase 2 Code view', () => {
     await page.getByRole('button', { name: 'History' }).click()
     await expect(page.getByRole('list', { name: 'Recent commits' })).toContainText('add readme')
   })
+
+  test('ports: a server started in the terminal appears and opens in a sandboxed preview', async ({ page }) => {
+    await createWorkspace(page, unique('ports'))
+    await page.getByRole('tab', { name: 'Code' }).click()
+    await expect(page.getByRole('tree', { name: 'Workspace files' }).getByText('README.md')).toBeVisible({ timeout: 20_000 })
+
+    const term = page.getByRole('region', { name: /Terminal 1/ })
+    await expect(term.locator('.xterm')).toBeVisible()
+    await term.locator('.xterm-helper-textarea').focus()
+    await page.keyboard.type('echo hello-preview-$((3*3)) > index.html && (python3 -m http.server 8123 --bind 127.0.0.1 >/dev/null 2>&1 & echo $! > .srv.pid)\n')
+
+    await page.getByRole('tab', { name: 'Ports' }).click()
+    const row = page.locator('li', { hasText: '8123' }).first()
+    await expect(row.getByText('Listening')).toBeVisible({ timeout: 20_000 })
+    await expect(row.getByText(/loopback only/)).toBeVisible()
+
+    const popup = page.waitForEvent('popup')
+    await row.getByRole('button', { name: 'Open preview of port 8123' }).click()
+    const preview = await popup
+    await expect(preview.locator('body')).toContainText('hello-preview-9', { timeout: 15_000 })
+    // The previewed page is sandboxed: it cannot act as the signed-in Nexmesh user.
+    const sandboxed = await preview.evaluate(() => { try { void localStorage.length; return false } catch { return true } })
+    expect(sandboxed).toBe(true)
+
+    await term.locator('.xterm-helper-textarea').focus()
+    await page.keyboard.type('kill $(cat .srv.pid)\n')
+  })
 })
