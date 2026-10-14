@@ -233,6 +233,12 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	gateSvc := gates.New(st, wsfs.New(agents), aud, csSvc)
 	csSvc.WithGates(gateSvc)
 	api.RegisterGates(gateSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
+	csSvc.WithImpact(impactOf(envSvc, wireSvc, st, cat, func(ctx context.Context, wsID string) string {
+		if w, err := st.GetWorkspace(ctx, wsID); err == nil {
+			return w.OwnerID
+		}
+		return ""
+	}))
 	api.RegisterRules(rulesSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	api.RegisterChangeSets(csSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	caSvc := codeagent.New(st, wsfs.New(agents), csSvc, aud, func(ctx context.Context, owner, wsID, cfgID string) (codeagent.Model, error) {
@@ -241,7 +247,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 			return nil, err
 		}
 		return c, nil
-	}).WithContext(archSvc, envSvc).WithRules(func(ctx context.Context, wsID string) ([]string, error) {
+	}).WithContext(archSvc, envSvc).WithCanvas(canvasOps{cat: cat, comps: compSvc, wires: wireSvc}).WithRules(func(ctx context.Context, wsID string) ([]string, error) {
 		return rulesSvc.ContextTexts(ctx, wsID), nil
 	}).WithSecretValues(func(ctx context.Context, wsID string) []string {
 		env, err := envSvc.Environment(ctx, wsID)

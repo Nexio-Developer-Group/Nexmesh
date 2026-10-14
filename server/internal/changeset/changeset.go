@@ -86,6 +86,21 @@ type GateOverride struct {
 	Failing []string  `json:"failing"`
 }
 
+// Impact lists the canvas components and variables a change set touches, so
+// the review can link to the architecture view's highlight mode (PRD F18).
+type Impact struct {
+	Components []ImpactComponent `json:"components"`
+	Variables  []string          `json:"variables"`
+}
+
+type ImpactComponent struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// ImpactFunc finds the components and variables mentioned in the proposed texts.
+type ImpactFunc func(ctx context.Context, wsID string, texts []string) Impact
+
 // Resolver says which rules apply to a set of files and warns about protected paths.
 type Resolver func(ctx context.Context, wsID string, files []string) ([]AppliedRule, []string)
 
@@ -117,6 +132,7 @@ type Set struct {
 	Rules []AppliedRule `json:"rules"`
 	// Hash identifies the proposed content so a gate run can be tied to it.
 	Hash         string        `json:"hash"`
+	Impact       Impact        `json:"impact"`
 	GateOverride *GateOverride `json:"gateOverride,omitempty"`
 	Warnings     []string      `json:"warnings,omitempty"`
 	CheckpointID string        `json:"checkpointId,omitempty"`
@@ -152,6 +168,7 @@ type Service struct {
 
 	resolve Resolver
 	gater   Gater
+	impact  ImpactFunc
 	trials  map[string]bool // workspaces with gates running on a trial apply
 	mu      sync.Mutex
 	locks   map[string]*sync.Mutex
@@ -159,6 +176,9 @@ type Service struct {
 
 // WithRules records the applicable rules on every proposal.
 func (s *Service) WithRules(r Resolver) *Service { s.resolve = r; return s }
+
+// WithImpact records the affected components and variables on every proposal.
+func (s *Service) WithImpact(f ImpactFunc) *Service { s.impact = f; return s }
 
 // WithGates makes required quality gates block agent change sets (PRD F23).
 func (s *Service) WithGates(g Gater) *Service { s.gater = g; return s }
@@ -291,6 +311,16 @@ func (s *Service) Propose(ctx context.Context, owner, wsID, actor, actorID strin
 	}
 	sort.Slice(set.Files, func(i, j int) bool { return set.Files[i].Path < set.Files[j].Path })
 	set.Hash = contentHash(set)
+	set.Impact = Impact{Components: []ImpactComponent{}, Variables: []string{}}
+	if s.impact != nil {
+		texts := make([]string, 0, len(set.Files))
+		for _, f := range set.Files {
+			texts = append(texts, f.After)
+		}
+		if im := s.impact(ctx, wsID, texts); im.Components != nil {
+			set.Impact = im
+		}
+	}
 	set.Rules = []AppliedRule{}
 	if s.resolve != nil {
 		paths := make([]string, 0, len(set.Files))
@@ -372,6 +402,16 @@ type View struct {
 }
 
 func (s *Service) viewOf(ctx context.Context, set *Set, hunks bool) *View {
+	if s.impact != nil && set.Status == StatusProposed {
+		// Undecided sets show the canvas as it is now, not as it was when proposed.
+		texts := make([]string, 0, len(set.Files))
+		for _, f := range set.Files {
+			texts = append(texts, f.After)
+		}
+		if im := s.impact(ctx, set.WorkspaceID, texts); im.Components != nil {
+			set.Impact = im
+		}
+	}
 	v := viewOf(set, hunks)
 	if s.gater != nil && set.Actor == domain.ActorAgent && set.Status == StatusProposed {
 		g := s.gater.Verdict(ctx, set.WorkspaceID, set.ID, set.Hash)

@@ -11,10 +11,11 @@ import (
 )
 
 type runCtx struct {
-	owner string
-	sess  *Session
-	level string
-	run   *run
+	owner      string
+	sess       *Session
+	level      string
+	autoAccept bool
+	run        *run
 }
 
 const systemPrompt = `You are the Code Agent inside Nexmesh, a developer workspace. You help the user read, understand and change the code in their workspace.
@@ -68,7 +69,7 @@ func (s *Service) Send(ctx context.Context, owner, wsID, id, text string) (*Sess
 	s.aud.User(ctx, owner, wsID, "agent.message_sent", id, map[string]any{"level": st.Level, "chars": len(text)})
 	snapshot := *sess
 	snapshot.Turns = append([]Turn(nil), sess.Turns...)
-	rc := &runCtx{owner: owner, sess: sess, level: st.Level, run: r}
+	rc := &runCtx{owner: owner, sess: sess, level: st.Level, autoAccept: st.AutoAccept && Allows(st.Level, LevelPropose), run: r}
 	go func() {
 		defer close(r.done)
 		defer func() {
@@ -129,7 +130,7 @@ func (s *Service) loop(ctx context.Context, rc *runCtx, model Model) {
 		if err == nil {
 			system += "\n\nCurrent workspace:\n" + cctx.Render()
 		}
-		resp, merr := model.Chat(ctx, modelprovider.ChatRequest{System: system, Messages: s.history(sess), Tools: toolDefs(rc.level)})
+		resp, merr := model.Chat(ctx, modelprovider.ChatRequest{System: system, Messages: s.history(sess), Tools: s.toolDefs(rc.level)})
 		if merr != nil {
 			if ctx.Err() != nil {
 				sess.Turns = append(sess.Turns, Turn{ID: store.NewID("trn"), Role: "assistant", Content: "Stopped.", At: s.now()})
@@ -163,7 +164,12 @@ func (s *Service) loop(ctx context.Context, rc *runCtx, model Model) {
 		for i := range sess.Turns[idx].Calls {
 			c := &sess.Turns[idx].Calls[i]
 			res, status, cs := s.exec(ctx, rc, modelprovider.ToolCall{ID: c.ID, Name: c.Name, Arguments: c.Args})
-			c.Result, c.Status, c.ChangeSetID = truncate(s.mask(bg, sess.WorkspaceID, res), MaxToolOutput), status, cs
+			c.Result, c.Status = truncate(s.mask(bg, sess.WorkspaceID, res), MaxToolOutput), status
+			if pid, ok := strings.CutPrefix(cs, "p:"); ok {
+				c.ProposalID = pid
+			} else {
+				c.ChangeSetID = cs
+			}
 			s.save(bg, sess)
 		}
 	}

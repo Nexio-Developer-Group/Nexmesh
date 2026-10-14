@@ -531,3 +531,151 @@ func TestOnlyOneRunAtATime(t *testing.T) {
 	close(release)
 	f.svc.Wait(s.ID)
 }
+
+type fakeCanvas struct {
+	mu      sync.Mutex
+	drafts  []string
+	wires   [][2]string
+	wireErr error
+}
+
+func (c *fakeCanvas) Catalog(id string) (string, bool) {
+	if id == "redis" {
+		return "Redis", true
+	}
+	return "", false
+}
+func (c *fakeCanvas) AddDraft(_ context.Context, _, _, id string, _ int) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.drafts = append(c.drafts, id)
+	return "comp_new", nil
+}
+func (c *fakeCanvas) CheckWire(context.Context, string, string, string, string) error {
+	return c.wireErr
+}
+func (c *fakeCanvas) AddWire(_ context.Context, _, _, from, to string) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.wires = append(c.wires, [2]string{from, to})
+	return "wire_new", nil
+}
+
+func TestCanvasProposalsAreSuggestionsUntilAccepted(t *testing.T) {
+	f := newFx(t,
+		use(ToolCard, map[string]any{"catalog_id": "redis", "reason": "cache"}),
+		use(ToolCard, map[string]any{"catalog_id": "nonexistent", "reason": "x"}),
+		use(ToolWire, map[string]any{"from": "FastAPI", "to": "redis", "reason": "uses cache"}),
+		use(ToolWire, map[string]any{"from": "Ghost", "to": "redis", "reason": "x"}),
+		say("proposed"))
+	cv := &fakeCanvas{}
+	f.svc.WithCanvas(cv)
+	s := f.send(t, f.session(t), "improve the architecture")
+	var calls []Call
+	for _, tn := range s.Turns {
+		calls = append(calls, tn.Calls...)
+	}
+	if len(calls) != 4 || calls[0].Status != CallOK || calls[0].ProposalID == "" || calls[1].Status != CallError || calls[2].Status != CallOK || calls[3].Status != CallError {
+		t.Fatalf("%+v", calls)
+	}
+	if len(cv.drafts) != 0 || len(cv.wires) != 0 {
+		t.Fatal("the agent changed the canvas by itself")
+	}
+	props, _ := f.svc.ListProposals(f.ctx, "u1", f.ws)
+	if len(props) != 2 {
+		t.Fatalf("%d", len(props))
+	}
+	var cardP, wireP *Proposal
+	for _, p := range props {
+		if p.Kind == ProposalCard {
+			cardP = p
+		} else {
+			wireP = p
+		}
+	}
+	if wireP.FromID != "n2" || wireP.ToID != "n1" || wireP.FromName != "FastAPI" {
+		t.Fatalf("%+v", wireP)
+	}
+	if _, err := f.svc.AcceptProposal(f.ctx, "u2", f.ws, cardP.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Fatal("ownership")
+	}
+	got, err := f.svc.AcceptProposal(f.ctx, "u1", f.ws, cardP.ID)
+	if err != nil || got.Status != ProposalAccepted || got.ResultID != "comp_new" || len(cv.drafts) != 1 || cv.drafts[0] != "redis" {
+		t.Fatalf("%v %+v", err, got)
+	}
+	if _, err := f.svc.AcceptProposal(f.ctx, "u1", f.ws, cardP.ID); vcode(err) != "already_decided" {
+		t.Fatal(err)
+	}
+	if got, _ := f.svc.RejectProposal(f.ctx, "u1", f.ws, wireP.ID); got.Status != ProposalRejected || len(cv.wires) != 0 {
+		t.Fatalf("%+v", got)
+	}
+	acts := f.auditActions(f.ws)
+	if !has(acts, "agent.canvas_proposal") || !has(acts, "agent.canvas_proposal_accepted") || !has(acts, "agent.canvas_proposal_rejected") {
+		t.Fatalf("%v", acts)
+	}
+}
+
+func TestCanvasToolsOnlyOfferedWhenAllowed(t *testing.T) {
+	f := newFx(t, say("x"))
+	f.svc.WithCanvas(&fakeCanvas{})
+	f.svc.SetSettings(f.ctx, "u1", f.ws, Settings{Level: LevelRead})
+	f.send(t, f.session(t), "hi")
+	for _, d := range f.model.reqs[0].Tools {
+		if d.Name == ToolCard || d.Name == ToolWire {
+			t.Fatal("read level may not propose canvas changes")
+		}
+	}
+	f2 := newFx(t, use(ToolCard, map[string]any{"catalog_id": "redis", "reason": "x"}), say("x"))
+	f2.svc.WithCanvas(&fakeCanvas{})
+	f2.svc.SetSettings(f2.ctx, "u1", "ws1", Settings{Level: LevelRead})
+	s := f2.send(t, f2.session(t), "add redis")
+	if s.Turns[1].Calls[0].Status != CallDenied {
+		t.Fatalf("%+v", s.Turns[1].Calls[0])
+	}
+}
+
+func TestAutoAcceptIsOptInAndRespectsGates(t *testing.T) {
+	propose := use(ToolPropose, map[string]any{"title": "Auto", "changes": []any{map[string]any{"path": "main.py", "content": "print('auto')\n"}}})
+	// Off by default: staged only.
+	f := newFx(t, propose, say("ok"))
+	f.send(t, f.session(t), "edit")
+	if f.fs.files["main.py"] != "print('hi')\n" {
+		t.Fatal("applied without opt-in")
+	}
+	// On: applied, with a checkpoint so it can be reverted.
+	f = newFx(t, propose, say("ok"))
+	f.svc.SetSettings(f.ctx, "u1", f.ws, Settings{Level: LevelPropose, AutoAccept: true})
+	s := f.send(t, f.session(t), "edit")
+	if f.fs.files["main.py"] != "print('auto')\n" {
+		t.Fatalf("not applied: %q", f.fs.files["main.py"])
+	}
+	if !strings.Contains(s.Turns[1].Calls[0].Result, "Applied") {
+		t.Fatalf("%+v", s.Turns[1].Calls[0])
+	}
+	cps, _ := f.svc.changes.Checkpoints(f.ctx, "u1", f.ws)
+	if len(cps) != 1 {
+		t.Fatal("auto-accept must still checkpoint")
+	}
+	if !has(f.auditActions(f.ws), "agent.auto_accepted") {
+		t.Fatal("not audited")
+	}
+	// Required gates still apply: it stays staged.
+	f = newFx(t, propose, say("ok"))
+	f.svc.changes.WithGates(stubGater{changeset.GateVerdict{Configured: true}})
+	f.svc.SetSettings(f.ctx, "u1", f.ws, Settings{Level: LevelPropose, AutoAccept: true})
+	s = f.send(t, f.session(t), "edit")
+	if f.fs.files["main.py"] != "print('hi')\n" || !strings.Contains(s.Turns[1].Calls[0].Result, "not applied automatically") {
+		t.Fatalf("gates ignored: %q %+v", f.fs.files["main.py"], s.Turns[1].Calls[0])
+	}
+	// Read level cannot auto-accept anything.
+	f = newFx(t, propose, say("ok"))
+	f.svc.SetSettings(f.ctx, "u1", f.ws, Settings{Level: LevelRead, AutoAccept: true})
+	f.send(t, f.session(t), "edit")
+	if f.fs.files["main.py"] != "print('hi')\n" {
+		t.Fatal("read level wrote a file")
+	}
+}
+
+type stubGater struct{ v changeset.GateVerdict }
+
+func (g stubGater) Verdict(context.Context, string, string, string) changeset.GateVerdict { return g.v }

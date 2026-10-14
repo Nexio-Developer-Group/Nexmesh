@@ -21,6 +21,8 @@ const (
 	ToolSearch  = "search_files"
 	ToolPropose = "propose_changes"
 	ToolRun     = "run_command"
+	ToolCard    = "propose_card"
+	ToolWire    = "propose_connection"
 )
 
 func obj(props map[string]any, required ...string) map[string]any {
@@ -30,7 +32,7 @@ func obj(props map[string]any, required ...string) map[string]any {
 func str(desc string) map[string]any { return map[string]any{"type": "string", "description": desc} }
 
 // toolDefs lists the tools a permission level may use.
-func toolDefs(level string) []modelprovider.ToolDef {
+func (s *Service) toolDefs(level string) []modelprovider.ToolDef {
 	defs := []modelprovider.ToolDef{
 		{Name: ToolContext, Description: "Get the current canvas: cards, connection lines, problems and variable names. Values are never included.", Parameters: obj(map[string]any{})},
 		{Name: ToolList, Description: "List the files and folders in a workspace folder (default: the workspace root).", Parameters: obj(map[string]any{"path": str("Folder path relative to the workspace root")})},
@@ -47,6 +49,13 @@ func toolDefs(level string) []modelprovider.ToolDef {
 				"changes": map[string]any{"type": "array", "items": obj(map[string]any{
 					"path": str("File path relative to the workspace root"), "content": map[string]any{"type": []string{"string", "null"}, "description": "Full new file content, or null to delete"}}, "path")},
 			}, "title", "changes")})
+	}
+	if Allows(level, LevelPropose) && s.canvas != nil {
+		defs = append(defs,
+			modelprovider.ToolDef{Name: ToolCard, Description: "Suggest adding a technology to the canvas as a Draft card. The user decides; nothing is installed or started.",
+				Parameters: obj(map[string]any{"catalog_id": str("Catalog id of the technology, for example redis"), "reason": str("Why it is needed")}, "catalog_id", "reason")},
+			modelprovider.ToolDef{Name: ToolWire, Description: "Suggest a connection line from one canvas card to another (for example a backend that uses a database). The user reviews the variables it creates and decides.",
+				Parameters: obj(map[string]any{"from": str("Card that depends on the other (name or id)"), "to": str("Card it connects to (name or id)"), "reason": str("Why")}, "from", "to", "reason")})
 	}
 	if Allows(level, LevelExecute) {
 		defs = append(defs, modelprovider.ToolDef{Name: ToolRun, Description: "Run a shell command in the workspace (for tests, builds and inspection). Read-only, build and test commands run immediately; anything else waits for the user's approval. Do not use commands to edit files: use propose_changes.",
@@ -184,7 +193,26 @@ func (s *Service) exec(ctx context.Context, rc *runCtx, call modelprovider.ToolC
 		if err2 != nil {
 			return "The change could not be staged: " + err2.Error(), CallError, ""
 		}
+		if rc.autoAccept {
+			if _, aerr := s.changes.Accept(ctx, rc.owner, rc.sess.WorkspaceID, set.ID, changeset.Decision{All: true}); aerr == nil {
+				s.aud.User(ctx, rc.owner, rc.sess.WorkspaceID, "agent.auto_accepted", set.ID, map[string]any{"files": len(set.Files)})
+				return fmt.Sprintf("Applied %d file(s) (auto-accept is on). A checkpoint was recorded so the user can revert.", len(set.Files)), CallOK, set.ID
+			} else {
+				return fmt.Sprintf("Staged as a change set with %d file(s), but it was not applied automatically: %s The user will review it.", len(set.Files), aerr.Error()), CallOK, set.ID
+			}
+		}
 		return fmt.Sprintf("Staged as a change set with %d file(s). Nothing has been written; the user will review it and accept or reject it.", len(set.Files)), CallOK, set.ID
+
+	case ToolCard, ToolWire:
+		if !Allows(rc.level, LevelPropose) || s.canvas == nil {
+			return denied("this workspace does not let the agent propose canvas changes", "")
+		}
+		if call.Name == ToolCard {
+			r, st, id := s.proposeCard(ctx, rc, call.Arguments)
+			return r, st, "p:" + id
+		}
+		r, st, id := s.proposeConnection(ctx, rc, call.Arguments)
+		return r, st, "p:" + id
 
 	case ToolRun:
 		if !Allows(rc.level, LevelExecute) {

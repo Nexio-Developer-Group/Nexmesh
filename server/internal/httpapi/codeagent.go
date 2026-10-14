@@ -111,4 +111,31 @@ func (s *Server) RegisterCodeAgent(svc *codeagent.Service) {
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
+	s.Handle("GET "+base+"/proposals", func(w http.ResponseWriter, r *http.Request) {
+		l, err := svc.ListProposals(r.Context(), Owner(r), r.PathValue("id"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		if l == nil {
+			l = []*codeagent.Proposal{}
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"proposals": l})
+	})
+	s.Handle("POST "+base+"/proposals/{pid}/accept", func(w http.ResponseWriter, r *http.Request) {
+		p, err := svc.AcceptProposal(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("pid"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, p)
+	})
+	s.Handle("POST "+base+"/proposals/{pid}/reject", func(w http.ResponseWriter, r *http.Request) {
+		p, err := svc.RejectProposal(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("pid"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, p)
+	})
 }

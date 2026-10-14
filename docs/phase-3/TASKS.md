@@ -33,6 +33,7 @@ Decisions taken here for the open items in PRD Section 17:
 - [x] **T3.2** Change sets: staged diffs, accept all, accept part, reject, checkpoints and revert (F18 core)
 - [x] **T3.3** Agent context and actions: canvas context without secrets, action permissions, forbidden actions recorded, approval for risky commands (F17)
 - [x] **T3.4** Rules files: repository files, scopes, applied-rules list (F21)
+- [x] **T3.3b** Agent canvas proposals (Draft cards, connections), opt-in auto-accept that never skips checkpoints or required gates, change-set impact (components and variables)
 - [x] **T3.5** Quality gates: detection, required or advisory, run in workspace, override recorded, stored in the definition (F23)
 - [ ] **T3.6** Agent chat panel and change-set review UI
 - [ ] **T3.7** Per-card Explain and Diagnose with context preview (F19)

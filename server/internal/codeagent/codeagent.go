@@ -71,6 +71,7 @@ type Service struct {
 	vars    VarSource
 	rules   func(ctx context.Context, wsID string) ([]string, error)
 	secrets func(ctx context.Context, wsID string) []string
+	canvas  CanvasOps
 	now     func() time.Time
 
 	mu   sync.Mutex
@@ -117,8 +118,11 @@ func (s *Service) workspace(ctx context.Context, owner, id string) (*domain.Work
 
 // Settings are the per-workspace agent controls.
 type Settings struct {
-	Level    string `json:"level"`
-	ConfigID string `json:"configId,omitempty"` // empty: the workspace's default code agent configuration
+	Level string `json:"level"`
+	// AutoAccept writes the agent's file edits without asking. It is off by
+	// default and never skips checkpoints or required quality gates (PRD F18).
+	AutoAccept bool   `json:"autoAccept"`
+	ConfigID   string `json:"configId,omitempty"` // empty: the workspace's default code agent configuration
 }
 
 func (s *Service) GetSettings(ctx context.Context, owner, wsID string) (*Settings, error) {
@@ -146,7 +150,7 @@ func (s *Service) SetSettings(ctx context.Context, owner, wsID string, in Settin
 	if err := store.PutJSON(ctx, s.st, KindSettings, wsID, wsID, &in); err != nil {
 		return nil, err
 	}
-	s.aud.User(ctx, owner, wsID, "agent.permissions_changed", "", map[string]any{"from": old.Level, "to": in.Level})
+	s.aud.User(ctx, owner, wsID, "agent.permissions_changed", "", map[string]any{"from": old.Level, "to": in.Level, "autoAccept": in.AutoAccept, "wasAutoAccept": old.AutoAccept})
 	return &in, nil
 }
 
@@ -158,6 +162,7 @@ type Call struct {
 	Result      string         `json:"result,omitempty"`
 	Status      string         `json:"status"`
 	ChangeSetID string         `json:"changeSetId,omitempty"`
+	ProposalID  string         `json:"proposalId,omitempty"`
 }
 
 type Turn struct {
