@@ -22,12 +22,13 @@ type Memory struct {
 	secrets  map[string]*domain.SecretRecord
 	users    map[string][]byte
 	sessions map[string][]byte
+	health   map[string][]domain.HealthSample
 }
 
 func NewMemory() *Memory {
 	return &Memory{
 		ws: map[string][]byte{}, comps: map[string][]byte{}, ops: map[string][]byte{},
-		agents: map[string][]byte{}, users: map[string][]byte{}, sessions: map[string][]byte{}, secrets: map[string]*domain.SecretRecord{},
+		agents: map[string][]byte{}, users: map[string][]byte{}, sessions: map[string][]byte{}, health: map[string][]domain.HealthSample{}, secrets: map[string]*domain.SecretRecord{},
 	}
 }
 
@@ -361,4 +362,27 @@ func (m *Memory) DeleteSession(_ context.Context, id string) error {
 	defer m.mu.Unlock()
 	delete(m.sessions, id)
 	return nil
+}
+
+func (m *Memory) AppendHealth(_ context.Context, id string, h *domain.HealthSample) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	l := append(m.health[id], *h)
+	if len(l) > MaxHealthSamples {
+		l = l[len(l)-MaxHealthSamples:]
+	}
+	m.health[id] = l
+	return nil
+}
+
+func (m *Memory) ListHealth(_ context.Context, id string, limit int) ([]*domain.HealthSample, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	l := m.health[id]
+	out := make([]*domain.HealthSample, 0, len(l))
+	for i := len(l) - 1; i >= 0 && (limit <= 0 || len(out) < limit); i-- {
+		cp := l[i]
+		out = append(out, &cp)
+	}
+	return out, nil
 }

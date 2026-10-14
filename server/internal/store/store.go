@@ -11,6 +11,9 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 )
 
+// MaxHealthSamples bounds stored health history per component.
+const MaxHealthSamples = 500
+
 var (
 	ErrNotFound = errors.New("not found")
 	ErrConflict = errors.New("conflict")
@@ -54,6 +57,11 @@ type Store interface {
 	GetUser(ctx context.Context, id string) (*domain.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
 	CountUsers(ctx context.Context) (int, error)
+
+	// AppendHealth records a health sample; the store keeps the newest MaxHealthSamples per component.
+	AppendHealth(ctx context.Context, componentID string, h *domain.HealthSample) error
+	// ListHealth returns samples newest first.
+	ListHealth(ctx context.Context, componentID string, limit int) ([]*domain.HealthSample, error)
 
 	PutSession(ctx context.Context, s *domain.Session) error
 	GetSession(ctx context.Context, id string) (*domain.Session, error)

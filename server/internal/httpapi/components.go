@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/component"
 	"github.com/nexio-developer-group/nexmesh/server/internal/connstr"
@@ -23,6 +24,26 @@ func (s *Server) RegisterComponents(svc *component.Service) {
 			out[i] = component.Public(c)
 		}
 		WriteJSON(w, http.StatusOK, map[string]any{"components": out})
+	})
+
+	s.Handle("GET /api/workspaces/{id}/components/{cid}/health", func(w http.ResponseWriter, r *http.Request) {
+		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+		h, err := svc.Health(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid"), limit)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, h)
+	})
+
+	s.Handle("GET /api/workspaces/{id}/components/{cid}/logs", func(w http.ResponseWriter, r *http.Request) {
+		tail, _ := strconv.Atoi(r.URL.Query().Get("tail"))
+		out, err := svc.Logs(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid"), tail)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"logs": out})
 	})
 
 	s.Handle("POST /api/workspaces/{id}/components", func(w http.ResponseWriter, r *http.Request) {

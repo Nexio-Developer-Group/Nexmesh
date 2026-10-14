@@ -405,6 +405,7 @@ func (s *Service) applyHealth(ctx context.Context, c *domain.Component, def *cat
 	})
 	if err == nil {
 		s.publish(c2)
+		s.recordHealth(ctx, c2, c2.Observed, res.LatencyMS, c2.Message)
 		if prev != c2.Observed {
 			s.aud.Record(ctx, domain.ActorSystem, "", c.WorkspaceID, "connection.health_changed", def.ID,
 				map[string]any{"componentId": c.ID, "from": prev, "to": c2.Observed, "stage": res.FailedStage})

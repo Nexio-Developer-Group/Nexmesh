@@ -340,6 +340,18 @@ func (d *Driver) RemoveService(ctx context.Context, ws, name string, deleteData 
 	return nil
 }
 
+// ServiceLogs reads the container's recent stdout and stderr.
+func (d *Driver) ServiceLogs(ctx context.Context, ws, name string, tail int) (string, error) {
+	if tail <= 0 || tail > 2000 {
+		tail = 200
+	}
+	out, err := d.out(ctx, "logs", "--tail", strconv.Itoa(tail), "--timestamps", svcCtrName(ws, name))
+	if err != nil && strings.Contains(err.Error(), "No such") {
+		return "", runtime.ErrNotFound
+	}
+	return out, err
+}
+
 func (d *Driver) InspectService(ctx context.Context, ws, name string) (runtime.Observed, error) {
 	return d.inspect(ctx, svcCtrName(ws, name))
 }

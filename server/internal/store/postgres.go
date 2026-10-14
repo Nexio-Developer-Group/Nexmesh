@@ -341,3 +341,20 @@ func (p *Postgres) GetSession(ctx context.Context, id string) (*domain.Session, 
 func (p *Postgres) DeleteSession(ctx context.Context, id string) error {
 	return p.exec(ctx, "DELETE FROM sessions WHERE id=$1", id)
 }
+
+func (p *Postgres) AppendHealth(ctx context.Context, id string, h *domain.HealthSample) error {
+	b, _ := json.Marshal(h)
+	if err := p.exec(ctx, "INSERT INTO health_samples (component_id, at, data) VALUES ($1,$2,$3)", id, h.At, b); err != nil {
+		return err
+	}
+	// Trim opportunistically so the table stays bounded without a janitor.
+	return p.exec(ctx, `DELETE FROM health_samples WHERE component_id=$1 AND at < (
+		SELECT at FROM health_samples WHERE component_id=$1 ORDER BY at DESC OFFSET $2 LIMIT 1)`, id, MaxHealthSamples-1)
+}
+
+func (p *Postgres) ListHealth(ctx context.Context, id string, limit int) ([]*domain.HealthSample, error) {
+	if limit <= 0 || limit > MaxHealthSamples {
+		limit = MaxHealthSamples
+	}
+	return docList[domain.HealthSample](ctx, p, "SELECT data FROM health_samples WHERE component_id=$1 ORDER BY at DESC LIMIT $2", id, limit)
+}

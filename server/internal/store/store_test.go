@@ -125,3 +125,59 @@ func contract(t *testing.T, s Store) {
 		t.Fatal("components not cascaded")
 	}
 }
+
+func TestStoreUsersSessionsHealth(t *testing.T) {
+	for name, s := range impls(t) {
+		t.Run(name, func(t *testing.T) {
+			ctx := context.Background()
+			email := NewID("e") + "@example.com"
+			u := &domain.User{ID: NewID("usr"), Email: email, Name: "Ada", Role: domain.RoleOwner, PasswordHash: "h", CreatedAt: time.Now().UTC()}
+			if err := s.CreateUser(ctx, u); err != nil {
+				t.Fatal(err)
+			}
+			dup := *u
+			dup.ID = NewID("usr")
+			if err := s.CreateUser(ctx, &dup); err != ErrConflict {
+				t.Fatalf("duplicate email: %v", err)
+			}
+			if got, err := s.GetUserByEmail(ctx, email); err != nil || got.ID != u.ID || got.PasswordHash != "h" {
+				t.Fatalf("by email: %v %+v", err, got)
+			}
+			if _, err := s.GetUser(ctx, "nope"); err != ErrNotFound {
+				t.Fatalf("missing user: %v", err)
+			}
+			if n, err := s.CountUsers(ctx); err != nil || n < 1 {
+				t.Fatalf("count: %v %d", err, n)
+			}
+
+			sess := &domain.Session{ID: NewID("s"), UserID: u.ID, CreatedAt: time.Now().UTC(), ExpiresAt: time.Now().Add(time.Hour).UTC()}
+			if err := s.PutSession(ctx, sess); err != nil {
+				t.Fatal(err)
+			}
+			if got, err := s.GetSession(ctx, sess.ID); err != nil || got.UserID != u.ID {
+				t.Fatalf("session: %v %+v", err, got)
+			}
+			_ = s.DeleteSession(ctx, sess.ID)
+			if _, err := s.GetSession(ctx, sess.ID); err != ErrNotFound {
+				t.Fatalf("deleted session: %v", err)
+			}
+
+			comp := NewID("c")
+			base := time.Now().UTC().Add(-time.Hour)
+			for i := 0; i < MaxHealthSamples+20; i++ {
+				_ = s.AppendHealth(ctx, comp, &domain.HealthSample{At: base.Add(time.Duration(i) * time.Second), State: "running", Healthy: i%2 == 0, LatencyMS: int64(i)})
+			}
+			got, err := s.ListHealth(ctx, comp, 5)
+			if err != nil || len(got) != 5 || got[0].LatencyMS != int64(MaxHealthSamples+19) || got[4].LatencyMS != int64(MaxHealthSamples+15) {
+				t.Fatalf("newest first: %v %+v", err, got)
+			}
+			all, _ := s.ListHealth(ctx, comp, 0)
+			if len(all) != MaxHealthSamples {
+				t.Fatalf("retention: %d samples, want %d", len(all), MaxHealthSamples)
+			}
+			if other, _ := s.ListHealth(ctx, NewID("c"), 10); len(other) != 0 {
+				t.Fatal("samples leaked across components")
+			}
+		})
+	}
+}

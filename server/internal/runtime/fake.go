@@ -59,6 +59,7 @@ type fakeWS struct {
 type fakeSvc struct {
 	spec    ServiceSpec
 	running bool
+	logs    []string
 }
 
 func NewFake(caps Capabilities) *Fake {
@@ -236,7 +237,7 @@ func (f *Fake) InstallService(ctx context.Context, spec ServiceSpec, progress fu
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.services[svcKey(spec.WorkspaceID, spec.Name)] = &fakeSvc{spec: spec}
+	f.services[svcKey(spec.WorkspaceID, spec.Name)] = &fakeSvc{spec: spec, logs: []string{"pulled " + spec.Image, "container created"}}
 	return nil
 }
 
@@ -256,6 +257,7 @@ func (f *Fake) StartService(_ context.Context, ws, name string) error {
 		}
 	}
 	s.running = true
+	s.logs = append(s.logs, "ready to accept connections")
 	return nil
 }
 
@@ -267,6 +269,7 @@ func (f *Fake) StopService(_ context.Context, ws, name string) error {
 		return ErrNotFound
 	}
 	s.running = false
+	s.logs = append(s.logs, "received stop signal, shutting down")
 	return nil
 }
 
@@ -275,6 +278,20 @@ func (f *Fake) RemoveService(_ context.Context, ws, name string, _ bool) error {
 	defer f.mu.Unlock()
 	delete(f.services, svcKey(ws, name))
 	return nil
+}
+
+func (f *Fake) ServiceLogs(_ context.Context, ws, name string, tail int) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	s, ok := f.services[svcKey(ws, name)]
+	if !ok {
+		return "", ErrNotFound
+	}
+	lines := s.logs
+	if tail > 0 && len(lines) > tail {
+		lines = lines[len(lines)-tail:]
+	}
+	return strings.Join(lines, "\n") + "\n", nil
 }
 
 func (f *Fake) InspectService(_ context.Context, ws, name string) (Observed, error) {

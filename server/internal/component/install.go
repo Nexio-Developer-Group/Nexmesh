@@ -222,6 +222,7 @@ func (s *Service) Install(ctx context.Context, owner, wsID, id string, in Instal
 		return nil, err
 	}
 	s.publish(c2)
+	s.recordHealth(ctx, c2, domain.StateInstalling, 0, "queued")
 	s.aud.User(ctx, owner, wsID, "component.install", def.ID, map[string]any{"componentId": id, "version": in.Version, "start": in.Start})
 	return s.eng.Enqueue(ctx, wsID, id, "install_component")
 }
@@ -239,7 +240,9 @@ func (s *Service) Retry(ctx context.Context, owner, wsID, id string) (*domain.Op
 }
 
 func (s *Service) setState(ctx context.Context, id, state, msg string, progress int) {
+	var changed bool
 	if c, err := s.st.UpdateComponent(ctx, id, func(c *domain.Component) error {
+		changed = c.Observed != state
 		c.Observed, c.Message = state, msg
 		if progress >= 0 {
 			c.Progress = progress
@@ -247,6 +250,10 @@ func (s *Service) setState(ctx context.Context, id, state, msg string, progress 
 		return nil
 	}); err == nil {
 		s.publish(c)
+		// Install progress ticks reuse the same state; only transitions are history.
+		if changed {
+			s.recordHealth(ctx, c, state, 0, msg)
+		}
 	}
 }
 

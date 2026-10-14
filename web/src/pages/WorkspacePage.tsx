@@ -13,6 +13,7 @@ import { CatalogSidebar } from '@/features/canvas/CatalogSidebar'
 import { PropertiesPanel } from '@/features/canvas/PropertiesPanel'
 import { RuntimesPanel } from '@/features/canvas/RuntimesPanel'
 import { ConnectTab } from '@/features/connect/ConnectTab'
+import { ComponentActivity } from '@/features/health/ComponentActivity'
 import { InstallTab } from '@/features/canvas/InstallTab'
 import { applyComponentEvent, applyOperationEvent, useAddComponent, useComponents, useMoveComponent } from '@/features/canvas/hooks'
 import { osLabel } from '@/lib/format'
@@ -125,6 +126,8 @@ export default function WorkspacePage() {
             onClose={() => setSelectedId(null)}
             renderInstall={(c, def) => <InstallTab workspaceId={id!} component={c} def={def} />}
             renderConnect={(c, def) => <ConnectTab workspaceId={id!} component={c} def={def} />}
+            renderActivity={(c, def) => def.supportedModes.includes('connect') || def.supportedModes.includes('install') && def.kind === 'service'
+              ? <ComponentActivity workspaceId={id!} component={c} hasLogs={c.mode === 'installed' && def.kind === 'service'} /> : null}
           />
         )}
       </div>

@@ -251,3 +251,12 @@ type Session struct {
 }
 
 const RoleOwner = "owner"
+
+// HealthSample is one point in a component's health history.
+type HealthSample struct {
+	At        time.Time `json:"at"`
+	State     string    `json:"state"`
+	Healthy   bool      `json:"healthy"`
+	LatencyMS int64     `json:"latencyMs,omitempty"`
+	Message   string    `json:"message,omitempty"`
+}

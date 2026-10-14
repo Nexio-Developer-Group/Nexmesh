@@ -100,4 +100,6 @@ type Driver interface {
 	StopService(ctx context.Context, workspaceID, name string) error
 	RemoveService(ctx context.Context, workspaceID, name string, deleteData bool) error
 	InspectService(ctx context.Context, workspaceID, name string) (Observed, error)
+	// ServiceLogs returns the last tail lines of a service's output.
+	ServiceLogs(ctx context.Context, workspaceID, name string, tail int) (string, error)
 }
