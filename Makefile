@@ -1,4 +1,7 @@
-.PHONY: start verify dev-server dev-web test build lint acceptance it it-services
+.PHONY: smoke start verify dev-server dev-web test build lint acceptance it it-services
+
+smoke:
+	python3 scripts/smoke.py --base $${BASE:-http://localhost:8080}
 
 start:
 	./start.sh

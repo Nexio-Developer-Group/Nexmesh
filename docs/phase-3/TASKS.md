@@ -9,7 +9,7 @@ Decisions taken here for the open items in PRD Section 17:
 - **Checkpoints:** a Git-independent checkpoint of the files an agent change set touches (so it works in folders that are not repositories); full snapshots (F7) remain available.
 
 ## M0: Verify what exists, and make it easy to install
-- [ ] **T0.1** Smoke test script that drives every Phase 1 and 2 feature through the HTTP API of a running server; run on memory and PostgreSQL; fix defects found
+- [x] **T0.1** Smoke test script that drives every Phase 1 and 2 feature through the HTTP API of a running server; run on memory and PostgreSQL; fix defects found
 - [ ] **T0.2** `nexmesh --local` mode: embedded catalog, persistent file store, per-user data dir, opens the browser (the double-click experience)
 - [ ] **T0.3** Windows installer (.exe, NSIS): bundles the prebuilt app, Start Menu and desktop shortcuts, optional developer tools (Git, Go, Node, Docker via winget), uninstaller, docs
 - [ ] **T0.4** Ubuntu one-command installer: installs prerequisites and Docker, sets up the stack with PostgreSQL, systemd unit, firewall note, uninstall
