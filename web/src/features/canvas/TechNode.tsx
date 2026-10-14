@@ -44,8 +44,12 @@ export function TechNode({ data }: NodeProps<TechNodeType>) {
         selected ? 'border-blue shadow-[0_0_0_3px_rgba(22,118,254,0.28)]' : (border[c.observedState] ?? 'border-line-strong'),
       )}
     >
-      <Handle type="target" position={Position.Left} className="!pointer-events-none !opacity-0" />
-      <Handle type="source" position={Position.Right} className="!pointer-events-none !opacity-0" />
+      <Handle type="target" position={Position.Left} isConnectable={!!def.wiring?.provides}
+        title={def.wiring?.provides ? `Connect a card to ${def.name}` : undefined}
+        className={clsx('!size-3 !border-2 !border-blue !bg-panel', !def.wiring?.provides && '!pointer-events-none !opacity-0')} />
+      <Handle type="source" position={Position.Right} isConnectable={!!def.wiring?.consumes?.length}
+        title={def.wiring?.consumes?.length ? `Drag to a card that ${def.name} uses` : undefined}
+        className={clsx('!size-3 !border-2 !border-blue !bg-panel', !def.wiring?.consumes?.length && '!pointer-events-none !opacity-0')} />
       <div className="flex items-start gap-2.5">
         <Monogram text={def.monogram} />
         <div className="min-w-0 flex-1">

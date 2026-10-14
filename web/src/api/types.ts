@@ -59,6 +59,7 @@ export interface CatalogComponent {
   install?: { strategy: string; image?: string; ports?: number[]; volumes?: { name: string; path: string; sizeGB: number }[]; requires?: string[] }
   resources?: { cpu: number; ramMB: number; storageGB: number }
   connection?: { schemes: string[]; defaultPort?: number; envPrefix: string; fields: CatalogField[] }
+  wiring?: { consumes?: string[]; provides?: boolean }
 }
 
 export interface Catalog {
@@ -148,4 +149,32 @@ export interface AgentInput {
 export interface SettingsPreview {
   changes: { field: string; from: unknown; to: unknown; appliesImmediately: boolean }[]
   restartRequired: boolean
+}
+
+// ---- connection lines (PRD F1)
+
+export type WireState = 'healthy' | 'degraded' | 'unreachable' | 'pending'
+
+export interface Wire {
+  id: string
+  workspaceId: string
+  fromId: string
+  toId: string
+  name: string
+  environment?: string
+  variables: string[]
+  state: WireState
+  message?: string
+  createdAt: string
+}
+
+export interface WirePreview {
+  fromId: string
+  fromName: string
+  toId: string
+  toName: string
+  name: string
+  variables: { name: string; secret: boolean; conflict?: string }[]
+  state: WireState
+  warnings: string[]
 }

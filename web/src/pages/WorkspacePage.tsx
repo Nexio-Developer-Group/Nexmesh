@@ -3,12 +3,15 @@ import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { useCatalog, useWorkspace, useWorkspaceEvents } from '@/api/hooks'
-import type { CanvasComponent } from '@/api/types'
+import type { CanvasComponent, Wire } from '@/api/types'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { UserMenu } from '@/layouts/TopBar'
 import { Canvas } from '@/features/canvas/Canvas'
+import { useWires } from '@/features/wires/hooks'
+import { ConnectionsSection } from '@/features/wires/ConnectionsSection'
+import { NewWireDialog, WireDetailsDialog } from '@/features/wires/WireDialog'
 import { CatalogSidebar } from '@/features/canvas/CatalogSidebar'
 import { PropertiesPanel } from '@/features/canvas/PropertiesPanel'
 import { RuntimesPanel } from '@/features/canvas/RuntimesPanel'
@@ -34,6 +37,9 @@ export default function WorkspacePage() {
   const [runtimesOpen, setRuntimesOpen] = useState(false)
   const [templatesOpen, setTemplatesOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const { data: wires = [] } = useWires(id)
+  const [newWire, setNewWire] = useState<{ fromId: string; toId: string } | null>(null)
+  const [openWire, setOpenWire] = useState<Wire | null>(null)
   const [params, setParams] = useSearchParams()
   const view = params.get('view') === 'code' ? 'code' : 'canvas'
   const setView = (v: 'canvas' | 'code') => setParams(v === 'code' ? { view: 'code' } : {}, { replace: true })
@@ -117,6 +123,15 @@ export default function WorkspacePage() {
           setImportOpen(false)
         } })
       }} />}
+      {newWire && id && comps.find((c) => c.id === newWire.fromId) && comps.find((c) => c.id === newWire.toId) && (
+        <NewWireDialog workspaceId={id} from={comps.find((c) => c.id === newWire.fromId)!} to={comps.find((c) => c.id === newWire.toId)!} onClose={() => setNewWire(null)} />
+      )}
+      {openWire && id && (
+        <WireDetailsDialog workspaceId={id} wire={openWire}
+          fromName={defs.get(comps.find((c) => c.id === openWire.fromId)?.catalogId ?? '')?.name ?? 'Card'}
+          toName={defs.get(comps.find((c) => c.id === openWire.toId)?.catalogId ?? '')?.name ?? 'Card'}
+          onClose={() => setOpenWire(null)} />
+      )}
       {templatesOpen && id && <TemplatesDialog workspaceId={id} defs={defs} canvasHasCards={comps.length > 0} onClose={() => setTemplatesOpen(false)} />}
       <div className={view === 'code' ? 'hidden' : 'flex min-h-0 flex-1'}>
         {catalog && (
@@ -126,9 +141,7 @@ export default function WorkspacePage() {
           <div className="flex items-center gap-3 px-5 py-3 text-[13px]">
             <span className="font-semibold">Canvas</span>
             <span className="text-faint">{comps.length} component{comps.length === 1 ? '' : 's'}{draftCount ? ` · ${draftCount} draft` : ''}</span>
-            <span className="ml-auto rounded-full border border-dashed border-line-strong px-3 py-1 text-xs text-muted">
-              Connections between components <strong className="ml-1 text-info-fg">Coming soon</strong>
-            </span>
+            <span className="ml-auto text-xs text-muted">Drag from a card's right handle to the card it uses to connect them.</span>
           </div>
           <div className="min-h-0 flex-1">
             <Canvas
@@ -140,6 +153,9 @@ export default function WorkspacePage() {
               onMove={(cid, x, y) => move.mutate({ id: cid, x, y })}
               onRetry={(c) => { api.post(`/api/workspaces/${id}/components/${c.id}/retry`).catch(() => setSelectedId(c.id)) }}
               onViewLogs={(c: CanvasComponent) => setSelectedId(c.id)}
+              wires={wires}
+              onConnect={(fromId, toId) => setNewWire({ fromId, toId })}
+              onSelectWire={setOpenWire}
             />
           </div>
           {add.error && <p role="alert" className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-err-bg px-4 py-2 text-sm text-err-fg">{add.error.message}</p>}
@@ -152,6 +168,10 @@ export default function WorkspacePage() {
             onClose={() => setSelectedId(null)}
             renderInstall={(c, def) => <InstallTab workspaceId={id!} component={c} def={def} />}
             renderConnect={(c, def) => <ConnectTab workspaceId={id!} component={c} def={def} />}
+            renderConnections={(c, def) => (
+              <ConnectionsSection component={c} def={def} components={comps} defs={defs} wires={wires}
+                onNew={(from, to) => setNewWire({ fromId: from.id, toId: to.id })} onOpen={setOpenWire} />
+            )}
             renderActivity={(c, def) => def.supportedModes.includes('connect') || def.supportedModes.includes('install') && def.kind === 'service'
               ? <ComponentActivity workspaceId={id!} component={c} hasLogs={c.mode === 'installed' && def.kind === 'service'} /> : null}
           />

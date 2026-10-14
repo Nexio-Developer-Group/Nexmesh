@@ -13,13 +13,15 @@ interface Props {
   renderConnect: (c: CanvasComponent, def: CatalogComponent) => React.ReactNode
   /** Logs and health history; only offered once a card has a mode. */
   renderActivity?: (c: CanvasComponent, def: CatalogComponent) => React.ReactNode
+  /** Connection lines for this card (PRD F1). */
+  renderConnections?: (c: CanvasComponent, def: CatalogComponent) => React.ReactNode
 }
 
 /**
  * Properties panel. Service-type components get Install and Connect tabs
  * (catalog supportedModes); install-only components show no tabs (PRD 11.3).
  */
-export function PropertiesPanel({ component: c, def, onClose, renderInstall, renderConnect, renderActivity }: Props) {
+export function PropertiesPanel({ component: c, def, onClose, renderInstall, renderConnect, renderActivity, renderConnections }: Props) {
   const both = def.supportedModes.includes('install') && def.supportedModes.includes('connect')
   const initialTab = (): 'install' | 'connect' =>
     c.mode === 'connected' || (c.mode === '' && (c.suggestedMode === 'connect' || !!usePrefill.getState().byComponent[c.id])) ? 'connect' : 'install'
@@ -57,6 +59,7 @@ export function PropertiesPanel({ component: c, def, onClose, renderInstall, ren
       )}
       <div role="tabpanel" className="flex-1 overflow-y-auto">
         {!both || tab === 'install' ? renderInstall(c, def) : renderConnect(c, def)}
+        {renderConnections?.(c, def)}
         {renderActivity && c.mode !== '' && renderActivity(c, def)}
       </div>
     </aside>

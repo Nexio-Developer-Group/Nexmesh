@@ -95,9 +95,10 @@ export function useWorkspaceEvents(id: string | undefined, onEvent?: (type: stri
         qc.setQueryData(keys.workspace(id), data)
         qc.invalidateQueries({ queryKey: keys.workspaces })
       }
+      if (type === 'wires_changed') { qc.invalidateQueries({ queryKey: ['wires', id] }); qc.invalidateQueries({ queryKey: ['variables', id] }) }
       onEvent?.(type, data)
     }
-    for (const t of ['workspace', 'component', 'component_removed', 'operation', 'ports']) es.addEventListener(t, handle(t))
+    for (const t of ['workspace', 'component', 'component_removed', 'operation', 'ports', 'wires_changed']) es.addEventListener(t, handle(t))
     return () => es.close()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, qc])

@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
   Background, BackgroundVariant, Panel, ReactFlow, ReactFlowProvider, useReactFlow, useViewport,
-  type NodeChange, type NodeTypes,
+  MarkerType, type Connection, type Edge, type NodeChange, type NodeTypes,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import type { CanvasComponent, CatalogComponent } from '@/api/types'
+import type { CanvasComponent, CatalogComponent, Wire } from '@/api/types'
+import { canConnect } from '@/features/wires/rules'
 import { DRAG_MIME } from './CatalogSidebar'
 import { TechNode, type TechNodeType } from './TechNode'
 
@@ -19,7 +20,19 @@ interface Props {
   onMove: (id: string, x: number, y: number) => void
   onRetry: (c: CanvasComponent) => void
   onViewLogs: (c: CanvasComponent) => void
+  wires?: Wire[]
+  /** The user dragged a line from a consumer to a provider (nothing is created yet). */
+  onConnect?: (fromId: string, toId: string) => void
+  onSelectWire?: (w: Wire) => void
 }
+
+const WIRE_STYLE: Record<string, { stroke: string; dash?: string }> = {
+  healthy: { stroke: '#2fbf71' },
+  degraded: { stroke: '#e0a526', dash: '6 4' },
+  unreachable: { stroke: '#e5484d', dash: '2 5' },
+  pending: { stroke: '#7a86a8', dash: '4 4' },
+}
+const WIRE_WORD: Record<string, string> = { healthy: 'healthy', degraded: 'degraded', unreachable: 'unreachable', pending: 'waiting' }
 
 function Zoom() {
   const rf = useReactFlow()
@@ -38,7 +51,7 @@ function Zoom() {
   )
 }
 
-function Inner({ components, catalog, selectedId, onSelect, onDropComponent, onMove, onRetry, onViewLogs }: Props) {
+function Inner({ components, catalog, selectedId, onSelect, onDropComponent, onMove, onRetry, onViewLogs, wires = [], onConnect, onSelectWire }: Props) {
   const rf = useReactFlow()
   const [pos, setPos] = useState<Record<string, { x: number; y: number }>>({})
   const [dragOver, setDragOver] = useState(false)
@@ -54,6 +67,36 @@ function Inner({ components, catalog, selectedId, onSelect, onDropComponent, onM
         }]
       }),
     [components, catalog, pos, selectedId, onRetry, onViewLogs],
+  )
+
+  // A line's colour comes with a word and a dash pattern, never colour alone (PRD 19.4).
+  const edges = useMemo<Edge[]>(
+    () =>
+      wires.map((w) => {
+        const st = WIRE_STYLE[w.state] ?? WIRE_STYLE.pending
+        return {
+          id: w.id, source: w.fromId, target: w.toId, type: 'smoothstep',
+          label: `${w.name} · ${WIRE_WORD[w.state] ?? w.state}`,
+          labelStyle: { fill: '#c9d3ee', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' },
+          labelBgStyle: { fill: '#0e1730' }, labelBgPadding: [6, 3] as [number, number], labelBgBorderRadius: 6,
+          style: { stroke: st.stroke, strokeWidth: 2, strokeDasharray: st.dash },
+          markerEnd: { type: MarkerType.ArrowClosed, color: st.stroke },
+          ariaLabel: `Connection ${w.name}, ${w.state}`,
+          data: { wire: w },
+        }
+      }),
+    [wires],
+  )
+
+  const isValidConnection = useCallback(
+    (c: Connection | Edge) => {
+      const from = components.find((x) => x.id === c.source)
+      const to = components.find((x) => x.id === c.target)
+      if (!from || !to || from.id === to.id) return false
+      if (wires.some((w) => w.fromId === from.id && w.toId === to.id)) return false
+      return canConnect(catalog.get(from.catalogId), catalog.get(to.catalogId)).ok
+    },
+    [components, catalog, wires],
   )
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -78,13 +121,16 @@ function Inner({ components, catalog, selectedId, onSelect, onDropComponent, onM
       onDragLeave={() => setDragOver(false)} onDrop={onDrop}>
       <ReactFlow
         nodes={nodes}
-        edges={[]}
+        edges={edges}
+        isValidConnection={isValidConnection}
+        onConnect={(c) => c.source && c.target && onConnect?.(c.source, c.target)}
+        onEdgeClick={(_, e) => { const w = (e.data as { wire?: Wire } | undefined)?.wire; if (w) onSelectWire?.(w) }}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onNodeClick={(_, n) => onSelect(n.id)}
         onPaneClick={() => onSelect(null)}
         onNodeDragStop={(_, n) => onMove(n.id, Math.round(n.position.x), Math.round(n.position.y))}
-        nodesConnectable={false}
+        nodesConnectable={!!onConnect}
         minZoom={0.3}
         maxZoom={1.6}
         fitView
