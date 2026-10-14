@@ -34,17 +34,19 @@ type AgentTokens interface {
 }
 
 type Service struct {
-	usage      UsageProvider
-	agents     AgentTokens
-	controlURL string
-	st         store.Store
-	drv        runtime.Driver
-	ops        *ops.Engine
-	bus        *events.Bus
-	aud        *audit.Recorder
-	log        *slog.Logger
-	image      string
-	cleanup    []func(ctx context.Context, w *domain.Workspace)
+	usage       UsageProvider
+	agents      AgentTokens
+	controlURL  string
+	st          store.Store
+	drv         runtime.Driver
+	ops         *ops.Engine
+	bus         *events.Bus
+	aud         *audit.Recorder
+	log         *slog.Logger
+	image       string
+	cleanup     []func(ctx context.Context, w *domain.Workspace)
+	idle        *idleState
+	defaultIdle int
 }
 
 func NewService(st store.Store, drv runtime.Driver, eng *ops.Engine, bus *events.Bus, aud *audit.Recorder, log *slog.Logger) *Service {
@@ -81,6 +83,9 @@ func (s *Service) WithCleanup(fn func(ctx context.Context, w *domain.Workspace))
 	s.cleanup = append(s.cleanup, fn)
 	return s
 }
+
+// WithDefaultIdle sets the idle-stop timeout new workspaces start with (0 = never).
+func (s *Service) WithDefaultIdle(minutes int) *Service { s.defaultIdle = minutes; return s }
 
 func (s *Service) WithImage(image string) *Service {
 	if image != "" {
@@ -133,7 +138,7 @@ func (s *Service) Create(ctx context.Context, owner string, in CreateInput) (*do
 	w := &domain.Workspace{ID: store.NewID("ws"), OwnerID: owner, Name: in.Name, Description: in.Description,
 		OS: domain.OSUbuntu2404, CPU: in.CPU, RAMGB: in.RAMGB, StorageGB: in.StorageGB, GPU: in.GPU,
 		Status: domain.WSAllocating, Step: domain.WSAllocating, CreatedAt: now, LastOpened: now,
-		Runtimes: map[string]domain.RuntimeState{}}
+		Runtimes: map[string]domain.RuntimeState{}, IdleStopMinutes: s.defaultIdle}
 	if err := s.st.CreateWorkspace(ctx, w); err != nil {
 		if errors.Is(err, store.ErrConflict) {
 			return nil, ErrNameTaken
@@ -275,7 +280,7 @@ func (s *Service) Stop(ctx context.Context, owner, id string) (*domain.Operation
 		return nil, ErrBadState
 	}
 	s.aud.User(ctx, owner, id, "workspace.stop", w.Name, nil)
-	return s.ops.Enqueue(ctx, id, "", "stop_workspace")
+	return s.ops.EnqueueParams(ctx, id, "", "stop_workspace", map[string]any{"reason": "user"})
 }
 
 func (s *Service) startWorkspace(ctx context.Context, op *domain.Operation, p ops.Progress) error {
@@ -284,6 +289,7 @@ func (s *Service) startWorkspace(ctx context.Context, op *domain.Operation, p op
 		s.setStep(ctx, op.WorkspaceID, domain.WSFailed, domain.WSStarting, fmt.Sprintf("Start failed: %v", err))
 		return err
 	}
+	_, _ = s.st.UpdateWorkspace(ctx, op.WorkspaceID, func(w *domain.Workspace) error { w.StopReason = ""; return nil })
 	s.setStep(ctx, op.WorkspaceID, domain.WSReady, domain.WSReady, "")
 	return nil
 }
@@ -292,6 +298,11 @@ func (s *Service) stopWorkspace(ctx context.Context, op *domain.Operation, p ops
 	if err := s.drv.StopWorkspace(ctx, op.WorkspaceID); err != nil {
 		return err
 	}
+	reason, _ := op.Params["reason"].(string)
+	if reason == "" {
+		reason = "user"
+	}
+	_, _ = s.st.UpdateWorkspace(ctx, op.WorkspaceID, func(w *domain.Workspace) error { w.StopReason = reason; return nil })
 	s.setStep(ctx, op.WorkspaceID, domain.WSStopped, domain.WSStopped, "")
 	return nil
 }

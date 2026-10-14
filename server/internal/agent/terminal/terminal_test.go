@@ -130,3 +130,22 @@ func TestSessionLimitAndClose(t *testing.T) {
 		t.Fatal("closing unknown id must fail")
 	}
 }
+
+func TestBusyReportsForegroundChildren(t *testing.T) {
+	sk := newSink()
+	m := NewManager(t.TempDir(), sk.emit, nil)
+	defer m.CloseAll()
+	info, _ := m.Open(context.Background(), OpenParams{Title: "build"})
+	time.Sleep(200 * time.Millisecond)
+	if b := m.Busy(); b != "" {
+		t.Fatalf("idle prompt reported busy: %q", b)
+	}
+	_ = m.Write(info.ID, "sleep 3\n")
+	waitFor(t, "busy", func() bool { return m.Busy() != "" })
+	if b := m.Busy(); !strings.Contains(b, "build") {
+		t.Fatalf("busy reason: %q", b)
+	}
+	// Ctrl-C returns the shell to its prompt.
+	_ = m.Write(info.ID, "\x03")
+	waitFor(t, "idle again", func() bool { return m.Busy() == "" })
+}

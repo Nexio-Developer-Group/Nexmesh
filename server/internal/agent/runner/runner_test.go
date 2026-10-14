@@ -55,3 +55,14 @@ func TestCancelIsNotATimeout(t *testing.T) {
 		t.Fatal("caller cancel reported as timeout")
 	}
 }
+
+func TestBeginBracketsEachCommand(t *testing.T) {
+	var depth, peak int
+	r := &Runner{Root: t.TempDir(), Begin: func() func() { depth++; peak = max(peak, depth); return func() { depth-- } }}
+	if _, err := r.Run(context.Background(), Params{Command: "true"}); err != nil {
+		t.Fatal(err)
+	}
+	if peak != 1 || depth != 0 {
+		t.Fatalf("peak=%d depth=%d", peak, depth)
+	}
+}

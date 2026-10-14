@@ -66,6 +66,8 @@ type Result struct {
 
 type Runner struct {
 	Root string
+	// Begin, when set, brackets each Git command so the agent can report it as running work.
+	Begin func() (end func())
 }
 
 // safeDir resolves a root-relative directory and verifies, after resolving
@@ -189,6 +191,9 @@ func (r *Runner) Run(ctx context.Context, p Params) (*Result, error) {
 		}
 	}
 
+	if r.Begin != nil {
+		defer r.Begin()()
+	}
 	cmd := exec.Command("git", p.Args...)
 	cmd.Dir = dir
 	cmd.Env = env

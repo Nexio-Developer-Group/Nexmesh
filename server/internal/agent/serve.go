@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/nexio-developer-group/nexmesh/server/internal/agent/activity"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/gitrun"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/ports"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/runner"
@@ -51,15 +52,24 @@ func (a *Agent) Serve(ctx context.Context, root string) (stop func(), err error)
 		return nil, err
 	}
 	fsys.Install(a)
-	(&runner.Runner{Root: root, Env: a.FetchEnv}).Install(a)
-	(&gitrun.Runner{Root: root}).Install(a)
+	mon := activity.New()
+	mon.Install(a)
+	(&runner.Runner{Root: root, Env: a.FetchEnv, Begin: mon.Begin}).Install(a)
+	(&gitrun.Runner{Root: root, Begin: mon.Begin}).Install(a)
 	tm := terminal.NewManager(root, a.Emit, a.FetchEnv)
 	tm.Install(a)
+	mon.Add(tm.Busy)
 	sc := ports.NewScanner()
 	sc.Install(a)
 
 	tun := tunnel.NewManager(a.Emit)
 	tun.Install(a)
+	mon.Add(func() string {
+		if tun.Active() > 0 {
+			return "a preview connection is open"
+		}
+		return ""
+	})
 	a.OnDisconnect(tun.CloseAll)
 
 	pctx, cancel := context.WithCancel(ctx)

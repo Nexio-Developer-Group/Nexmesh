@@ -9,6 +9,8 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -19,6 +21,7 @@ type Server struct {
 	authEnabled bool
 	publicURL   string
 	authSvc     *auth.Service
+	activity    Activity
 }
 
 func New(log *slog.Logger) *Server {
@@ -32,7 +35,7 @@ func New(log *slog.Logger) *Server {
 // Handle registers a route on the underlying mux (Go 1.22 pattern syntax).
 func (s *Server) Handle(pattern string, h http.HandlerFunc) { s.mux.HandleFunc(pattern, h) }
 
-func (s *Server) Handler() http.Handler { return s.logging(s.recover(s.authenticate(s.mux))) }
+func (s *Server) Handler() http.Handler { return s.logging(s.recover(s.authenticate(s.track(s.mux)))) }
 
 func (s *Server) logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -94,4 +97,40 @@ type ErrorBody struct {
 
 func WriteError(w http.ResponseWriter, status int, code, msg string) {
 	WriteJSON(w, status, map[string]ErrorBody{"error": {Code: code, Message: msg}})
+}
+
+// Activity records use of a workspace so idle workspaces can be stopped.
+type Activity interface {
+	Touch(workspaceID string)
+	Open(workspaceID string) (end func())
+}
+
+// WithActivity enables activity tracking for every /api/workspaces/{id}/..., preview and share request.
+func (s *Server) WithActivity(a Activity) { s.activity = a }
+
+var wsPathRE = regexp.MustCompile(`^/(?:api/workspaces|api/preview|share)/(ws_[a-f0-9]+)(?:/|$)`)
+
+// TrackRequest records a request for the workspace named in its path (if any).
+// Long-lived requests (event streams, WebSocket upgrades) keep the workspace
+// active for as long as they stay open; the returned function ends that.
+func TrackRequest(a Activity, r *http.Request, wsID string) (end func()) {
+	if a == nil || wsID == "" {
+		return func() {}
+	}
+	if r.Header.Get("Upgrade") != "" || strings.HasSuffix(r.URL.Path, "/events") {
+		return a.Open(wsID)
+	}
+	a.Touch(wsID)
+	return func() {}
+}
+
+func (s *Server) track(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.activity != nil {
+			if m := wsPathRE.FindStringSubmatch(r.URL.Path); m != nil {
+				defer TrackRequest(s.activity, r, m[1])()
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }

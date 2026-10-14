@@ -34,6 +34,10 @@ type Config struct {
 	// expiring public preview links. Off by default.
 	AllowShareLinks bool
 
+	// DefaultIdleMinutes (NEXMESH_DEFAULT_IDLE_MINUTES) is the idle-stop timeout
+	// new workspaces start with; 0 means never stop automatically.
+	DefaultIdleMinutes int
+
 	// AuthDisabled (NEXMESH_AUTH=disabled) skips sign-in; every request acts as one local user. Development and tests only.
 	AuthDisabled bool
 	// AllowSignup lets additional users register after the first (owner) account.
@@ -61,6 +65,7 @@ func Load() Config {
 		MasterKeyFile:       env("NEXMESH_MASTER_KEY_FILE", "nexmesh-master.key"),
 		AllowPrivateEgress:  os.Getenv("NEXMESH_ALLOW_PRIVATE_EGRESS") == "true",
 		PreviewDomain:       os.Getenv("NEXMESH_PREVIEW_DOMAIN"),
+		DefaultIdleMinutes:  envInt("NEXMESH_DEFAULT_IDLE_MINUTES", 0),
 		AllowShareLinks:     os.Getenv("NEXMESH_ALLOW_SHARE_LINKS") == "true",
 		AuthDisabled:        os.Getenv("NEXMESH_AUTH") == "disabled",
 		AllowSignup:         os.Getenv("NEXMESH_ALLOW_SIGNUP") == "true",

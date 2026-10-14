@@ -4,7 +4,7 @@ import { keys } from '@/api/hooks'
 import type { SettingsPreview, Workspace } from '@/api/types'
 
 export interface SettingsBody {
-  name?: string; description?: string; cpu?: number; ramGb?: number; storageGb?: number; gpu?: boolean; confirmRestart?: boolean
+  name?: string; description?: string; cpu?: number; ramGb?: number; storageGb?: number; gpu?: boolean; idleStopMinutes?: number; confirmRestart?: boolean
 }
 
 export const usePreviewSettings = (id: string) =>

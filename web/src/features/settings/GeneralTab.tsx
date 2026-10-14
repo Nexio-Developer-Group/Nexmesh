@@ -6,11 +6,14 @@ import { Field } from '@/components/ui/Field'
 import { osLabel } from '@/lib/format'
 import { useApplySettings } from './hooks'
 
+const IDLE_OPTIONS: [number, string][] = [[0, 'Never'], [15, 'After 15 minutes'], [30, 'After 30 minutes'], [60, 'After 1 hour'], [120, 'After 2 hours'], [240, 'After 4 hours'], [480, 'After 8 hours']]
+
 export function GeneralTab({ workspace: w }: { workspace: Workspace }) {
   const [name, setName] = useState(w.name)
   const [description, setDescription] = useState(w.description)
   const apply = useApplySettings(w.id)
-  const dirty = name !== w.name || description !== w.description
+  const [idle, setIdle] = useState(w.idleStopMinutes ?? 0)
+  const dirty = name !== w.name || description !== w.description || idle !== (w.idleStopMinutes ?? 0)
   const err = apply.error instanceof ApiError ? apply.error : null
   return (
     <section aria-label="General settings" className="max-w-2xl space-y-6">
@@ -32,9 +35,21 @@ export function GeneralTab({ workspace: w }: { workspace: Workspace }) {
         </div>
         <p className="mt-2 text-sm text-muted">Changing the operating system requires creating a new workspace.</p>
       </div>
-      {err && err.field !== 'name' && <p role="alert" className="rounded-lg bg-err-bg p-3 text-sm text-err-fg">{err.message}</p>}
+      <div>
+        <label htmlFor="idle-stop" className="mb-1.5 block text-[13px] font-semibold">Stop when idle</label>
+        <select id="idle-stop" value={idle} onChange={(e) => setIdle(Number(e.target.value))} className="h-10 w-full rounded-[10px] border border-line-strong bg-field px-3 text-sm">
+          {IDLE_OPTIONS.map(([m, l]) => <option key={m} value={m}>{l}</option>)}
+        </select>
+        <p className="mt-1.5 text-xs text-muted">Frees CPU and memory when nobody is using the workspace. Files and installed services are kept; start it again to resume. It never stops while a terminal has a process running or the workspace is open in a browser.</p>
+        {err?.field === 'idleStopMinutes' && <p role="alert" className="mt-1 text-xs text-err-fg">{err.message}</p>}
+      </div>
+      {err && err.field !== 'name' && err.field !== 'idleStopMinutes' && <p role="alert" className="rounded-lg bg-err-bg p-3 text-sm text-err-fg">{err.message}</p>}
       <div className="flex items-center gap-3">
-        <Button variant="primary" disabled={!dirty} loading={apply.isPending} onClick={() => apply.mutate({ name, description })}>Save changes</Button>
+        <Button variant="primary" disabled={!dirty} loading={apply.isPending} onClick={() => apply.mutate({
+          ...(name !== w.name ? { name } : {}),
+          ...(description !== w.description ? { description } : {}),
+          ...(idle !== (w.idleStopMinutes ?? 0) ? { idleStopMinutes: idle } : {}),
+        })}>Save changes</Button>
         {apply.isSuccess && !dirty && <span role="status" className="text-sm text-ok-fg">✓ Saved</span>}
       </div>
     </section>

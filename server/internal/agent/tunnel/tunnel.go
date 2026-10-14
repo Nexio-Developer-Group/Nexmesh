@@ -163,3 +163,10 @@ func (m *Manager) CloseAll() {
 		m.drop(id, false)
 	}
 }
+
+// Active reports how many tunnelled connections are open.
+func (m *Manager) Active() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return len(m.m)
+}

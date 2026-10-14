@@ -45,3 +45,41 @@ func TestCatalogEndpoint(t *testing.T) {
 		t.Fatalf("%d components, %d categories", len(body.Components), len(body.Categories))
 	}
 }
+
+type fakeActivity struct {
+	touched []string
+	open    int
+	ended   int
+}
+
+func (f *fakeActivity) Touch(ws string) { f.touched = append(f.touched, ws) }
+func (f *fakeActivity) Open(ws string) func() {
+	f.open++
+	return func() { f.ended++ }
+}
+
+func TestRequestsForAWorkspaceAreTracked(t *testing.T) {
+	s := New(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	act := &fakeActivity{}
+	s.WithActivity(act)
+	s.Handle("GET /api/workspaces/{id}/files", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) })
+	s.Handle("GET /api/workspaces/{id}/events", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
+	s.Handle("GET /api/workspaces", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
+	ts := httptest.NewServer(s.Handler())
+	defer ts.Close()
+	for _, p := range []string{"/api/workspaces/ws_abc123/files", "/api/workspaces", "/healthz"} {
+		res, err := http.Get(ts.URL + p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res.Body.Close()
+	}
+	if len(act.touched) != 1 || act.touched[0] != "ws_abc123" {
+		t.Fatalf("touched: %v (listing and healthz must not count as workspace use)", act.touched)
+	}
+	res, _ := http.Get(ts.URL + "/api/workspaces/ws_abc123/events")
+	res.Body.Close()
+	if act.open != 1 || act.ended != 1 || len(act.touched) != 1 {
+		t.Fatalf("event streams hold the workspace open for their lifetime: open=%d ended=%d", act.open, act.ended)
+	}
+}

@@ -25,6 +25,8 @@ type EnvFunc func(ctx context.Context) (map[string]string, error)
 type Runner struct {
 	Root string
 	Env  EnvFunc
+	// Begin, when set, brackets each command so the agent can report it as running work.
+	Begin func() (end func())
 }
 
 type Params struct {
@@ -85,6 +87,9 @@ func (r *Runner) Run(ctx context.Context, p Params) (*Result, error) {
 	cmd.Stdout, cmd.Stderr = out, errb
 	if p.Stdin != "" {
 		cmd.Stdin = bytes.NewBufferString(p.Stdin)
+	}
+	if r.Begin != nil {
+		defer r.Begin()()
 	}
 	start := time.Now()
 	if err := cmd.Start(); err != nil {

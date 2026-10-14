@@ -75,31 +75,35 @@ func TestRealListener(t *testing.T) {
 }
 
 func TestWatchEmitsOnChangeOnly(t *testing.T) {
+	// A fixture /proc keeps this deterministic: other tests open real listeners concurrently.
+	s := fixture(t, "", "")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	got := make(chan []Port, 10)
-	s := NewScanner()
 	go s.Watch(ctx, 30*time.Millisecond, func(p []Port) { got <- p })
-	<-got // initial
+	if first := <-got; len(first) != 0 {
+		t.Fatalf("initial: %+v", first)
+	}
 	select {
 	case <-got:
 		t.Fatal("emitted without a change")
-	case <-time.After(200 * time.Millisecond):
+	case <-time.After(250 * time.Millisecond):
 	}
-	l, _ := net.Listen("tcp", "127.0.0.1:0")
-	defer l.Close()
+	line := "   0: 00000000:0BB8 00000000:0000 0A 00000000:00000000 00:00000000 00000000  1000        0 1111 1 0 0 100 0 0 10 0\n"
+	if err := os.WriteFile(filepath.Join(s.Proc, "net/tcp"), []byte(header+line), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	select {
 	case p := <-got:
-		found := false
-		for _, x := range p {
-			if x.Port == l.Addr().(*net.TCPAddr).Port {
-				found = true
-			}
-		}
-		if !found {
-			t.Fatalf("change emitted without the new port: %+v", p)
+		if len(p) != 1 || p[0].Port != 3000 || p[0].Process != "node" {
+			t.Fatalf("change: %+v", p)
 		}
 	case <-time.After(2 * time.Second):
-		t.Fatal("no emit after new listener")
+		t.Fatal("no emit after the listener appeared")
+	}
+	select {
+	case <-got:
+		t.Fatal("re-emitted an unchanged list")
+	case <-time.After(250 * time.Millisecond):
 	}
 }

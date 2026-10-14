@@ -10,9 +10,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
+	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/envvars"
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitcred"
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitops"
+	"github.com/nexio-developer-group/nexmesh/server/internal/idle"
 	"github.com/nexio-developer-group/nexmesh/server/internal/preview"
 	"github.com/nexio-developer-group/nexmesh/server/internal/tunnel"
 	"log/slog"
@@ -154,7 +156,22 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	wsSvc.WithCleanup(gitSvc.DeleteAll)
 	wsSvc.WithUsage(compSvc)
 
+	tracker := idle.NewTracker()
+	wsSvc.WithDefaultIdle(cfg.DefaultIdleMinutes).WithIdle(tracker, func(ctx context.Context, wsID string) (bool, []string) {
+		var st struct {
+			Busy    bool     `json:"busy"`
+			Reasons []string `json:"reasons"`
+		}
+		cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		if err := agents.Call(cctx, wsID, "activity.status", struct{}{}, &st); err != nil {
+			return false, nil // offline or old agent: nothing running that we know of
+		}
+		return st.Busy, st.Reasons
+	})
+	wsSvc.WithCleanup(func(_ context.Context, w *domain.Workspace) { tracker.Forget(w.ID) })
 	api := httpapi.New(log)
+	api.WithActivity(tracker)
 	api.RegisterAuth(auth.NewService(st, cfg.AllowSignup), !cfg.AuthDisabled, cfg.PublicURL)
 	if cfg.AuthDisabled {
 		log.Warn("authentication is disabled (NEXMESH_AUTH=disabled): every request acts as one local user")
@@ -183,9 +200,9 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	api.RegisterTerminal(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	var h http.Handler = api.Handler()
-	h = withPreviewHost(h, pv)
+	h = withPreviewHost(h, pv, tracker)
 	if opt.WithUI {
-		h = withPreviewHost(withUI(api.Handler(), webui.Handler()), pv)
+		h = withPreviewHost(withUI(api.Handler(), webui.Handler()), pv, tracker)
 	}
 	return &App{Handler: h, Store: st, Driver: drv, Bus: bus, Workspaces: wsSvc, Components: compSvc, Agents: agentSvc, Secrets: sec,
 		engine: eng, agent: agents, log: log, closer: closer}, nil
@@ -193,8 +210,11 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 
 // withPreviewHost sends requests for preview origins straight to the preview
 // proxy; everything else continues to the normal handler.
-func withPreviewHost(next http.Handler, pv *preview.Service) http.Handler {
+func withPreviewHost(next http.Handler, pv *preview.Service, act httpapi.Activity) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if ws, _, ok := pv.MatchHost(r.Host); ok {
+			defer httpapi.TrackRequest(act, r, ws)()
+		}
 		if pv.ServeHost(w, r) {
 			return
 		}
@@ -219,6 +239,7 @@ func withUI(api, ui http.Handler) http.Handler {
 func (a *App) Run(ctx context.Context) {
 	a.engine.Start(ctx) // after every handler is registered
 	go a.Workspaces.RunReconciler(ctx, 15*time.Second)
+	go a.Workspaces.RunIdleStopper(ctx, time.Minute)
 	go a.agent.Run(ctx)
 	go a.Components.RunHealth(ctx, 30*time.Second)
 	go a.Components.RunReconciler(ctx, 15*time.Second)

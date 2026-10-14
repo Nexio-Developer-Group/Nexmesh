@@ -97,7 +97,7 @@ export function WorkspaceCard({ workspace: w, view, onStart, onStop, onDelete, o
       <div className={clsx('flex items-center justify-between', view === 'grid' ? 'mt-4 border-t border-line pt-4' : 'w-80 shrink-0')}>
         <div className="flex items-center gap-2.5">
           <StatusBadge state={badgeState(w)} />
-          <span className="text-xs text-faint">{provisioning ? `Started ${relativeTime(w.createdAt)}` : w.status === 'failed' ? relativeTime(w.lastOpenedAt) : `Opened ${relativeTime(w.lastOpenedAt)}`}</span>
+          <span className="text-xs text-faint">{provisioning ? `Started ${relativeTime(w.createdAt)}` : w.status === 'failed' ? relativeTime(w.lastOpenedAt) : w.status === 'stopped' && w.stopReason === 'idle' ? 'Stopped when idle. Start to resume.' : `Opened ${relativeTime(w.lastOpenedAt)}`}</span>
         </div>
         {action}
       </div>

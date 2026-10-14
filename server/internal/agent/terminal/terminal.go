@@ -11,6 +11,8 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -356,4 +358,52 @@ func (m *Manager) Install(a installer) {
 		}
 		return struct{}{}, m.Close(p.ID)
 	})
+}
+
+// Busy names a terminal whose shell has a running child process (a build, a
+// dev server, an editor), or "" when every shell is sitting at a prompt.
+func (m *Manager) Busy() string {
+	m.mu.Lock()
+	list := make([]*session, 0, len(m.sessions))
+	for _, s := range m.sessions {
+		list = append(list, s)
+	}
+	m.mu.Unlock()
+	for _, s := range list {
+		if s.info().Exited || s.cmd.Process == nil {
+			continue
+		}
+		if hasChild("/proc", s.cmd.Process.Pid) {
+			return "a process is running in " + s.title
+		}
+	}
+	return ""
+}
+
+// hasChild reports whether any process has ppid as its parent, by scanning proc.
+func hasChild(proc string, ppid int) bool {
+	ents, err := os.ReadDir(proc)
+	if err != nil {
+		return false
+	}
+	for _, e := range ents {
+		if !e.IsDir() || e.Name()[0] < '0' || e.Name()[0] > '9' {
+			continue
+		}
+		b, err := os.ReadFile(proc + "/" + e.Name() + "/stat")
+		if err != nil {
+			continue
+		}
+		// /proc/<pid>/stat: pid (comm) state ppid ...; comm may contain spaces/parens.
+		str := string(b)
+		i := strings.LastIndex(str, ")")
+		if i < 0 || i+4 > len(str) {
+			continue
+		}
+		f := strings.Fields(str[i+1:])
+		if len(f) >= 2 && f[1] == strconv.Itoa(ppid) {
+			return true
+		}
+	}
+	return false
 }

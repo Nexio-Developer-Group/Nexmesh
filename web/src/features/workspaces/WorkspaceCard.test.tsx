@@ -7,7 +7,7 @@ import type { Workspace } from '@/api/types'
 const base: Workspace = {
   id: 'ws_1', name: 'orders-api', description: '', os: 'ubuntu-24.04', cpu: 4, ramGb: 8, storageGb: 40, gpu: false,
   status: 'ready', step: 'ready', createdAt: '2026-10-13T10:00:00Z', lastOpenedAt: '2026-10-13T10:00:00Z',
-  runtimes: {}, restartRequired: false, agentConnected: false,
+  runtimes: {}, restartRequired: false, agentConnected: false, idleStopMinutes: 0,
 }
 const noop = () => {}
 const renderCard = (w: Partial<Workspace>, handlers = {}) =>

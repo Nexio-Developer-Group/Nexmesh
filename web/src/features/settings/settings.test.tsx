@@ -7,7 +7,7 @@ import type { Workspace } from '@/api/types'
 
 const ws: Workspace = {
   id: 'w1', name: 'orders-api', description: 'Stripe webhooks', os: 'ubuntu-24.04', cpu: 4, ramGb: 8, storageGb: 40, gpu: false, status: 'ready', step: 'ready',
-  createdAt: '2026-10-13T10:00:00Z', lastOpenedAt: '2026-10-13T10:00:00Z', runtimes: {}, restartRequired: false, agentConnected: true,
+  createdAt: '2026-10-13T10:00:00Z', lastOpenedAt: '2026-10-13T10:00:00Z', runtimes: {}, restartRequired: false, agentConnected: true, idleStopMinutes: 0,
 }
 const host = { maxCpu: 12, maxRamGb: 24, maxStorageGb: 200, freeRamGb: 0, gpuAvailable: false, gpuReason: 'this execution backend has no GPU drivers installed.' }
 
@@ -20,7 +20,7 @@ describe('GeneralTab', () => {
     expect(screen.getByText('Ubuntu 24.04 LTS')).toBeInTheDocument()
     expect(screen.getByText(/Locked/)).toBeInTheDocument()
     expect(screen.getByText(/Changing the operating system requires creating a new workspace/)).toBeInTheDocument()
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: /operating system/i })).not.toBeInTheDocument()
   })
 
   it('saves only changed name and description', async () => {
@@ -32,7 +32,7 @@ describe('GeneralTab', () => {
     await userEvent.type(screen.getByLabelText('Workspace name'), 'orders-v2')
     await userEvent.click(save)
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true))
-    expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ name: 'orders-v2', description: 'Stripe webhooks' })
+    expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ name: 'orders-v2' })
   })
 
   it('shows a name conflict next to the field', async () => {
@@ -114,5 +114,17 @@ describe('ResourcesTab', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Discard' }))
     expect(screen.getAllByRole('spinbutton')[0]).toHaveValue(8)
     expect(screen.queryByRole('region', { name: 'Review changes' })).not.toBeInTheDocument()
+  })
+})
+
+describe('Stop when idle', () => {
+  it('saves the idle timeout with the other general settings', async () => {
+    const calls = mockApi({ 'PATCH /api/workspaces/w1/settings': () => ({ ...ws, idleStopMinutes: 60 }) })
+    renderPage(<GeneralTab workspace={ws} />)
+    const sel = screen.getByLabelText('Stop when idle')
+    expect(sel).toHaveValue('0')
+    await userEvent.selectOptions(sel, '60')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    await waitFor(() => expect(calls.find((c) => c.method === 'PATCH')?.body).toMatchObject({ idleStopMinutes: 60 }))
   })
 })

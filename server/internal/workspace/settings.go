@@ -23,13 +23,15 @@ func (s *Service) WithUsage(u UsageProvider) *Service { s.usage = u; return s }
 // SettingsChange is any subset of the editable settings (PRD 12.2). The
 // operating system is not editable and has no field here.
 type SettingsChange struct {
-	Name           *string `json:"name"`
-	Description    *string `json:"description"`
-	CPU            *int    `json:"cpu"`
-	RAMGB          *int    `json:"ramGb"`
-	StorageGB      *int    `json:"storageGb"`
-	GPU            *bool   `json:"gpu"`
-	ConfirmRestart bool    `json:"confirmRestart"`
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	CPU         *int    `json:"cpu"`
+	RAMGB       *int    `json:"ramGb"`
+	StorageGB   *int    `json:"storageGb"`
+	GPU         *bool   `json:"gpu"`
+	// IdleStopMinutes: 0 disables; otherwise 5 to 1440.
+	IdleStopMinutes *int `json:"idleStopMinutes"`
+	ConfirmRestart  bool `json:"confirmRestart"`
 }
 
 type Change struct {
@@ -76,6 +78,12 @@ func (s *Service) plan(ctx context.Context, w *domain.Workspace, in SettingsChan
 	}
 	if in.Description != nil && *in.Description != w.Description {
 		pv.Changes = append(pv.Changes, Change{"description", w.Description, *in.Description, true})
+	}
+	if in.IdleStopMinutes != nil && *in.IdleStopMinutes != w.IdleStopMinutes {
+		if m := *in.IdleStopMinutes; m != 0 && (m < 5 || m > 1440) {
+			return nil, cur, verr("idleStopMinutes", "idle_out_of_range", "Choose Never, or between 5 minutes and 24 hours.")
+		}
+		pv.Changes = append(pv.Changes, Change{"idleStopMinutes", w.IdleStopMinutes, *in.IdleStopMinutes, true})
 	}
 	if in.CPU != nil && *in.CPU != w.CPU {
 		next.CPU = *in.CPU
@@ -159,6 +167,9 @@ func (s *Service) ApplySettings(ctx context.Context, owner, id string, in Settin
 		}
 		if in.Description != nil {
 			x.Description = *in.Description
+		}
+		if in.IdleStopMinutes != nil {
+			x.IdleStopMinutes = *in.IdleStopMinutes
 		}
 		x.CPU, x.RAMGB, x.StorageGB, x.GPU = next.CPU, next.RAMGB, next.StorageGB, next.GPU
 		x.RestartRequired = pv.RestartRequired

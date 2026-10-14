@@ -48,6 +48,10 @@ type Workspace struct {
 	// GitCredentials are metadata for Git tokens; the token itself lives in
 	// the secrets service.
 	GitCredentials []GitCredential `json:"gitCredentials,omitempty"`
+	// IdleStopMinutes stops the workspace after this many idle minutes (0 = never).
+	IdleStopMinutes int `json:"idleStopMinutes"`
+	// StopReason says why the workspace is stopped: "user" or "idle".
+	StopReason string `json:"stopReason,omitempty"`
 	// Ports are ports the user declared (named) for previews; detection adds the rest.
 	Ports []DeclaredPort `json:"ports,omitempty"`
 	// ShareLinks are expiring, revocable public preview links (off by default).
