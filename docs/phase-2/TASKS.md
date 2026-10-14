@@ -12,7 +12,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 ## M1 — Workspace agent capabilities (F9 backend, F8 detection)
 - [x] **T1.1** Agent file operations confined to the workspace root: list, read, write, mkdir, rename, delete, stat, search (symlink and `..` escapes rejected)
 - [x] **T1.2** Agent terminals: PTY sessions that outlive the browser, scrollback buffer, resize, attach
-- [ ] **T1.3** Agent command execution with limits, and listening-port detection
+- [x] **T1.3** Agent command execution with limits, and listening-port detection
 - [ ] **T1.4** Control-plane file/exec API with ownership checks and audit
 - [ ] **T1.5** Browser terminal WebSocket bridge (reconnectable)
 - [ ] **T1.6** Local agent for the fake driver so development and E2E use real files and shells
