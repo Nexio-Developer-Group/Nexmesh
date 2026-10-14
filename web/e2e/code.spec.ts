@@ -45,4 +45,28 @@ test.describe('Phase 2 Code view', () => {
     await page.getByRole('tab', { name: 'Code' }).click()
     await expect(page.getByRole('region', { name: /Terminal 1/ }).locator('.xterm-rows')).toContainText('nexmesh-says-42', { timeout: 20_000 })
   })
+
+  test('source control: stage and commit changes from the Git panel', async ({ page }) => {
+    await createWorkspace(page, unique('git'))
+    await page.getByRole('tab', { name: 'Code' }).click()
+    await expect(page.getByRole('tree', { name: 'Workspace files' }).getByText('README.md')).toBeVisible({ timeout: 20_000 })
+
+    // Make a repository with the real terminal, then see it in the panel.
+    const term = page.getByRole('region', { name: /Terminal 1/ })
+    await expect(term.locator('.xterm')).toBeVisible()
+    await term.locator('.xterm-helper-textarea').focus()
+    await page.keyboard.type('git init -q -b main . && echo ready-$((1+1))\n')
+    await expect(term.locator('.xterm-rows')).toContainText('ready-2', { timeout: 15_000 })
+
+    await page.getByRole('tab', { name: 'Source control' }).click()
+    await expect(page.getByRole('region', { name: 'Untracked' }).getByText('README.md')).toBeVisible({ timeout: 15_000 })
+    await page.getByRole('button', { name: 'Stage README.md' }).click({ force: true })
+    await expect(page.getByRole('region', { name: 'Staged changes' }).getByText('README.md')).toBeVisible()
+    await page.getByLabel('Commit message').fill('add readme')
+    await page.getByRole('button', { name: /Commit 1 file/ }).click()
+    await expect(page.getByText('No changes. Working tree clean.')).toBeVisible({ timeout: 15_000 })
+
+    await page.getByRole('button', { name: 'History' }).click()
+    await expect(page.getByRole('list', { name: 'Recent commits' })).toContainText('add readme')
+  })
 })
