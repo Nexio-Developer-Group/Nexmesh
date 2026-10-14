@@ -11,6 +11,6 @@ fi
 cd "$root/server"
 go build -o /tmp/nexmesh-e2e ./cmd/nexmesh
 touch "$root/server/internal/webui/dist/.gitkeep"
-exec env NEXMESH_STORE=memory NEXMESH_DRIVER=fake NEXMESH_FAKE_DELAY_MS=150 \
+exec env NEXMESH_AUTH=disabled NEXMESH_STORE=memory NEXMESH_DRIVER=fake NEXMESH_FAKE_DELAY_MS=150 \
   NEXMESH_CATALOG_DIR="$root/catalog" NEXMESH_MASTER_KEY_FILE=/tmp/nx-e2e-master.key \
   NEXMESH_DEV_ALLOW_LOOPBACK_EGRESS=true NEXMESH_ADDR=:18080 /tmp/nexmesh-e2e

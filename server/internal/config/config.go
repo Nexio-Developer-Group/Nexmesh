@@ -24,6 +24,11 @@ type Config struct {
 	// AllowPrivateEgress lets Test Connection and health checks reach RFC 1918
 	// addresses (self-hosted deployments). Metadata and link-local stay blocked.
 	AllowPrivateEgress bool
+
+	// AuthDisabled (NEXMESH_AUTH=disabled) skips sign-in; every request acts as one local user. Development and tests only.
+	AuthDisabled bool
+	// AllowSignup lets additional users register after the first (owner) account.
+	AllowSignup bool
 	// AllowLoopbackEgress is for local development only: it lets probes reach 127.0.0.1.
 	AllowLoopbackEgress bool
 	// Host capacity limits enforced by workspace validation (PRD 6.2).
@@ -46,6 +51,8 @@ func Load() Config {
 		MasterKey:           os.Getenv("NEXMESH_MASTER_KEY"),
 		MasterKeyFile:       env("NEXMESH_MASTER_KEY_FILE", "nexmesh-master.key"),
 		AllowPrivateEgress:  os.Getenv("NEXMESH_ALLOW_PRIVATE_EGRESS") == "true",
+		AuthDisabled:        os.Getenv("NEXMESH_AUTH") == "disabled",
+		AllowSignup:         os.Getenv("NEXMESH_ALLOW_SIGNUP") == "true",
 		AllowLoopbackEgress: os.Getenv("NEXMESH_DEV_ALLOW_LOOPBACK_EGRESS") == "true",
 		MaxCPU:              envInt("NEXMESH_MAX_CPU", 12),
 		MaxRAMGB:            envInt("NEXMESH_MAX_RAM_GB", 24),

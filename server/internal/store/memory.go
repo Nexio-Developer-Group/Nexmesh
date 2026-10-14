@@ -13,19 +13,21 @@ import (
 // Memory is a thread-safe in-memory Store. Values are stored as JSON so that
 // callers can never mutate stored state through returned pointers.
 type Memory struct {
-	mu      sync.Mutex
-	ws      map[string][]byte
-	comps   map[string][]byte
-	ops     map[string][]byte
-	agents  map[string][]byte
-	audit   []*domain.AuditEvent
-	secrets map[string]*domain.SecretRecord
+	mu       sync.Mutex
+	ws       map[string][]byte
+	comps    map[string][]byte
+	ops      map[string][]byte
+	agents   map[string][]byte
+	audit    []*domain.AuditEvent
+	secrets  map[string]*domain.SecretRecord
+	users    map[string][]byte
+	sessions map[string][]byte
 }
 
 func NewMemory() *Memory {
 	return &Memory{
 		ws: map[string][]byte{}, comps: map[string][]byte{}, ops: map[string][]byte{},
-		agents: map[string][]byte{}, secrets: map[string]*domain.SecretRecord{},
+		agents: map[string][]byte{}, users: map[string][]byte{}, sessions: map[string][]byte{}, secrets: map[string]*domain.SecretRecord{},
 	}
 }
 
@@ -299,5 +301,64 @@ func (m *Memory) DeleteSecret(_ context.Context, id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.secrets, id)
+	return nil
+}
+
+func (m *Memory) CreateUser(_ context.Context, u *domain.User) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, b := range m.users {
+		var o domain.User
+		_ = json.Unmarshal(b, &o)
+		if o.Email == u.Email {
+			return ErrConflict
+		}
+	}
+	put(m.users, u.ID, u)
+	return nil
+}
+
+func (m *Memory) GetUser(_ context.Context, id string) (*domain.User, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return get[domain.User](m.users, id)
+}
+
+func (m *Memory) GetUserByEmail(_ context.Context, email string) (*domain.User, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, b := range m.users {
+		u := new(domain.User)
+		_ = json.Unmarshal(b, u)
+		if u.Email == email {
+			return u, nil
+		}
+	}
+	return nil, ErrNotFound
+}
+
+func (m *Memory) CountUsers(_ context.Context) (int, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return len(m.users), nil
+}
+
+func (m *Memory) PutSession(_ context.Context, s *domain.Session) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	put(m.sessions, s.ID, s)
+	return nil
+}
+
+func (m *Memory) GetSession(_ context.Context, id string) (*domain.Session, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return get[domain.Session](m.sessions, id)
+}
+
+func (m *Memory) DeleteSession(_ context.Context, id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.sessions, id)
 	return nil
 }

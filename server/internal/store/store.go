@@ -50,6 +50,15 @@ type Store interface {
 	GetSecret(ctx context.Context, id string) (*domain.SecretRecord, error)
 	DeleteSecret(ctx context.Context, id string) error
 
+	CreateUser(ctx context.Context, u *domain.User) error // ErrConflict on duplicate email
+	GetUser(ctx context.Context, id string) (*domain.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
+	CountUsers(ctx context.Context) (int, error)
+
+	PutSession(ctx context.Context, s *domain.Session) error
+	GetSession(ctx context.Context, id string) (*domain.Session, error)
+	DeleteSession(ctx context.Context, id string) error
+
 	Close()
 }
 

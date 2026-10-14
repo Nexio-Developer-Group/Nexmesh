@@ -23,9 +23,16 @@ func jsonDecoder(r *http.Request) *json.Decoder {
 	return d
 }
 
-// Owner returns the authenticated user. Authentication is a stub until the
-// sign-in work lands; every request acts as the single local user.
+// Owner returns the acting user's id. With auth enabled it is the session's
+// user (the header is ignored); with auth disabled every request acts as the
+// single local user, optionally overridden by X-Nexmesh-User in tests.
 func Owner(r *http.Request) string {
+	if a, ok := r.Context().Value(ctxKey{}).(*authCtx); ok {
+		if a.user != nil {
+			return a.user.ID
+		}
+		return ""
+	}
 	if u := r.Header.Get("X-Nexmesh-User"); u != "" {
 		return u
 	}

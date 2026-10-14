@@ -8,6 +8,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"fmt"
+	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
 	"log/slog"
 	"net/http"
 	"os"
@@ -140,6 +141,10 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	wsSvc.WithUsage(compSvc)
 
 	api := httpapi.New(log)
+	api.RegisterAuth(auth.NewService(st, cfg.AllowSignup), !cfg.AuthDisabled, cfg.PublicURL)
+	if cfg.AuthDisabled {
+		log.Warn("authentication is disabled (NEXMESH_AUTH=disabled): every request acts as one local user")
+	}
 	api.RegisterCatalog(cat)
 	agents.Register(api)
 	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc, Agent: agentSvc})

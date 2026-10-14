@@ -303,3 +303,41 @@ func (p *Postgres) GetSecret(ctx context.Context, id string) (*domain.SecretReco
 func (p *Postgres) DeleteSecret(ctx context.Context, id string) error {
 	return p.exec(ctx, "DELETE FROM secrets WHERE id=$1", id)
 }
+
+func (p *Postgres) CreateUser(ctx context.Context, u *domain.User) error {
+	b, _ := json.Marshal(u)
+	return p.exec(ctx, "INSERT INTO users (id, email, data) VALUES ($1,$2,$3)", u.ID, u.Email, b)
+}
+
+func (p *Postgres) GetUser(ctx context.Context, id string) (*domain.User, error) {
+	return docGet[domain.User](ctx, p, "users", id)
+}
+
+func (p *Postgres) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	var raw []byte
+	if err := p.pool.QueryRow(ctx, "SELECT data FROM users WHERE email=$1", email).Scan(&raw); err != nil {
+		return nil, mapErr(err)
+	}
+	u := new(domain.User)
+	return u, json.Unmarshal(raw, u)
+}
+
+func (p *Postgres) CountUsers(ctx context.Context) (int, error) {
+	var n int
+	err := p.pool.QueryRow(ctx, "SELECT count(*) FROM users").Scan(&n)
+	return n, err
+}
+
+func (p *Postgres) PutSession(ctx context.Context, s *domain.Session) error {
+	b, _ := json.Marshal(s)
+	return p.exec(ctx, `INSERT INTO sessions (id, user_id, expires_at, data) VALUES ($1,$2,$3,$4)
+		ON CONFLICT (id) DO UPDATE SET data=EXCLUDED.data, expires_at=EXCLUDED.expires_at`, s.ID, s.UserID, s.ExpiresAt, b)
+}
+
+func (p *Postgres) GetSession(ctx context.Context, id string) (*domain.Session, error) {
+	return docGet[domain.Session](ctx, p, "sessions", id)
+}
+
+func (p *Postgres) DeleteSession(ctx context.Context, id string) error {
+	return p.exec(ctx, "DELETE FROM sessions WHERE id=$1", id)
+}

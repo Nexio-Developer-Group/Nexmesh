@@ -3,6 +3,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
 	"log/slog"
 	"net/http"
 	"time"
@@ -11,6 +12,10 @@ import (
 type Server struct {
 	log *slog.Logger
 	mux *http.ServeMux
+
+	authEnabled bool
+	publicURL   string
+	authSvc     *auth.Service
 }
 
 func New(log *slog.Logger) *Server {
@@ -24,7 +29,7 @@ func New(log *slog.Logger) *Server {
 // Handle registers a route on the underlying mux (Go 1.22 pattern syntax).
 func (s *Server) Handle(pattern string, h http.HandlerFunc) { s.mux.HandleFunc(pattern, h) }
 
-func (s *Server) Handler() http.Handler { return s.logging(s.recover(s.mux)) }
+func (s *Server) Handler() http.Handler { return s.logging(s.recover(s.authenticate(s.mux))) }
 
 func (s *Server) logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

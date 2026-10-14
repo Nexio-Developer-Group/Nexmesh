@@ -5,7 +5,7 @@ Goal (PRD 18.2): a workspace a developer can work in every day: edit, run, previ
 Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one commit pushed to `main`.
 
 ## M0 — Foundations
-- [ ] **T0.1** Accounts and sessions: argon2id passwords, HttpOnly session cookie, Origin check on unsafe methods, first user = owner, `NEXMESH_AUTH=disabled` dev mode, per-user ownership everywhere
+- [x] **T0.1** Accounts and sessions: argon2id passwords, HttpOnly session cookie, Origin check on unsafe methods, first user = owner, `NEXMESH_AUTH=disabled` dev mode, per-user ownership everywhere
 - [ ] **T0.2** Sign-in / sign-up screens (design prompt P1), auth guard, user menu with sign-out
 - [ ] **T0.3** Agent transport: outbound WebSocket (request/response + events) replacing HTTP heartbeats; presence, reconnect with backoff
 

@@ -178,3 +178,24 @@ type SecretRecord struct {
 	WrappedKey []byte    `json:"-"`
 	CreatedAt  time.Time `json:"createdAt"`
 }
+
+// User is a Nexmesh account. PasswordHash is never serialised to clients.
+type User struct {
+	ID           string    `json:"id"`
+	Email        string    `json:"email"`
+	Name         string    `json:"name"`
+	Role         string    `json:"role"`
+	PasswordHash string    `json:"passwordHash,omitempty"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+// Session is a browser session. ID is the SHA-256 of the cookie token, so a
+// database leak does not yield usable cookies.
+type Session struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"userId"`
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+const RoleOwner = "owner"

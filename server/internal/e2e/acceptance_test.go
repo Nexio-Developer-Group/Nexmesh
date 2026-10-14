@@ -47,7 +47,7 @@ type harness struct {
 
 func newHarness(t *testing.T) *harness {
 	h := &harness{t: t, goodPW: dbPassword}
-	cfg := config.Config{Store: "memory", Driver: "fake", CatalogDir: "../../../catalog", MasterKey: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
+	cfg := config.Config{AuthDisabled: true, Store: "memory", Driver: "fake", CatalogDir: "../../../catalog", MasterKey: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
 		MaxCPU: 12, MaxRAMGB: 24, MaxStorageGB: 200, PublicURL: "http://localhost"}
 	h.drv = runtime.NewFake(runtime.Capabilities{MaxCPU: 12, MaxRAMGB: 24, MaxStorageGB: 200, StorageShrink: false, GPUReason: "this execution backend has no GPU drivers installed."})
 	h.drv.Delay = 40 * time.Millisecond
