@@ -44,7 +44,7 @@ Milestones: M1 Foundation → M2 Workspace provisioning → M3 Web shell + canva
 
 ### Phase 2 — Daily-use workspace
 F9 editor/terminal/file browser, F5 logs + health history, F8 ports + previews, F11 secrets/env manager, F10 Git integration, F7 idle stop + snapshots, F3 stack templates, F6 dev-container import/export, F12 workspace definition export/import, F14 connection import, F27 audit log viewer.
-Entry: Phase 1 acceptance criteria met. Detailed task sheet: [`docs/phase-2/TASKS.md`](phase-2/TASKS.md).
+Entry: Phase 1 acceptance criteria met. Detailed task sheet: [`docs/phase-2/TASKS.md`](phase-2/TASKS.md). Implemented; review in [`docs/phase-2/ACCEPTANCE.md`](phase-2/ACCEPTANCE.md).
 
 ### Phase 3 — Structured AI development
 F1 canvas connections + env wiring, F2 architecture view, F4 canvas environments, F13 DB/broker tools, F16 external API card, F17–F19 canvas-scoped agent with approvals/diffs/contextual help, F21 agent rules files, F23 quality gates, F25 Dockerfile/compose export, F5 metrics.

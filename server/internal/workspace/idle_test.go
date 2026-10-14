@@ -177,3 +177,23 @@ func TestIdleSettingValidationAndDefault(t *testing.T) {
 }
 
 func timeSleep() { time.Sleep(10 * time.Millisecond) }
+
+func TestOnStartHookRunsWhenWorkspaceResumes(t *testing.T) {
+	r := newIdleRig(t)
+	got := make(chan string, 1)
+	r.svc.WithOnStart(func(_ context.Context, id string) { got <- id })
+	*r.now = r.now.Add(31 * time.Minute)
+	r.svc.StopIdle(r.ctx)
+	r.waitStatus(t, domain.WSStopped)
+	if _, err := r.svc.Start(r.ctx, "u1", "ws1"); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case id := <-got:
+		if id != "ws1" {
+			t.Fatalf("hook got %q", id)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("on-start hook never ran")
+	}
+}

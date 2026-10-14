@@ -97,6 +97,7 @@ func publicPath(p string) bool {
 // RegisterAuth wires account endpoints and, when enabled, session enforcement
 // for every /api route. With auth disabled the API acts as one local user.
 func (s *Server) RegisterAuth(svc *auth.Service, enabled bool, publicURL string) {
+	rec := s.authAudit
 	s.authEnabled = enabled
 	s.publicURL = publicURL
 	secure := strings.HasPrefix(publicURL, "https://")
@@ -143,6 +144,9 @@ func (s *Server) RegisterAuth(svc *auth.Service, enabled bool, publicURL string)
 			s.authError(w, err)
 			return
 		}
+		if rec != nil {
+			rec.User(r.Context(), u.ID, "", "auth.register", u.Email, map[string]any{"role": u.Role})
+		}
 		start(w, r, u)
 	})
 	s.Handle("POST /api/auth/login", func(w http.ResponseWriter, r *http.Request) {
@@ -152,13 +156,24 @@ func (s *Server) RegisterAuth(svc *auth.Service, enabled bool, publicURL string)
 		}
 		u, err := svc.Login(r.Context(), in.Email, in.Password, clientIP(r))
 		if err != nil {
+			if rec != nil {
+				rec.Record(r.Context(), domain.ActorSystem, "", "", "auth.login_failed", in.Email, map[string]any{"ip": clientIP(r)})
+			}
 			s.HandleError(w, err)
 			return
+		}
+		if rec != nil {
+			rec.User(r.Context(), u.ID, "", "auth.login", u.Email, nil)
 		}
 		start(w, r, u)
 	})
 	s.Handle("POST /api/auth/logout", func(w http.ResponseWriter, r *http.Request) {
 		if c, err := r.Cookie(sessionCookie); err == nil {
+			if rec != nil {
+				if u, _ := svc.UserFor(r.Context(), c.Value); u != nil {
+					rec.User(r.Context(), u.ID, "", "auth.logout", u.Email, nil)
+				}
+			}
 			svc.Logout(r.Context(), c.Value)
 		}
 		setCookie(w, r, "", time.Unix(0, 0))

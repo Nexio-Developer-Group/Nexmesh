@@ -45,8 +45,10 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T6.5** Workspace definition export, import and drift report (F12)
 - [x] **T6.6** Connection import from `.env`, connection string or compose service (F14)
 - [x] **T6.7** Dev container import and export (F6)
-- [ ] **T6.8** Phase 2 acceptance review, E2E additions, docs
+- [x] **T6.8** Phase 2 acceptance review, E2E additions, docs
 
 ## Notes
 - Agent-side work is tested against a real local agent process (real PTY, real files, real git) in addition to the fake runtime driver.
 - Anything that needs a live Docker daemon is called out in `ACCEPTANCE.md` rather than claimed.
+
+Acceptance review, evidence and known gaps: [`ACCEPTANCE.md`](ACCEPTANCE.md).

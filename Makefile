@@ -1,4 +1,7 @@
-.PHONY: dev-server dev-web test build lint acceptance it it-services
+.PHONY: verify dev-server dev-web test build lint acceptance it it-services
+
+verify:
+	./scripts/verify.sh
 
 dev-server:
 	cd server && NEXMESH_DRIVER=fake NEXMESH_STORE=memory go run ./cmd/nexmesh

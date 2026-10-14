@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
 	"log/slog"
 	"net"
@@ -21,6 +22,7 @@ type Server struct {
 	authEnabled bool
 	publicURL   string
 	authSvc     *auth.Service
+	authAudit   *audit.Recorder
 	activity    Activity
 }
 
@@ -134,3 +136,7 @@ func (s *Server) track(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// WithAuthAudit records account events (register, login, failed login, logout)
+// in the audit log. Call before RegisterAuth.
+func (s *Server) WithAuthAudit(rec *audit.Recorder) *Server { s.authAudit = rec; return s }

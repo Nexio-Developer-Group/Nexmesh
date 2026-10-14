@@ -1,6 +1,8 @@
 package httpapi_test
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -8,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
 	"github.com/nexio-developer-group/nexmesh/server/internal/httpapi"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
@@ -143,5 +146,32 @@ func TestPasswordHashing(t *testing.T) {
 	h2, _ := auth.HashPassword("s3cret-pass-phrase")
 	if h == h2 {
 		t.Fatal("salts must differ")
+	}
+}
+
+func TestAccountEventsAreAudited(t *testing.T) {
+	st := store.NewMemory()
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	s := httpapi.New(log).WithAuthAudit(audit.New(st, log))
+	s.RegisterAuth(auth.NewService(st, false), true, "")
+	ts := httptest.NewServer(s.Handler())
+	defer ts.Close()
+	c := jar(t)
+	do(t, c, "POST", ts.URL+"/api/auth/register", `{"email":"o@example.com","password":"correct horse battery"}`, nil)
+	do(t, c, "POST", ts.URL+"/api/auth/login", `{"email":"o@example.com","password":"wrong wrong wrong"}`, nil)
+	do(t, c, "POST", ts.URL+"/api/auth/login", `{"email":"o@example.com","password":"correct horse battery"}`, nil)
+	do(t, c, "POST", ts.URL+"/api/auth/logout", "", nil)
+	evs, _ := st.ListAudit(context.Background(), "", 20)
+	got := map[string]bool{}
+	for _, e := range evs {
+		got[e.Action] = true
+		if strings.Contains(fmt.Sprint(e.Detail), "correct horse") || strings.Contains(fmt.Sprint(e.Detail), "wrong wrong") {
+			t.Fatalf("password leaked into audit: %+v", e)
+		}
+	}
+	for _, a := range []string{"auth.register", "auth.login", "auth.login_failed", "auth.logout"} {
+		if !got[a] {
+			t.Errorf("missing audit event %s (have %v)", a, got)
+		}
 	}
 }

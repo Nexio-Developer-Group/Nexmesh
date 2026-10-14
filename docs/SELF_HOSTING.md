@@ -46,6 +46,12 @@ All settings are environment variables on the `nexmesh` service.
 | `NEXMESH_PUBLIC_URL` | `http://host.docker.internal:8080` | How workspace containers reach the control plane |
 | `NEXMESH_MAX_CPU` / `_RAM_GB` / `_STORAGE_GB` | 12 / 24 / 200 | Per-workspace limits |
 | `NEXMESH_ALLOW_PRIVATE_EGRESS` | `false` | Allow Test Connection and model tests to reach RFC 1918 addresses |
+| `NEXMESH_AUTH` | enabled | `disabled` skips sign-in (development and tests only) |
+| `NEXMESH_ALLOW_SIGNUP` | `false` | Let additional users register |
+| `NEXMESH_PREVIEW_DOMAIN` | unset | Enables subdomain previews |
+| `NEXMESH_ALLOW_SHARE_LINKS` | `false` | Allow public share links |
+| `NEXMESH_DEFAULT_IDLE_MINUTES` | 0 | Idle auto-stop for new workspaces (0 = never) |
+| `NEXMESH_FAKE_WORKSPACE_DIR` | unset | Fake driver only: real directory for files, terminal and git |
 | `NEXMESH_DEV_ALLOW_LOOPBACK_EGRESS` | `false` | Development only: allow probes to reach `127.0.0.1` |
 
 ## Security notes

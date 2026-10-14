@@ -533,17 +533,26 @@ func (s *Service) HealthOnce(ctx context.Context) {
 		return
 	}
 	for _, w := range list {
-		comps, err := s.st.ListComponents(ctx, w.ID)
-		if err != nil {
+		s.HealthForWorkspace(ctx, w.ID)
+	}
+}
+
+// HealthForWorkspace checks the connected components of one workspace. It runs
+// when a workspace resumes so cards report observed state, not stale state.
+func (s *Service) HealthForWorkspace(ctx context.Context, wsID string) {
+	if s.conn == nil {
+		return
+	}
+	comps, err := s.st.ListComponents(ctx, wsID)
+	if err != nil {
+		return
+	}
+	for _, c := range comps {
+		if c.Mode != domain.ModeConnected {
 			continue
 		}
-		for _, c := range comps {
-			if c.Mode != domain.ModeConnected {
-				continue
-			}
-			if def, ok := s.cat.Get(c.CatalogID); ok {
-				s.applyHealth(ctx, c, def, false)
-			}
+		if def, ok := s.cat.Get(c.CatalogID); ok {
+			s.applyHealth(ctx, c, def, false)
 		}
 	}
 }

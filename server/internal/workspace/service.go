@@ -44,6 +44,7 @@ type Service struct {
 	aud         *audit.Recorder
 	log         *slog.Logger
 	image       string
+	onStart     []func(ctx context.Context, workspaceID string)
 	cleanup     []func(ctx context.Context, w *domain.Workspace)
 	idle        *idleState
 	defaultIdle int
@@ -82,6 +83,13 @@ func ValidateName(name string) error {
 // that keep per-workspace secrets outside the workspace document.
 func (s *Service) WithCleanup(fn func(ctx context.Context, w *domain.Workspace)) *Service {
 	s.cleanup = append(s.cleanup, fn)
+	return s
+}
+
+// WithOnStart registers a hook run after a workspace becomes Ready again, so
+// connected components can report their observed state on resume.
+func (s *Service) WithOnStart(fn func(ctx context.Context, workspaceID string)) *Service {
+	s.onStart = append(s.onStart, fn)
 	return s
 }
 
@@ -295,6 +303,9 @@ func (s *Service) startWorkspace(ctx context.Context, op *domain.Operation, p op
 	}
 	_, _ = s.st.UpdateWorkspace(ctx, op.WorkspaceID, func(w *domain.Workspace) error { w.StopReason = ""; return nil })
 	s.setStep(ctx, op.WorkspaceID, domain.WSReady, domain.WSReady, "")
+	for _, fn := range s.onStart {
+		fn(ctx, op.WorkspaceID)
+	}
 	return nil
 }
 
