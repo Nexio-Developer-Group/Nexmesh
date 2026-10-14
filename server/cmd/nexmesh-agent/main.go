@@ -20,7 +20,18 @@ func main() {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := agent.New(cfg, log).Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+	root := os.Getenv("NEXMESH_WORKSPACE_ROOT")
+	if root == "" {
+		root = "/workspace"
+	}
+	ag := agent.New(cfg, log)
+	stopServe, err := ag.Serve(ctx, root)
+	if err != nil {
+		log.Error("cannot open workspace root", "root", root, "err", err)
+		os.Exit(2)
+	}
+	defer stopServe()
+	if err := ag.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		log.Error("agent stopped", "err", err)
 		os.Exit(1)
 	}

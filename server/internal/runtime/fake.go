@@ -22,6 +22,33 @@ type Fake struct {
 	// service that exposes one fails with ErrPortInUse.
 	BusyPorts map[int]bool
 	ExecLog   []string // commands passed to Exec, for assertions
+
+	// Runner, when set, is called whenever a workspace becomes running and
+	// may start an in-process agent so local development has real files and
+	// shells. The returned function stops it; remove asks it to delete the
+	// workspace's files too.
+	Runner func(spec WorkspaceSpec) (stop func(remove bool))
+	stops  map[string]func(remove bool)
+}
+
+func (f *Fake) launch(spec WorkspaceSpec) {
+	if f.Runner == nil {
+		return
+	}
+	if f.stops == nil {
+		f.stops = map[string]func(bool){}
+	}
+	if _, running := f.stops[spec.ID]; running {
+		return
+	}
+	f.stops[spec.ID] = f.Runner(spec)
+}
+
+func (f *Fake) halt(id string, remove bool) {
+	if stop := f.stops[id]; stop != nil {
+		stop(remove)
+		delete(f.stops, id)
+	}
 }
 
 type fakeWS struct {
@@ -81,6 +108,7 @@ func (f *Fake) CreateWorkspace(ctx context.Context, spec WorkspaceSpec, progress
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.ws[spec.ID] = &fakeWS{spec: spec, running: true}
+	f.launch(spec)
 	return nil
 }
 
@@ -100,6 +128,7 @@ func (f *Fake) StartWorkspace(_ context.Context, id string) error {
 		return err
 	}
 	w.running = true
+	f.launch(w.spec)
 	return nil
 }
 
@@ -111,12 +140,14 @@ func (f *Fake) StopWorkspace(_ context.Context, id string) error {
 		return err
 	}
 	w.running = false
+	f.halt(id, false)
 	return nil
 }
 
 func (f *Fake) RemoveWorkspace(_ context.Context, id string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.halt(id, true)
 	delete(f.ws, id)
 	for k, s := range f.services {
 		if s.spec.WorkspaceID == id {
@@ -147,6 +178,8 @@ func (f *Fake) RecreateWorkspace(ctx context.Context, spec WorkspaceSpec, progre
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.ws[spec.ID] = &fakeWS{spec: spec, running: true}
+	f.halt(spec.ID, false)
+	f.launch(spec)
 	return nil
 }
 
@@ -252,4 +285,13 @@ func (f *Fake) InspectService(_ context.Context, ws, name string) (Observed, err
 		return Observed{}, nil
 	}
 	return Observed{Exists: true, Running: s.running}, nil
+}
+
+// Shutdown stops every in-process agent the Runner started.
+func (f *Fake) Shutdown() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for id := range f.stops {
+		f.halt(id, false)
+	}
 }

@@ -94,6 +94,9 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 			if ms, _ := strconv.Atoi(os.Getenv("NEXMESH_FAKE_DELAY_MS")); ms > 0 {
 				f.Delay = time.Duration(ms) * time.Millisecond
 			}
+			if cfg.Addr != "" {
+				f.Runner = localAgentRunner(cfg.Addr, log)
+			}
 			drv = f
 			log.Warn("using fake runtime driver: no real containers are created")
 		default:
@@ -193,4 +196,9 @@ func (a *App) Start(ctx context.Context) {
 	go a.Components.RunReconciler(ctx, 15*time.Second)
 }
 
-func (a *App) Close() { a.closer() }
+func (a *App) Close() {
+	if f, ok := a.Driver.(*runtime.Fake); ok {
+		f.Shutdown()
+	}
+	a.closer()
+}
