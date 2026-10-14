@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type { Workspace } from '@/api/types'
 import { keys } from '@/api/hooks'
@@ -20,3 +20,27 @@ export function useImportDefinition() {
 }
 
 export const readFileText = (f: File) => f.text()
+
+export interface ReportItem { field: string; status: 'applied' | 'adapted' | 'unsupported'; detail: string }
+export interface DevContainerImport extends ImportResult {
+  report: ReportItem[]
+  postCreate: string[]
+  name: string
+  resources: { cpu: number; ramGb: number; storageGb: number }
+}
+
+export const useImportDevContainer = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { content: string; name: string; autoInstall: boolean; runPostCreate: boolean; dryRun: boolean }) => api.post<DevContainerImport>('/api/devcontainer/import', v),
+    onSuccess: (r) => { if (!r.dryRun) qc.invalidateQueries({ queryKey: keys.workspaces }) },
+  })
+}
+
+export const useDevContainerReport = (ws: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ['devcontainer-report', ws],
+    queryFn: () => api.get<{ report: ReportItem[]; file: string }>(`/api/workspaces/${ws}/devcontainer?format=report`),
+    enabled,
+    retry: false,
+  })

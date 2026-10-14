@@ -189,7 +189,9 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterVariables(envSvc)
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
-	api.RegisterDefinition(definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud))
+	defSvc := definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud).WithAgent(agents)
+	api.RegisterDefinition(defSvc)
+	api.RegisterDevContainer(defSvc, cat)
 	if tpls, err := catalog.LoadTemplates(cfg.CatalogDir, cat); err != nil {
 		return nil, fmt.Errorf("templates: %w", err)
 	} else {

@@ -25,11 +25,13 @@ type Service struct {
 	vars  *envvars.Service
 	eng   *ops.Engine
 	aud   *audit.Recorder
+	agent Agent
 }
 
 func NewService(st store.Store, cat *catalog.Catalog, ws *workspace.Service, comps *component.Service, vars *envvars.Service, eng *ops.Engine, aud *audit.Recorder) *Service {
 	s := &Service{st: st, cat: cat, ws: ws, comps: comps, vars: vars, eng: eng, aud: aud}
 	eng.Register("apply_definition", s.applyHandler)
+	eng.Register("post_create", s.postCreateHandler)
 	return s
 }
 

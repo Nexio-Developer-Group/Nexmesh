@@ -26,6 +26,8 @@ type ImportOptions struct {
 	AutoInstall bool
 	// DryRun validates and reports without creating anything.
 	DryRun bool
+	// PostCreate commands run once in the workspace after the definition is applied (explicit opt-in).
+	PostCreate []string
 }
 
 type ImportResult struct {
@@ -68,10 +70,14 @@ func (s *Service) Import(ctx context.Context, owner string, d *Definition, o Imp
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.eng.EnqueueParams(ctx, w.ID, "", "apply_definition", map[string]any{"definition": m, "autoInstall": o.AutoInstall, "owner": owner}); err != nil {
+	cmds := make([]any, len(o.PostCreate))
+	for i, c := range o.PostCreate {
+		cmds[i] = c
+	}
+	if _, err := s.eng.EnqueueParams(ctx, w.ID, "", "apply_definition", map[string]any{"definition": m, "autoInstall": o.AutoInstall, "owner": owner, "postCreate": cmds}); err != nil {
 		return nil, err
 	}
-	s.aud.User(ctx, owner, w.ID, "definition.import", w.Name, map[string]any{"components": len(d.Components), "autoInstall": o.AutoInstall})
+	s.aud.User(ctx, owner, w.ID, "definition.import", w.Name, map[string]any{"components": len(d.Components), "autoInstall": o.AutoInstall, "postCreateCommands": len(o.PostCreate)})
 	res.Workspace = w
 	return res, nil
 }
@@ -138,6 +144,13 @@ func (s *Service) applyHandler(ctx context.Context, op *domain.Operation, p ops.
 		})
 	}
 	p.Logf("definition applied")
+	if cmds, _ := op.Params["postCreate"].([]any); len(cmds) > 0 {
+		// Queued last, so the runtimes installed above are in place when the commands run.
+		if _, err := s.eng.EnqueueParams(ctx, wsID, "", "post_create", map[string]any{"commands": cmds, "owner": owner}); err != nil {
+			p.Logf("could not queue the post-create commands: %v", err)
+			failures++
+		}
+	}
 	if failures > 0 {
 		return fmt.Errorf("%d item(s) of the definition could not be applied; see the log", failures)
 	}

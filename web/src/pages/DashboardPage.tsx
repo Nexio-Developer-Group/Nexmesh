@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Logo } from '@/components/ui/Logo'
 import { UserMenu } from '@/layouts/TopBar'
+import { ImportDevContainerDialog } from '@/features/definition/ImportDevContainerDialog'
 import { ImportDefinitionDialog } from '@/features/definition/ImportDialog'
 import { DeleteWorkspaceDialog } from '@/features/workspaces/DeleteWorkspaceDialog'
 import { isProvisioning, WorkspaceCard } from '@/features/workspaces/WorkspaceCard'
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const [toDelete, setToDelete] = useState<Workspace | null>(null)
   const [errorOf, setErrorOf] = useState<Workspace | null>(null)
   const [importing, setImporting] = useState(false)
+  const [importingDc, setImportingDc] = useState(false)
   const search = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -69,6 +71,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <Button onClick={() => setImporting(true)}>Import definition</Button>
+        <Button onClick={() => setImportingDc(true)}>Import dev container</Button>
         <Link to="/new"><Button variant="primary">Create Code Space</Button></Link>
         <UserMenu />
       </header>
@@ -130,6 +133,7 @@ export default function DashboardPage() {
       </main>
 
       {importing && <ImportDefinitionDialog onClose={() => setImporting(false)} />}
+      {importingDc && <ImportDevContainerDialog onClose={() => setImportingDc(false)} />}
       {toDelete && <DeleteWorkspaceDialog workspace={toDelete} onClose={() => setToDelete(null)} />}
       {errorOf && (
         <Modal title={`${errorOf.name} failed to provision`} onClose={() => setErrorOf(null)}

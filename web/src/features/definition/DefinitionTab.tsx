@@ -4,7 +4,8 @@ import { ApiError } from '@/api/client'
 import type { Workspace } from '@/api/types'
 import { Button } from '@/components/ui/Button'
 import { groupBy } from '@/lib/group'
-import { useDrift, type Difference } from './hooks'
+import { useDevContainerReport, useDrift, type Difference } from './hooks'
+import { ReportList } from './ReportList'
 
 const KIND: Record<Difference['kind'], { label: string; cls: string }> = {
   changed: { label: 'Changed', cls: 'bg-warn-bg text-warn-fg' },
@@ -16,6 +17,8 @@ const CATEGORY: Record<string, string> = { workspace: 'Workspace', runtime: 'Run
 
 export function DefinitionTab({ workspace }: { workspace: Workspace }) {
   const drift = useDrift(workspace.id)
+  const [showReport, setShowReport] = useState(false)
+  const dcReport = useDevContainerReport(workspace.id, showReport)
   const [text, setText] = useState('')
   const err = drift.error instanceof ApiError ? drift.error : null
   const report = drift.data
@@ -35,6 +38,16 @@ export function DefinitionTab({ workspace }: { workspace: Workspace }) {
           <a className="inline-flex h-10 items-center rounded-[10px] bg-nx-gradient px-4 text-sm font-semibold text-white" href={`/api/workspaces/${workspace.id}/definition`} download>Download YAML</a>
           <a className="inline-flex h-10 items-center rounded-[10px] border border-line-strong bg-raised px-4 text-sm font-semibold hover:border-blue" href={`/api/workspaces/${workspace.id}/definition?format=json`} download>Download JSON</a>
         </div>
+      </div>
+
+      <div className="rounded-card border border-line bg-panel p-5">
+        <h3 className="font-bold">Dev container</h3>
+        <p className="mt-1 text-sm text-muted">Export this workspace as a <code className="font-mono">devcontainer.json</code> that other tools (VS Code, GitHub Codespaces, the dev container CLI) can open. Runtimes, ports, variables and resources carry over; services and credentials do not.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a className="inline-flex h-10 items-center rounded-[10px] bg-nx-gradient px-4 text-sm font-semibold text-white" href={`/api/workspaces/${workspace.id}/devcontainer`} download="devcontainer.json">Download devcontainer.json</a>
+          <Button aria-expanded={showReport} onClick={() => setShowReport((s) => !s)}>{showReport ? 'Hide compatibility report' : 'Show compatibility report'}</Button>
+        </div>
+        {showReport && <div className="mt-4">{dcReport.isPending ? <p className="text-sm text-muted">Loading…</p> : dcReport.data ? <ReportList report={dcReport.data.report} label="Export compatibility report" /> : <p role="alert" className="text-sm text-err-fg">{dcReport.error?.message}</p>}</div>}
       </div>
 
       <div className="rounded-card border border-line bg-panel p-5">
