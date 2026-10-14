@@ -658,6 +658,15 @@ func (s *Service) Accept(ctx context.Context, owner, wsID, id string, d Decision
 		return nil, err
 	}
 	s.prune(ctx, wsID)
+	if set.Actor == domain.ActorAgent {
+		written := make([]string, 0, len(plans))
+		for _, p := range plans {
+			if p.exists {
+				written = append(written, set.Files[p.idx].Path)
+			}
+		}
+		s.recordTouched(ctx, set, written)
+	}
 	s.aud.Record(ctx, set.Actor, set.ActorID, wsID, "changeset.applied", set.ID, map[string]any{"title": set.Title, "files": len(plans), "checkpoint": cp.ID, "acceptedBy": owner})
 	if override != nil {
 		s.aud.User(ctx, owner, wsID, "gates.overridden", set.ID, map[string]any{"reason": override.Reason, "failing": override.Failing})

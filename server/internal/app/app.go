@@ -291,7 +291,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 			bus.Publish(ws, events.Event{Type: "ports", Data: p})
 		}
 	})
-	api.RegisterGit(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud}, gitops.NewService(agents, gitSvc, aud))
+	api.RegisterGit(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud}, gitops.NewService(agents, gitSvc, aud).WithAgentMarks(csSvc))
 	api.RegisterConnections(compSvc)
 	api.RegisterAgent(agentSvc)
 	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})

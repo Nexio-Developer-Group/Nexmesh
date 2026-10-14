@@ -102,7 +102,24 @@ func (s *Service) Status(ctx context.Context, ws, repo string) (*Status, error) 
 	if err != nil {
 		return nil, err
 	}
-	return ParseStatus(repo, res.Stdout), nil
+	st := ParseStatus(repo, res.Stdout)
+	if s.marks != nil {
+		agent := s.marks.AgentFiles(ctx, ws)
+		for _, f := range st.Files {
+			if _, ok := agent[joinRepo(repo, f.Path)]; ok {
+				st.AgentFiles = append(st.AgentFiles, f.Path)
+			}
+		}
+	}
+	return st, nil
+}
+
+// joinRepo turns a path inside a repository into a workspace-relative path.
+func joinRepo(repo, p string) string {
+	if repo == "" {
+		return p
+	}
+	return repo + "/" + p
 }
 
 func (s *Service) Branches(ctx context.Context, ws, repo string) ([]Branch, error) {
@@ -214,10 +231,33 @@ func (s *Service) Commit(ctx context.Context, ws, actor, repo, message string, a
 	if res, err := s.git(ctx, ws, repo, nil, nil, "config", "user.email"); err == nil && res.ExitCode == 0 && strings.TrimSpace(res.Stdout) != "" {
 		env = nil
 	}
-	if _, err := s.ok(ctx, ws, repo, nil, env, "commit", "-m", message); err != nil {
+	// A commit that includes files written by the Code Agent says so.
+	var agentPaths []string
+	if s.marks != nil {
+		if agent := s.marks.AgentFiles(ctx, ws); len(agent) > 0 {
+			if res, err := s.git(ctx, ws, repo, nil, nil, "diff", "--cached", "--name-only", "-z"); err == nil && res.ExitCode == 0 {
+				for _, name := range strings.Split(res.Stdout, "\x00") {
+					if name == "" {
+						continue
+					}
+					if _, ok := agent[joinRepo(repo, name)]; ok {
+						agentPaths = append(agentPaths, joinRepo(repo, name))
+					}
+				}
+			}
+		}
+	}
+	full := message
+	if len(agentPaths) > 0 && !strings.Contains(message, AgentTrailer) {
+		full = message + "\n\n" + AgentTrailer
+	}
+	if _, err := s.ok(ctx, ws, repo, nil, env, "commit", "-m", full); err != nil {
 		return err
 	}
-	s.aud.User(ctx, actor, ws, "git.commit", repo, map[string]any{"messageLength": len(message)})
+	if len(agentPaths) > 0 {
+		s.marks.ConsumeAgentFiles(ctx, ws, agentPaths)
+	}
+	s.aud.User(ctx, actor, ws, "git.commit", repo, map[string]any{"messageLength": len(message), "agentAssisted": len(agentPaths) > 0})
 	return nil
 }
 

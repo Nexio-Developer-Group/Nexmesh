@@ -35,6 +35,17 @@ describe('GitPanel', () => {
     expect(within(screen.getByRole('region', { name: 'Untracked' })).getByText('new.txt')).toBeInTheDocument()
   })
 
+  it('says a commit will be marked when staged files were written by the Code Agent', async () => {
+    panel({ 'GET /api/workspaces/ws1/git/status': () => status({ agentFiles: ['staged.go'] }) })
+    expect(await screen.findByRole('note')).toHaveTextContent('Assisted-by: Nexmesh Code Agent')
+  })
+
+  it('shows no agent note when none of the staged files came from the agent', async () => {
+    panel({ 'GET /api/workspaces/ws1/git/status': () => status({ agentFiles: ['edited.go'] }) })
+    await screen.findByRole('region', { name: 'Staged changes' })
+    expect(screen.queryByRole('note')).toBeNull()
+  })
+
   it('stages and unstages files', async () => {
     const { calls } = panel({ 'POST /api/workspaces/ws1/git/stage': () => ({ status: 204 }) })
     await userEvent.click(await screen.findByRole('button', { name: 'Stage edited.go' }))

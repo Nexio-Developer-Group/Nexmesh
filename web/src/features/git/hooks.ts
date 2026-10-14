@@ -6,7 +6,7 @@ export interface FileChange {
   staged: boolean; unstaged: boolean; untracked: boolean; conflicted: boolean
 }
 export interface GitStatus {
-  repo: string; branch: string; detached: boolean; upstream?: string; ahead: number; behind: number; files: FileChange[]; clean: boolean
+  repo: string; branch: string; detached: boolean; upstream?: string; ahead: number; behind: number; files: FileChange[]; clean: boolean; agentFiles?: string[]
 }
 export interface Branch { name: string; current: boolean; remote: boolean; upstream?: string }
 export interface Commit { hash: string; short: string; author: string; date: string; subject: string }

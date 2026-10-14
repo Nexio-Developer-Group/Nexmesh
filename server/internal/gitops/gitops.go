@@ -23,11 +23,25 @@ type Agent interface {
 	Call(ctx context.Context, wsID, method string, params, out any) error
 }
 
+// AgentMarks tells the Git panel which files the Code Agent wrote (PRD F18),
+// so commits that include them can say so.
+type AgentMarks interface {
+	AgentFiles(ctx context.Context, wsID string) map[string]string
+	ConsumeAgentFiles(ctx context.Context, wsID string, paths []string)
+}
+
 type Service struct {
 	agent Agent
 	creds *gitcred.Service
 	aud   *audit.Recorder
+	marks AgentMarks
 }
+
+// WithAgentMarks enables the Assisted-by trailer on commits with agent-written files.
+func (s *Service) WithAgentMarks(m AgentMarks) *Service { s.marks = m; return s }
+
+// AgentTrailer is added to the message of a commit that includes agent-written files.
+const AgentTrailer = "Assisted-by: Nexmesh Code Agent"
 
 func NewService(a Agent, creds *gitcred.Service, aud *audit.Recorder) *Service {
 	return &Service{agent: a, creds: creds, aud: aud}
@@ -239,11 +253,13 @@ type Status struct {
 	Behind   int          `json:"behind"`
 	Files    []FileChange `json:"files"`
 	Clean    bool         `json:"clean"`
+	// AgentFiles are changed files that were written by accepted Code Agent changes.
+	AgentFiles []string `json:"agentFiles"`
 }
 
 // ParseStatus reads `git status --porcelain=v1 -b -z` output.
 func ParseStatus(repo, out string) *Status {
-	st := &Status{Repo: repo, Files: []FileChange{}}
+	st := &Status{Repo: repo, Files: []FileChange{}, AgentFiles: []string{}}
 	entries := strings.Split(out, "\x00")
 	for i := 0; i < len(entries); i++ {
 		e := entries[i]

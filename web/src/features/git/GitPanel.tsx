@@ -90,6 +90,9 @@ function RepoView({ workspaceId, repo, onOpenFile }: { workspaceId: string; repo
             <label htmlFor="commit-msg" className="sr-only">Commit message</label>
             <textarea id="commit-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="Commit message"
               className="w-full resize-none rounded-lg border border-line-strong bg-field p-2 text-[13px] placeholder:text-faint" />
+            {staged.some((f) => st.agentFiles?.includes(f.path)) && (
+              <p role="note" className="mt-1.5 text-xs text-muted">Some staged files were written by the Code Agent, so this commit will include an “Assisted-by: Nexmesh Code Agent” line.</p>
+            )}
             <Button size="sm" variant="primary" className="mt-2 w-full" disabled={staged.length === 0 || !message.trim()} loading={acts.commit.isPending}
               onClick={() => acts.commit.mutate({ repo, message }, { onSuccess: () => setMessage('') })}>
               Commit {staged.length > 0 ? `${staged.length} file${staged.length === 1 ? '' : 's'}` : ''}

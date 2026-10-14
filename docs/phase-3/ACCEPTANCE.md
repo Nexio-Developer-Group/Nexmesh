@@ -21,9 +21,9 @@ python3 scripts/smoke.py http://127.0.0.1:8080                       # drives ev
 | F2 | View always matches the canvas; exports contain no secrets; drift matches card state | Met | `architecture` tests; computed per request from cards and lines; Playwright compares the view with the canvas and checks the exports |
 | F4 | Switching environment changes injected values; production protected; no cross-environment leakage | Met | `component/envprofile_test.go`; Playwright with two real Redis servers; production switch needs an explicit confirmation |
 | F5 | CPU, memory, storage trends per card; latency for connected cards | Met (simulated on the fake driver) | `metrics` tests; Docker stats path written, not run live |
-| F13 | Queries never expose credentials to the browser; read-only blocks writes; every query audited without results | Met (read-only) | real MariaDB, MongoDB, Redis, RabbitMQ and Kafka in `probe/inspect_it_test.go` (SQL write refusal, Mongo and Redis command allow-lists, panic recovery); Playwright write refusal is audited. **Gap 2** |
+| F13 | Queries never expose credentials to the browser; read-only blocks writes; every query audited without results | Met (read-only) | real MariaDB, MongoDB, Redis, RabbitMQ and Kafka in `probe/inspect_it_test.go` (SQL write refusal, Mongo and Redis command allow-lists, panic recovery); Playwright write refusal is audited. **Gap 1** |
 | F16 | External API card follows test-then-add and secret handling | Met | `component` tests and `externalapi.test.tsx`; the probe goes through the SSRF guard |
-| F25 | Compose starts installed services only; no connected card becomes a container; no secrets in files | Met (validated, not run) | `deployexport` tests; `docker compose config` accepts the generated file; Playwright writes files and keeps existing ones. **Gap 3** |
+| F25 | Compose starts installed services only; no connected card becomes a container; no secrets in files | Met (validated, not run) | `deployexport` tests; `docker compose config` accepts the generated file; Playwright writes files and keeps existing ones. **Gap 2** |
 | F17 | Agent context built from the canvas and never includes secret values | Met | `codeagent` `TestContextNeverCarriesSecretValues`; e2e `TestCodeAgentOverRealWorkspace` checks the provider's request bodies for a variable's secret value and a `.env` secret |
 | F17 | Forbidden actions are rejected and recorded | Met | secret files, path escapes, `printenv`, `$SECRET` expansion, unknown tools and tools above the permission level all return `denied` and write `agent.action_denied` to the audit log (`codeagent` tests, Playwright) |
 | F17 | Allowed actions follow F18's approval rules | Met | file edits only as change sets; risky commands wait for approval with the exact command; read-only and test commands run at once (`policy_test.go`, approval and decline flows in Go and Playwright) |
@@ -35,7 +35,7 @@ python3 scripts/smoke.py http://127.0.0.1:8080                       # drives ev
 | F18 | Rejected changes leave no residue | Met | `TestRejectTouchesNothing`; a failed apply rolls back and leaves no checkpoint |
 | F18 | Risky commands always need approval with the exact command | Met | classification in `codeagent/policy.go`; see the security review for what counts as risky |
 | F18 | Summary lists files, components and variables, linked to highlight mode | Met | `impact` on every change set; "Highlight in architecture view" opens F2 with the components highlighted |
-| F18 | Agent-authored commits are marked as such (F10) | **Not met.** **Gap 1** | the agent has no commit tool; accepted agent changes are audited (`changeset.applied`, actor agent) but a commit made afterwards from the Git panel is not marked |
+| F18 | Agent-authored commits are marked as such (F10) | Met | files written by accepted agent changes are tracked until committed; a commit that includes any gets an `Assisted-by: Nexmesh Code Agent` line, the Git panel says so beforehand, and the audit event records `agentAssisted` (e2e `TestAgentAuthoredCommitsAreMarked`, `git.test.tsx`). The agent itself has no commit tool |
 | F19 | Explain and Diagnose on a card from logs, health and test results; failure-category explanation | Met | `assist.go` builds the request from the card's state, last connection test (with fixed per-stage hints from PRD 11.5), health history and scrubbed logs |
 | F19 | The preview matches what is sent; no secret in sent context | Met | the preview is stored server side and sent verbatim as the user message (`TestAssistPreviewIsScrubbedAndSentExactly`, Playwright compares the text); `secretscan` plus exact-value masking |
 | F19 | Suggested fixes never applied without approval | Met | fixes arrive as change sets |
@@ -50,15 +50,14 @@ python3 scripts/smoke.py http://127.0.0.1:8080                       # drives ev
 
 ## Known gaps
 
-1. **Agent-authored commits are not marked** (F18). Needs either an agent commit tool or tracking which files came from accepted agent changes so the Git panel can add a trailer.
-2. **Inspectors are read-only.** There is no opt-in write mode, and installed (container) services cannot be inspected yet.
-3. **Docker is still unverified live.** The Docker driver, its stats, the generated compose bundle, the workspace image and the Windows installer have not run against a real daemon or a real Windows machine. The installer builds with `makensis` on Linux and is smoke-checked only structurally.
-4. **No hosted model API was called.** Chat with tools is tested with protocol fakes for Anthropic, OpenAI-compatible, Gemini and Ollama request and response shapes. Differences in a real provider's tool-calling behaviour will only show against the real service.
-5. **Snapshot restore still covers files only** (Phase 2 gap 1). A restored workspace keeps its current canvas configuration.
-6. **Agent runs live in server memory.** A restart interrupts a running conversation (it is marked interrupted and can be continued by sending another message). A pending approval does not survive a restart.
-7. **Gate trial runs touch the working tree.** While gates run on a proposed change, the files on disk temporarily hold the proposal and Nexmesh refuses other change-set work in that workspace. Edits you make by hand during that window can conflict. The review dialog says so, and a crash during a trial is repaired the next time the workspace's change sets are used.
-8. **Static analysis of commands is heuristic.** Command classification, the path guard for secret files and credential-shaped scrubbing reduce risk but are not a sandbox. Tests and build scripts the project already contains run arbitrary project code, the same as when a person runs them.
-9. **Account audit events have no UI** (Phase 2 gap 3) and a full run on PostgreSQL was not done (Phase 2 gap 4).
+1. **Inspectors are read-only.** There is no opt-in write mode, and installed (container) services cannot be inspected yet.
+2. **Docker is still unverified live.** The Docker driver, its stats, the generated compose bundle, the workspace image and the Windows installer have not run against a real daemon or a real Windows machine. The installer builds with `makensis` on Linux and is smoke-checked only structurally.
+3. **No hosted model API was called.** Chat with tools is tested with protocol fakes for Anthropic, OpenAI-compatible, Gemini and Ollama request and response shapes. Differences in a real provider's tool-calling behaviour will only show against the real service.
+4. **Snapshot restore still covers files only** (Phase 2 gap 1). A restored workspace keeps its current canvas configuration.
+5. **Agent runs live in server memory.** A restart interrupts a running conversation (it is marked interrupted and can be continued by sending another message). A pending approval does not survive a restart.
+6. **Gate trial runs touch the working tree.** While gates run on a proposed change, the files on disk temporarily hold the proposal and Nexmesh refuses other change-set work in that workspace. Edits you make by hand during that window can conflict. The review dialog says so, and a crash during a trial is repaired the next time the workspace's change sets are used.
+7. **Static analysis of commands is heuristic.** Command classification, the path guard for secret files and credential-shaped scrubbing reduce risk but are not a sandbox. Tests and build scripts the project already contains run arbitrary project code, the same as when a person runs them.
+8. **Account audit events have no UI** (Phase 2 gap 3) and a full run on PostgreSQL was not done (Phase 2 gap 4).
 
 ## Security review of the new attack surfaces
 
