@@ -23,7 +23,7 @@ Three ways to run Nexmesh. Pick one:
 | **B. Self-host with Docker Compose** | Real workspaces and installed services | Yes |
 | **C. Build binaries** | Running without Compose, packaging | Optional |
 
-> Status: Phases 1 and 2 are implemented. Path B has not yet been run against a live Docker daemon by the project (see `docs/phase-2/ACCEPTANCE.md`, known gaps). Do the smoke test at the end of this guide before you rely on it.
+> Status: Phases 1, 2 and 3 are implemented. Path B has not yet been run against a live Docker daemon by the project (see `docs/phase-2/ACCEPTANCE.md`, known gaps). Do the smoke test at the end of this guide before you rely on it.
 
 ## 1. Download
 

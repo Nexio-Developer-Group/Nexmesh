@@ -16,6 +16,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--base", default="http://localhost:8080")
 ap.add_argument("--redis", default="")
 ap.add_argument("--redis-pass", default="", help="password of that Redis, if it has one")
+ap.add_argument("--agent-port", type=int, default=0, help="start a scripted model on this local port and drive the Code Agent end to end (needs NEXMESH_DEV_ALLOW_LOOPBACK_EGRESS=true)")
 args = ap.parse_args()
 BASE = args.base.rstrip("/")
 results = []
@@ -494,6 +495,122 @@ if args.redis:
         inst = call("GET", W(f"/components/{S['redis']}/inspect"))
         assert not inst["available"] and inst["reason"], inst
         call("DELETE", W(base))
+
+
+@check("change sets: stage, accept part, checkpoint, revert, protected paths")
+def _():
+    call("PUT", W("/files/content"), {"path": "cs.txt", "content": "one\ntwo\nthree\n"})
+    expect("POST", W("/changes"), {"title": "x", "changes": [{"path": "../escape", "content": "x"}]}, 422)
+    expect("POST", W("/changes"), {"title": "x", "changes": [{"path": ".git/config", "content": "x"}]}, 422)
+    cs = call("POST", W("/changes"), {"title": "Edit cs", "changes": [{"path": "cs.txt", "content": "one\n2\nthree\n"}, {"path": "cs-new/a.txt", "content": "a\n"}]})
+    assert call("GET", W("/files/content?path=cs.txt"))["content"] == "one\ntwo\nthree\n", "staging must not write"
+    out = call("POST", W(f"/changes/{cs['id']}/accept"), {"files": [{"path": "cs-new/a.txt"}]})
+    assert out["status"] == "partially_applied", out
+    assert call("GET", W("/files/content?path=cs.txt"))["content"] == "one\ntwo\nthree\n"
+    cps = call("GET", W("/checkpoints"))["checkpoints"]
+    cp = [c for c in cps if c["setId"] == cs["id"]][0]
+    call("POST", W(f"/checkpoints/{cp['id']}/revert"), {})
+    expect("GET", W("/files/content?path=cs-new/a.txt"), None, 404)
+
+
+@check("agent rules: save, list, applied to change sets, delete")
+def _():
+    r = call("PUT", W("/rules"), {"title": "Smoke style", "scope": "global", "body": "Keep it short.", "components": [], "paths": [], "protect": []})
+    assert r["id"] == ".nexmesh/rules/smoke-style.md", r
+    assert any(x["title"] == "Smoke style" for x in call("GET", W("/rules"))["rules"])
+    cs = call("POST", W("/changes"), {"title": "With rule", "changes": [{"path": "rule-check.txt", "content": "x\n"}]})
+    assert [x["title"] for x in cs["rules"]] == ["Smoke style"], cs["rules"]
+    call("POST", W(f"/changes/{cs['id']}/reject"))
+    call("DELETE", W("/rules/smoke-style"))
+    assert not any(x["title"] == "Smoke style" for x in call("GET", W("/rules"))["rules"])
+
+
+@check("quality gates: detect, confirm, run, built-in secret scan finds and hides")
+def _():
+    det = call("GET", W("/gates/detect"))["gates"]
+    assert any(g["command"] == "builtin:secrets" for g in det), det
+    assert call("GET", W("/gates"))["confirmed"] is False
+    call("PUT", W("/files/content"), {"path": "leak.py", "content": "KEY = 'AKIAIOSFODNN7ABCDEFG'\n"})
+    call("PUT", W("/gates"), {"gates": [
+        {"id": "ok", "name": "Echo", "kind": "custom", "command": "echo fine", "policy": "required", "enabled": True},
+        {"id": "secrets", "name": "Secret scan", "kind": "secrets", "command": "builtin:secrets", "policy": "advisory", "enabled": True}]})
+    run = call("POST", W("/gates/runs"), {})
+    done = wait(lambda: (lambda r: r if r["status"] != "running" else None)(call("GET", W(f"/gates/runs/{run['id']}"))), "gates finished")
+    st = {r["gateId"]: r for r in done["results"]}
+    assert st["ok"]["status"] == "passed" and st["secrets"]["status"] == "failed", done
+    assert "AKIAIOSFODNN7ABCDEFG" not in json.dumps(done), "the scan must not print the secret"
+    assert done["passed"] is True  # the failing gate is advisory
+    call("PUT", W("/gates"), {"gates": []})
+    expect("DELETE", W("/files?path=leak.py&recursive=false"), None, 204)
+
+
+@check("definition: Phase 3 sections export without secrets and drift is clean")
+def _():
+    call("PUT", W("/agent/settings"), {"level": "propose", "autoAccept": True})
+    code, b = call("GET", W("/definition"), raw=True)
+    text = b.decode()
+    assert code == 200 and "agentPolicy:" in text and "autoAccept" not in text, text[:300]
+    call("PUT", W("/agent/settings"), {"level": "propose", "autoAccept": False})
+
+
+if args.agent_port:
+    import http.server, threading
+
+    SEEN = []
+
+    class Scripted(http.server.BaseHTTPRequestHandler):
+        steps = [
+            ("tool", "read_file", {"path": ".env"}),
+            ("tool", "propose_changes", {"title": "Smoke edit", "changes": [{"path": "agent-made.txt", "content": "hello\n"}]}),
+            ("text", "Proposed one file."),
+        ]
+
+        def log_message(self, *a):
+            pass
+
+        def _send(self, obj, code=200):
+            b = json.dumps(obj).encode()
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(b)))
+            self.end_headers()
+            self.wfile.write(b)
+
+        def do_GET(self):
+            self._send({"data": [{"id": "smoke-model"}]})
+
+        def do_POST(self):
+            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+            if not body.get("tools"):
+                return self._send({"choices": [{"message": {"content": "pong"}}]})
+            SEEN.append(json.dumps(body))
+            kind, *rest = Scripted.steps.pop(0) if Scripted.steps else ("text", "Done.")
+            if kind == "tool":
+                return self._send({"choices": [{"finish_reason": "tool_calls", "message": {"content": "", "tool_calls": [
+                    {"id": "c%d" % len(SEEN), "type": "function", "function": {"name": rest[0], "arguments": json.dumps(rest[1])}}]}}]})
+            self._send({"choices": [{"finish_reason": "stop", "message": {"content": rest[0]}}]})
+
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", args.agent_port), Scripted)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+    @check("code agent: scripted model reads, is refused a secret file, proposes; user accepts; secrets never sent")
+    def _():
+        cfg = {"name": "Smoke model", "provider": "custom", "protocol": "openai", "endpoint": f"http://127.0.0.1:{args.agent_port}", "modelId": "smoke-model", "apiKey": "sk-smoke-0123456789abc"}
+        call("PUT", W("/files/content"), {"path": ".env", "content": "TOKEN=smoke-secret-value-98765\n"})
+        assert call("POST", "/api/agent/test", cfg)["passed"] is True
+        call("POST", W("/agent-configs"), cfg)
+        sess = call("POST", W("/agent/sessions"), {})
+        call("POST", W(f"/agent/sessions/{sess['id']}/messages"), {"text": "make a file"})
+        done = wait(lambda: (lambda x: x if x["status"] == "idle" else None)(call("GET", W(f"/agent/sessions/{sess['id']}"))), "agent idle")
+        calls = [c for t in done["turns"] for c in t.get("calls", [])]
+        assert [c["status"] for c in calls] == ["denied", "ok"], calls
+        expect("GET", W("/files/content?path=agent-made.txt"), None, 404)  # nothing written before acceptance
+        csid = calls[1]["changeSetId"]
+        call("POST", W(f"/changes/{csid}/accept"), {"all": True})
+        assert call("GET", W("/files/content?path=agent-made.txt"))["content"] == "hello\n"
+        assert not any("smoke-secret-value-98765" in b for b in SEEN), "a secret reached the model"
+        acts = [e["action"] for e in call("GET", W("/audit"))["events"]]
+        assert "agent.action_denied" in acts and "changeset.applied" in acts, acts
 
 
 @check("audit: events, filters, CSV export")

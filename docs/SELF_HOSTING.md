@@ -4,7 +4,7 @@ Step-by-step download and setup: [`INSTALL.md`](INSTALL.md).
 
 Nexmesh runs on one Linux host with Docker. `docker compose` starts PostgreSQL and the control plane (the web app is embedded in the same binary).
 
-> Status: Phase 1 (MVP). The Docker driver, compose bundle and workspace image have unit tests and `docker compose config` validation but have **not yet been exercised against a live Docker daemon in CI** (see `docs/phase-1/ACCEPTANCE.md`, gap 1). Run the smoke test below on your host before relying on it.
+> Status: Phases 1 to 3. The Docker driver, compose bundle and workspace image have unit tests and `docker compose config` validation but have **not yet been exercised against a live Docker daemon in CI** (see `docs/phase-1/ACCEPTANCE.md`, gap 1). Run the smoke test below on your host before relying on it.
 
 ## Requirements
 
@@ -63,6 +63,7 @@ All settings are environment variables on the `nexmesh` service.
 - **Outbound connections.** Test Connection, health checks and model tests go through an SSRF guard: cloud metadata addresses and link-local ranges are always blocked; loopback is blocked; private ranges are blocked unless `NEXMESH_ALLOW_PRIVATE_EGRESS=true`.
 - **Authentication.** Sign-in is required; see the Accounts section. Never set `NEXMESH_AUTH=disabled` on a network others can reach.
 - **Agent keys are not injected into workspaces.** Connection variables are delivered only to processes started through the workspace agent.
+- **Code Agent data.** The agent sends your prompts and the files and command output it reads to the model provider you configure (for a local model, to your own server; reaching a private address needs `NEXMESH_ALLOW_PRIVATE_EGRESS=true` or the per-configuration option). Secret values, `.env` files and key files are never sent; credential-shaped text is removed from command output and card diagnostics. Conversations, change sets (with the full text of proposed and replaced files), checkpoints and gate logs are stored in the control plane's database and are deleted with the workspace; the last 50 checkpoints and 30 gate runs per workspace are kept. Agent runs are bounded (16 steps and 10 minutes per message, 3 concurrent runs per workspace).
 
 ## Upgrading
 
@@ -88,7 +89,8 @@ Database migrations run automatically at startup.
 ```sh
 make dev-server   # in-memory store, fake runtime driver, no containers
 make dev-web      # Vite dev server on :5173, proxies /api to :8080
-make acceptance   # walks the Phase 1 acceptance criteria in-process
+make acceptance   # walks the acceptance criteria in-process
+python3 scripts/smoke.py --base http://localhost:8080 --agent-port 19950   # drives every feature through the API, including a scripted Code Agent (needs NEXMESH_DEV_ALLOW_LOOPBACK_EGRESS=true)
 make it-services && make it   # probe integration tests against real services
 ```
 

@@ -35,9 +35,9 @@ Decisions taken here for the open items in PRD Section 17:
 - [x] **T3.4** Rules files: repository files, scopes, applied-rules list (F21)
 - [x] **T3.3b** Agent canvas proposals (Draft cards, connections), opt-in auto-accept that never skips checkpoints or required gates, change-set impact (components and variables)
 - [x] **T3.5** Quality gates: detection, required or advisory, run in workspace, override recorded, stored in the definition (F23)
-- [ ] **T3.6** Agent chat panel and change-set review UI
-- [ ] **T3.7** Per-card Explain and Diagnose with context preview (F19)
+- [x] **T3.6** Agent chat panel and change-set review UI
+- [x] **T3.7** Per-card Explain and Diagnose with context preview (F19)
 
 ## M4: Acceptance
 - [x] **T4.0** Workspace definition carries wires, environments, gates and rules (F12 with F1, F4, F21, F23); drift covers them
-- [ ] **T4.1** Phase 3 acceptance review, Playwright journeys, docs, security review
+- [x] **T4.1** Phase 3 acceptance review, Playwright journeys, docs, security review
