@@ -259,20 +259,6 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 		WriteJSON(w, http.StatusOK, map[string]any{"operations": list})
 	})
 
-	s.Handle("GET /api/workspaces/{id}/audit", func(w http.ResponseWriter, r *http.Request) {
-		ws, err := d.Svc.Get(r.Context(), Owner(r), r.PathValue("id"))
-		if err != nil {
-			s.HandleError(w, err)
-			return
-		}
-		evs, err := d.Store.ListAudit(r.Context(), ws.ID, 200)
-		if err != nil {
-			s.HandleError(w, err)
-			return
-		}
-		WriteJSON(w, http.StatusOK, map[string]any{"events": evs})
-	})
-
 	// Server-Sent Events: workspace, component and operation changes.
 	s.Handle("GET /api/workspaces/{id}/events", func(w http.ResponseWriter, r *http.Request) {
 		ws, err := d.Svc.Get(r.Context(), Owner(r), r.PathValue("id"))
