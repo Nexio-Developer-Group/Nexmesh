@@ -28,16 +28,17 @@ export function EditorPane({ workspaceId, tabs, active, onActivate, onClose, onE
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div role="tablist" aria-label="Open files" className="flex shrink-0 overflow-x-auto border-b border-line bg-panel">
-        {tabs.map((t) => (
-          <div key={t.path} className={clsx('group flex items-center border-r border-line text-[13px]', t.path === active ? 'bg-bg text-fg' : 'text-muted hover:text-fg')}>
-            <button role="tab" aria-selected={t.path === active} title={t.path} onClick={() => onActivate(t.path)} className="max-w-[200px] truncate py-2 pl-3 pr-1.5">
+      <div className="flex shrink-0 border-b border-line bg-panel">
+        <div role="tablist" aria-label="Open files" className="flex min-w-0 flex-1 overflow-x-auto">
+          {tabs.map((t) => (
+            <button key={t.path} role="tab" aria-selected={t.path === active} title={t.path} onClick={() => onActivate(t.path)}
+              className={clsx('max-w-[200px] shrink-0 truncate border-r border-line px-3 py-2 text-[13px]', t.path === active ? 'bg-bg text-fg' : 'text-muted hover:text-fg')}>
               {baseOf(t.path)}
               {isDirty(t) && <span aria-label="unsaved changes" className="ml-1.5 inline-block size-2 rounded-full bg-warn-fg align-middle" />}
             </button>
-            <button aria-label={`Close ${baseOf(t.path)}`} onClick={() => requestClose(t)} className="mr-1 rounded px-1.5 text-faint hover:bg-raised hover:text-fg">×</button>
-          </div>
-        ))}
+          ))}
+        </div>
+        {tab && <button aria-label={`Close ${baseOf(tab.path)}`} title={`Close ${baseOf(tab.path)}`} onClick={() => requestClose(tab)} className="shrink-0 px-3 text-faint hover:bg-raised hover:text-fg">×</button>}
       </div>
 
       {tab && (

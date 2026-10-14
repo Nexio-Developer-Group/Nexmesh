@@ -15,10 +15,19 @@ export default defineConfig({
     trace: 'retain-on-failure',
     launchOptions: process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {},
   },
-  webServer: {
-    command: 'bash e2e/start.sh',
-    url: 'http://127.0.0.1:18080/healthz',
-    reuseExistingServer: !process.env.CI,
-    timeout: 240_000,
-  },
+  webServer: [
+    {
+      command: 'bash e2e/start.sh',
+      url: 'http://127.0.0.1:18080/healthz',
+      reuseExistingServer: !process.env.CI,
+      timeout: 240_000,
+    },
+    {
+      // A second instance with sign-in enabled, for auth.spec.ts.
+      command: 'E2E_PORT=18081 E2E_AUTH=enabled bash e2e/start.sh',
+      url: 'http://127.0.0.1:18081/healthz',
+      reuseExistingServer: !process.env.CI,
+      timeout: 240_000,
+    },
+  ],
 })

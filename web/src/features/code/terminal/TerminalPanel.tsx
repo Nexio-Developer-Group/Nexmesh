@@ -13,6 +13,7 @@ export function TerminalPanel({ workspaceId }: { workspaceId: string }) {
   const started = useRef(false)
 
   const sessions = (list.data ?? []).filter((s) => !s.exited || s.id === active)
+  const activeSession = sessions.find((s) => s.id === active)
 
   // First visit: reuse a surviving session (it outlived the last browser tab) or start one.
   useEffect(() => {
@@ -32,13 +33,12 @@ export function TerminalPanel({ workspaceId }: { workspaceId: string }) {
       <div className="flex h-9 shrink-0 items-center border-b border-line bg-panel text-[13px]">
         <div role="tablist" aria-label="Terminals" className="flex min-w-0 flex-1 overflow-x-auto">
           {sessions.map((s) => (
-            <div key={s.id} className={clsx('flex items-center border-r border-line', s.id === active ? 'bg-bg text-fg' : 'text-muted hover:text-fg')}>
-              <button role="tab" aria-selected={s.id === active} onClick={() => { setActive(s.id); setCollapsed(false) }} className="max-w-[160px] truncate py-1.5 pl-3 pr-1.5">{s.title}</button>
-              <button aria-label={`Close ${s.title}`} onClick={() => end(s.id)} className="mr-1 rounded px-1.5 text-faint hover:bg-raised hover:text-fg">×</button>
-            </div>
+            <button key={s.id} role="tab" aria-selected={s.id === active} onClick={() => { setActive(s.id); setCollapsed(false) }}
+              className={clsx('max-w-[160px] shrink-0 truncate border-r border-line px-3 py-1.5', s.id === active ? 'bg-bg text-fg' : 'text-muted hover:text-fg')}>{s.title}</button>
           ))}
-          <button aria-label="New terminal" title="New terminal" onClick={add} disabled={open.isPending} className="px-3 text-muted hover:text-fg disabled:opacity-50">+</button>
         </div>
+        <button aria-label="New terminal" title="New terminal" onClick={add} disabled={open.isPending} className="px-3 text-muted hover:text-fg disabled:opacity-50">+</button>
+        {activeSession && <button aria-label={`Close ${activeSession.title}`} title={`Close ${activeSession.title}`} onClick={() => end(activeSession.id)} className="px-2 text-faint hover:text-fg">×</button>}
         <button aria-label={collapsed ? 'Expand terminal panel' : 'Collapse terminal panel'} aria-expanded={!collapsed} onClick={() => setCollapsed((c) => !c)} className="px-3 text-muted hover:text-fg">{collapsed ? '▴' : '▾'}</button>
       </div>
       <div className={clsx('min-h-0 flex-1', collapsed && 'hidden')}>
