@@ -1,5 +1,7 @@
 # Self-hosting Nexmesh
 
+Step-by-step download and setup: [`INSTALL.md`](INSTALL.md).
+
 Nexmesh runs on one Linux host with Docker. `docker compose` starts PostgreSQL and the control plane (the web app is embedded in the same binary).
 
 > Status: Phase 1 (MVP). The Docker driver, compose bundle and workspace image have unit tests and `docker compose config` validation but have **not yet been exercised against a live Docker daemon in CI** (see `docs/phase-1/ACCEPTANCE.md`, gap 1). Run the smoke test below on your host before relying on it.
@@ -59,7 +61,7 @@ All settings are environment variables on the `nexmesh` service.
 - **Docker socket.** The control plane needs the host's Docker socket to create workspaces, which is root-equivalent access to the host. Run Nexmesh on a dedicated host or VM. A rootless-Docker or socket-proxy setup is planned (PRD Section 20.3.2). Workspace containers never receive the socket, run without privileges, drop all but a small capability allow-list, and sit on a private per-workspace network.
 - **Master key.** Losing `NEXMESH_MASTER_KEY` makes stored connection credentials and agent keys unrecoverable (users re-enter them). Rotating it requires re-saving secrets.
 - **Outbound connections.** Test Connection, health checks and model tests go through an SSRF guard: cloud metadata addresses and link-local ranges are always blocked; loopback is blocked; private ranges are blocked unless `NEXMESH_ALLOW_PRIVATE_EGRESS=true`.
-- **Authentication.** Phase 1 has no sign-in screen: every request acts as one local user. **Do not expose port 8080 to untrusted networks**; put it behind a VPN or an authenticating reverse proxy. Sign-in and teams arrive in later phases.
+- **Authentication.** Sign-in is required; see the Accounts section. Never set `NEXMESH_AUTH=disabled` on a network others can reach.
 - **Agent keys are not injected into workspaces.** Connection variables are delivered only to processes started through the workspace agent.
 
 ## Upgrading

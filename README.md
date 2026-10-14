@@ -19,7 +19,7 @@ make dev-server   # control plane, in-memory store and fake runtime driver (no D
 make dev-web      # web app on http://localhost:5173
 ```
 
-Self-hosting with Docker: [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
+Download and setup guide: [`docs/INSTALL.md`](docs/INSTALL.md). Self-hosting reference: [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
 
 ## Layout
 
