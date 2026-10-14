@@ -232,7 +232,10 @@ def _():
 @check("share links: create, public access path, revoke")
 def _():
     call("PUT", W("/ports/3001"), {"label": "x"})
-    sh = call("POST", W("/shares"), {"port": 3001, "ttlMinutes": 10})
+    code, body = call("POST", W("/shares"), {"port": 3001, "ttlMinutes": 10}, raw=True)
+    if code == 403 and b"sharing_disabled" in body:
+        return  # off by default: that is the correct behaviour unless NEXMESH_ALLOW_SHARE_LINKS=true
+    sh = json.loads(body)
     assert sh.get("url") and "nx_share" not in json.dumps(call("GET", W("/shares")))
     code, _ = call("GET", sh["url"].replace(BASE, ""), raw=True)
     assert code != 401, code

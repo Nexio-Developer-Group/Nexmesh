@@ -1,4 +1,4 @@
-.PHONY: smoke start verify dev-server dev-web test build lint acceptance it it-services
+.PHONY: embed-catalog smoke start verify dev-server dev-web test build lint acceptance it it-services
 
 smoke:
 	python3 scripts/smoke.py --base $${BASE:-http://localhost:8080}
@@ -20,7 +20,7 @@ test:
 	cd web && pnpm test --run
 
 # Builds the web app, embeds it into the control-plane binary, and builds the agent.
-build:
+build: embed-catalog
 	cd web && pnpm install --frozen-lockfile && pnpm build
 	rm -rf server/internal/webui/dist && mkdir -p server/internal/webui/dist && cp -r web/dist/. server/internal/webui/dist/
 	cd server && go build -o ../bin/nexmesh ./cmd/nexmesh && CGO_ENABLED=0 go build -o ../bin/nexmesh-agent ./cmd/nexmesh-agent
@@ -38,3 +38,9 @@ it:
 
 lint:
 	cd server && go vet ./...
+
+# Copies the catalog into the binary so a downloaded executable needs no files beside it.
+embed-catalog:
+	rm -rf server/internal/catalogdata/data && mkdir -p server/internal/catalogdata/data
+	cp -r catalog/. server/internal/catalogdata/data/
+	touch server/internal/catalogdata/data/.gitkeep

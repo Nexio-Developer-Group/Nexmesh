@@ -8,7 +8,8 @@ import (
 
 type Config struct {
 	Addr        string // HTTP listen address
-	Store       string // "memory" or "postgres"
+	Store       string // "memory", "file" or "postgres"
+	DataDir     string // where the file store, master key and local workspaces live (local mode)
 	DatabaseURL string
 	Driver      string // "fake" or "docker"
 	CatalogDir  string
@@ -55,6 +56,7 @@ func Load() Config {
 	return Config{
 		Addr:                env("NEXMESH_ADDR", ":8080"),
 		Store:               env("NEXMESH_STORE", "postgres"),
+		DataDir:             os.Getenv("NEXMESH_DATA_DIR"),
 		DatabaseURL:         env("NEXMESH_DATABASE_URL", "postgres://nexmesh:nexmesh@localhost:5432/nexmesh?sslmode=disable"),
 		Driver:              env("NEXMESH_DRIVER", "docker"),
 		CatalogDir:          env("NEXMESH_CATALOG_DIR", "../catalog"),

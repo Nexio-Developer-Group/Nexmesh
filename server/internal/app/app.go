@@ -65,10 +65,11 @@ type App struct {
 	Agents     *agentcfg.Service
 	Secrets    *secrets.Service
 
-	engine *ops.Engine
-	agent  *agentapi.Registry
-	log    *slog.Logger
-	closer func()
+	engine       *ops.Engine
+	adoptOnStart bool
+	agent        *agentapi.Registry
+	log          *slog.Logger
+	closer       func()
 }
 
 // New builds the control plane. Nothing runs until Run is called.
@@ -88,6 +89,15 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		case "memory":
 			st = store.NewMemory()
 			log.Warn("using in-memory store: data is lost on restart")
+		case "file":
+			if cfg.DataDir == "" {
+				return nil, fmt.Errorf("NEXMESH_STORE=file needs NEXMESH_DATA_DIR")
+			}
+			ps, err := store.OpenPersistent(filepath.Join(cfg.DataDir, "data.json"))
+			if err != nil {
+				return nil, fmt.Errorf("file store: %w", err)
+			}
+			st, closer = ps, ps.Close
 		default:
 			pg, err := store.NewPostgres(ctx, cfg.DatabaseURL)
 			if err != nil {
@@ -222,7 +232,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		h = withPreviewHost(withUI(api.Handler(), webui.Handler()), pv, tracker)
 	}
 	return &App{Handler: h, Store: st, Driver: drv, Bus: bus, Workspaces: wsSvc, Components: compSvc, Agents: agentSvc, Secrets: sec,
-		engine: eng, agent: agents, log: log, closer: closer}, nil
+		engine: eng, agent: agents, log: log, closer: closer, adoptOnStart: cfg.Store == "file" && cfg.Driver == "fake"}, nil
 }
 
 // withPreviewHost sends requests for preview origins straight to the preview
@@ -266,6 +276,14 @@ func (a *App) Run(ctx context.Context) {
 // Start is Run without blocking.
 func (a *App) Start(ctx context.Context) {
 	a.engine.Start(ctx)
+	if a.adoptOnStart {
+		// A persistent store outlives the simulated runtime: bring workspaces
+		// and their services back before reconcilers look for them.
+		if ids := a.Workspaces.Adopt(ctx); len(ids) > 0 {
+			a.log.Info("restored workspaces from the data file", "count", len(ids))
+		}
+		a.Components.Adopt(ctx)
+	}
 	go a.Workspaces.RunReconciler(ctx, 15*time.Second)
 	go a.agent.Run(ctx)
 	go a.Components.RunHealth(ctx, 30*time.Second)
