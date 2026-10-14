@@ -29,7 +29,7 @@ Decisions taken here for the open items in PRD Section 17:
 - [x] **T2.2** Inspector UI on the card
 
 ## M3: Agent (F17, F18, F19, F21, F23)
-- [ ] **T3.1** Chat with tool calls in the model provider layer (Anthropic, OpenAI-compatible, scripted test provider)
+- [x] **T3.1** Chat with tool calls in the model provider layer (Anthropic, OpenAI-compatible, scripted test provider)
 - [ ] **T3.2** Change sets: staged diffs, accept all, accept part, reject, checkpoints and revert (F18 core)
 - [ ] **T3.3** Agent context and actions: canvas context without secrets, action permissions, forbidden actions recorded, approval for risky commands (F17)
 - [ ] **T3.4** Rules files: repository files, scopes, applied-rules list (F21)

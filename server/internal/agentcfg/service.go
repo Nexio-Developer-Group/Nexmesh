@@ -598,3 +598,40 @@ func (s *Service) TestEdit(ctx context.Context, owner, wsID, id string, edit Inp
 	}
 	return s.Test(ctx, owner, merge(s.inputOf(ctx, c), edit))
 }
+
+// ChatClient returns a ready client for the workspace's chosen configuration
+// (the default one when id is empty), plus its saved defaults. The key lives
+// only in the returned client's memory and is registered with the scrubber so
+// it can never appear in logs or errors (PRD F17, 18.2).
+func (s *Service) ChatClient(ctx context.Context, owner, wsID, id string) (*modelprovider.Client, *domain.AgentConfig, error) {
+	if _, err := s.workspace(ctx, owner, wsID); err != nil {
+		return nil, nil, err
+	}
+	list, err := s.st.ListAgentConfigs(ctx, wsID)
+	if err != nil {
+		return nil, nil, err
+	}
+	var cfg *domain.AgentConfig
+	for _, c := range list {
+		if (id != "" && c.ID == id) || (id == "" && c.IsDefault) {
+			cfg = c
+			break
+		}
+	}
+	if cfg == nil && id == "" && len(list) == 1 {
+		cfg = list[0]
+	}
+	if cfg == nil {
+		return nil, nil, verr("agentConfig", "no_agent_config", "Choose a code agent in Workspace Settings first.")
+	}
+	r, err := s.resolve(s.inputOf(ctx, cfg))
+	if err != nil {
+		return nil, nil, err
+	}
+	p := s.params(r)
+	cl, merr := modelprovider.NewClient(p.Config, p.Guard, p.Scrub)
+	if merr != nil {
+		return nil, nil, verr("agentConfig", string(merr.Kind), merr.Msg)
+	}
+	return cl, cfg, nil
+}

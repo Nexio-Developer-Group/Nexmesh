@@ -355,3 +355,18 @@ func TestCustomLocalModelEndToEnd(t *testing.T) {
 		t.Fatalf("%v %+v", err, ms)
 	}
 }
+
+func TestChatClientUsesDefaultConfigAndOwnership(t *testing.T) {
+	f := newFx(t)
+	if _, _, err := f.svc.ChatClient(f.ctx, "u1", "ws1", ""); code(err) != "no_agent_config" {
+		t.Fatalf("no config: %v", err)
+	}
+	c := saved(t, f, "Claude A", f.good)
+	cl, cfg, err := f.svc.ChatClient(f.ctx, "u1", "ws1", "")
+	if err != nil || cl == nil || cfg.ID != c.ID {
+		t.Fatalf("default: %v %v", cfg, err)
+	}
+	if _, _, err := f.svc.ChatClient(f.ctx, "u2", "ws1", ""); err == nil {
+		t.Fatal("another user must not get a client")
+	}
+}
