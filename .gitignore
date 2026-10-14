@@ -14,3 +14,4 @@ test-results/
 playwright-report/
 server/internal/catalogdata/data/*
 !server/internal/catalogdata/data/.gitkeep
+dist/

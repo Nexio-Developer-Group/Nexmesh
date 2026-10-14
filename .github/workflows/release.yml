@@ -1,0 +1,39 @@
+name: release
+
+# Builds the downloadable artifacts (Linux, macOS and Windows archives plus the
+# Windows installer) when a version tag is pushed, and attaches them to a GitHub
+# release. Run it by hand from the Actions tab to just build and keep the files.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-go@v5
+        with: { go-version-file: server/go.mod }
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: web/pnpm-lock.yaml }
+      - name: Tools
+        run: sudo apt-get update && sudo apt-get install -y nsis zip
+      - name: Verify
+        run: scripts/verify.sh
+      - name: Build artifacts
+        run: scripts/build-release.sh "${GITHUB_REF_NAME:-dev}"
+      - uses: actions/upload-artifact@v4
+        with: { name: nexmesh-release, path: dist/* }
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
