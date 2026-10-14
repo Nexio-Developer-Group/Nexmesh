@@ -85,6 +85,26 @@ func TestFakeDriverRunsLocalAgent(t *testing.T) {
 	if c, b := do("POST", "/api/workspaces/"+id+"/exec", `{"command":"NAME=nx sh hello.sh"}`); c != 200 || !strings.Contains(b, "from-nx") {
 		t.Fatalf("exec: %d %s", c, b)
 	}
+	// T2.2: variables reach every process the agent starts, and edits apply to the next one.
+	if c, b := do("PUT", "/api/workspaces/"+id+"/variables/DB_PASSWORD", `{"secret":true,"value":"s3cr3t-one"}`); c != 200 || strings.Contains(b, "s3cr3t") {
+		t.Fatalf("set secret: %d %s", c, b)
+	}
+	if c, b := do("PUT", "/api/workspaces/"+id+"/variables/APP_MODE", `{"value":"dev"}`); c != 200 {
+		t.Fatalf("set plain: %d %s", c, b)
+	}
+	if c, b := do("POST", "/api/workspaces/"+id+"/exec", `{"command":"echo $APP_MODE/$DB_PASSWORD"}`); c != 200 || !strings.Contains(b, "dev/s3cr3t-one") {
+		t.Fatalf("exec env: %d %s", c, b)
+	}
+	do("PUT", "/api/workspaces/"+id+"/variables/DB_PASSWORD", `{"secret":true,"value":"s3cr3t-two"}`)
+	if _, b := do("POST", "/api/workspaces/"+id+"/exec", `{"command":"echo $DB_PASSWORD"}`); !strings.Contains(b, "s3cr3t-two") {
+		t.Fatalf("rotated secret not applied to new process: %s", b)
+	}
+	if _, b := do("GET", "/api/workspaces/"+id+"/variables", ""); strings.Contains(b, "s3cr3t") || !strings.Contains(b, `"APP_MODE"`) {
+		t.Fatalf("listing leaked or lost data: %s", b)
+	}
+	if _, b := do("GET", "/api/workspaces/"+id, ""); strings.Contains(b, "s3cr3t") {
+		t.Fatalf("workspace payload leaked a secret: %s", b)
+	}
 	if c, _ := do("DELETE", "/api/workspaces/"+id+"?confirmName=local-dev", ""); c != 202 && c != 204 && c != 200 {
 		t.Logf("delete returned %d (informational)", c)
 	}
