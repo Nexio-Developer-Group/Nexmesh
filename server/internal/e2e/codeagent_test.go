@@ -107,6 +107,15 @@ func TestCodeAgentOverRealWorkspace(t *testing.T) {
 		t.Fatalf("context preview: %s", ctxText)
 	}
 
+	if c, o := do("PUT", "/api/workspaces/"+id+"/rules", `{"title":"Typing","scope":"global","body":"Always use type hints."}`); c != 200 {
+		t.Fatalf("save rule: %d %s", c, o)
+	}
+	if c, o := do("PUT", "/api/workspaces/"+id+"/rules", `{"title":"Kafka only","scope":"component","components":["kafka"],"body":"Kafka conventions."}`); c != 200 {
+		t.Fatalf("save rule: %d %s", c, o)
+	}
+	if c, o := do("PUT", "/api/workspaces/"+id+"/rules", `{"title":"Py files","scope":"path","paths":["**/*.py"],"protect":["infra/"],"body":"Python style notes."}`); c != 200 {
+		t.Fatalf("save rule: %d %s", c, o)
+	}
 	c, o := do("POST", "/api/workspaces/"+id+"/agent/sessions", `{}`)
 	if c != 201 {
 		t.Fatalf("session: %d %s", c, o)
@@ -185,6 +194,31 @@ func TestCodeAgentOverRealWorkspace(t *testing.T) {
 	}
 	if _, f := do("GET", "/api/workspaces/"+id+"/files/content?path=app.py", ""); !strings.Contains(f, "greet(name)") {
 		t.Fatalf("accepted change missing: %s", f)
+	}
+	// The change set records which rules applied: global and the matching path rule, not the kafka one.
+	_, csView := do("GET", "/api/workspaces/"+id+"/changes/"+csID, "")
+	if !strings.Contains(csView, `"title":"Typing"`) || !strings.Contains(csView, `"title":"Py files"`) || strings.Contains(csView, "Kafka only") {
+		t.Fatalf("applied rules: %s", csView)
+	}
+	// Rules were in the first request, and an edit shows up in the next one.
+	mu.Lock()
+	first := bodies[0]
+	mu.Unlock()
+	if !strings.Contains(first, "Always use type hints.") || strings.Contains(first, "Kafka conventions.") {
+		t.Fatalf("rules in context: %s", first)
+	}
+	if c, o := do("PUT", "/api/workspaces/"+id+"/rules", `{"name":"typing","title":"Typing","scope":"global","body":"Prefer dataclasses."}`); c != 200 {
+		t.Fatalf("edit rule: %d %s", c, o)
+	}
+	if c, o := do("POST", "/api/workspaces/"+id+"/agent/sessions/"+sid+"/messages", `{"text":"anything else?"}`); c != 202 {
+		t.Fatalf("second send: %d %s", c, o)
+	}
+	poll("idle")
+	mu.Lock()
+	last := bodies[len(bodies)-1]
+	mu.Unlock()
+	if !strings.Contains(last, "Prefer dataclasses.") || strings.Contains(last, "Always use type hints.") {
+		t.Fatalf("edit not picked up on the next request: %s", last)
 	}
 	// What the model was sent never contained a secret.
 	mu.Lock()

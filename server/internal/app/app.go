@@ -44,6 +44,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/metrics"
 	"github.com/nexio-developer-group/nexmesh/server/internal/netguard"
 	"github.com/nexio-developer-group/nexmesh/server/internal/ops"
+	"github.com/nexio-developer-group/nexmesh/server/internal/rules"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime/docker"
 	"github.com/nexio-developer-group/nexmesh/server/internal/secrets"
@@ -218,7 +219,16 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	archSvc := architecture.New(st, cat, wireSvc)
 	api.RegisterArchitecture(archSvc, aud)
 	api.RegisterDeployExport(deployexport.New(st, cat, compSvc, wireSvc, wsfs.New(agents), aud), httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
-	csSvc := changeset.New(st, wsfs.New(agents), aud)
+	rulesSvc := rules.New(st, wsfs.New(agents), aud, cat)
+	csSvc := changeset.New(st, wsfs.New(agents), aud).WithRules(func(ctx context.Context, wsID string, files []string) ([]changeset.AppliedRule, []string) {
+		res := rulesSvc.Resolve(ctx, wsID, files)
+		out := make([]changeset.AppliedRule, len(res.Rules))
+		for i, r := range res.Rules {
+			out[i] = changeset.AppliedRule{ID: r.ID, Title: r.Title, Scope: r.Scope, Hash: r.Hash}
+		}
+		return out, res.Warnings
+	})
+	api.RegisterRules(rulesSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	api.RegisterChangeSets(csSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	caSvc := codeagent.New(st, wsfs.New(agents), csSvc, aud, func(ctx context.Context, owner, wsID, cfgID string) (codeagent.Model, error) {
 		c, _, err := agentSvc.ChatClient(ctx, owner, wsID, cfgID)
@@ -226,7 +236,9 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 			return nil, err
 		}
 		return c, nil
-	}).WithContext(archSvc, envSvc).WithSecretValues(func(ctx context.Context, wsID string) []string {
+	}).WithContext(archSvc, envSvc).WithRules(func(ctx context.Context, wsID string) ([]string, error) {
+		return rulesSvc.ContextTexts(ctx, wsID), nil
+	}).WithSecretValues(func(ctx context.Context, wsID string) []string {
 		env, err := envSvc.Environment(ctx, wsID)
 		if err != nil {
 			return nil

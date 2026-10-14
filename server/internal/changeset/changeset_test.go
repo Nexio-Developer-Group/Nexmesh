@@ -343,3 +343,18 @@ func TestCheckpointsArePruned(t *testing.T) {
 		t.Fatalf("%d", len(cps))
 	}
 }
+
+func TestProposalRecordsAppliedRulesAndWarnings(t *testing.T) {
+	s, _, ctx := fx(t)
+	s.WithRules(func(_ context.Context, _ string, files []string) ([]AppliedRule, []string) {
+		return []AppliedRule{{ID: "r1", Title: "Style", Scope: "global", Hash: "abc"}}, []string{files[0] + " is protected"}
+	})
+	v := propose(t, s, ctx, Change{"a.txt", sp("A\n")})
+	if len(v.Rules) != 1 || v.Rules[0].Hash != "abc" || len(v.Warnings) != 1 || !strings.Contains(v.Warnings[0], "a.txt") {
+		t.Fatalf("%+v %v", v.Rules, v.Warnings)
+	}
+	plain, _, _ := fx(t)
+	if got := propose(t, plain, ctx, Change{"a.txt", sp("A\n")}); got.Rules == nil {
+		t.Fatal("rules must serialise as an empty list, not null")
+	}
+}

@@ -55,6 +55,17 @@ type FS interface {
 	Mkdir(ctx context.Context, ws, path string) error
 }
 
+// AppliedRule is a rule that applied to a change set, with the version used.
+type AppliedRule struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Scope string `json:"scope"`
+	Hash  string `json:"hash"`
+}
+
+// Resolver says which rules apply to a set of files and warns about protected paths.
+type Resolver func(ctx context.Context, wsID string, files []string) ([]AppliedRule, []string)
+
 // FileChange is one file in a set. Before and After are full contents so the
 // hunks can be recomputed and partially applied.
 type FileChange struct {
@@ -71,17 +82,20 @@ type FileChange struct {
 
 // Set is a proposed group of changes.
 type Set struct {
-	ID           string       `json:"id"`
-	WorkspaceID  string       `json:"workspaceId"`
-	Title        string       `json:"title"`
-	Summary      string       `json:"summary,omitempty"`
-	Actor        string       `json:"actor"` // user | agent
-	ActorID      string       `json:"actorId"`
-	Status       string       `json:"status"`
-	Files        []FileChange `json:"files"`
-	CheckpointID string       `json:"checkpointId,omitempty"`
-	CreatedAt    time.Time    `json:"createdAt"`
-	DecidedAt    *time.Time   `json:"decidedAt,omitempty"`
+	ID          string       `json:"id"`
+	WorkspaceID string       `json:"workspaceId"`
+	Title       string       `json:"title"`
+	Summary     string       `json:"summary,omitempty"`
+	Actor       string       `json:"actor"` // user | agent
+	ActorID     string       `json:"actorId"`
+	Status      string       `json:"status"`
+	Files       []FileChange `json:"files"`
+	// Rules lists the rules that applied when the set was proposed (PRD F21).
+	Rules        []AppliedRule `json:"rules"`
+	Warnings     []string      `json:"warnings,omitempty"`
+	CheckpointID string        `json:"checkpointId,omitempty"`
+	CreatedAt    time.Time     `json:"createdAt"`
+	DecidedAt    *time.Time    `json:"decidedAt,omitempty"`
 }
 
 // Checkpoint stores the files exactly as they were before a set was applied.
@@ -110,9 +124,13 @@ type Service struct {
 	aud *audit.Recorder
 	now func() time.Time
 
-	mu    sync.Mutex
-	locks map[string]*sync.Mutex
+	resolve Resolver
+	mu      sync.Mutex
+	locks   map[string]*sync.Mutex
 }
+
+// WithRules records the applicable rules on every proposal.
+func (s *Service) WithRules(r Resolver) *Service { s.resolve = r; return s }
 
 func New(st store.Store, fs FS, aud *audit.Recorder) *Service {
 	return &Service{st: st, fs: fs, aud: aud, now: func() time.Time { return time.Now().UTC() }, locks: map[string]*sync.Mutex{}}
@@ -238,6 +256,18 @@ func (s *Service) Propose(ctx context.Context, owner, wsID, actor, actorID strin
 		return nil, verr("changes", "set_too_large", "This change set is larger than 5 MB.")
 	}
 	sort.Slice(set.Files, func(i, j int) bool { return set.Files[i].Path < set.Files[j].Path })
+	set.Rules = []AppliedRule{}
+	if s.resolve != nil {
+		paths := make([]string, 0, len(set.Files))
+		for _, f := range set.Files {
+			paths = append(paths, f.Path)
+		}
+		rs, warns := s.resolve(ctx, wsID, paths)
+		if rs != nil {
+			set.Rules = rs
+		}
+		set.Warnings = warns
+	}
 	// A newer proposal for the same files replaces an older undecided one.
 	if err := s.supersede(ctx, wsID, seen); err != nil {
 		return nil, err
