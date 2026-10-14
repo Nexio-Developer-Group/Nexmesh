@@ -1,10 +1,11 @@
-import { useState } from 'react'
 import type { Workspace } from '@/api/types'
+import { EditorPane } from './EditorPane'
 import { FileTree } from './FileTree'
+import { useOpenFiles } from './useOpenFiles'
 
 /** Code view: file tree, editor and terminal for a running workspace. */
 export function CodeView({ workspace }: { workspace: Workspace }) {
-  const [active, setActive] = useState<{ path: string; line?: number } | null>(null)
+  const files = useOpenFiles(workspace.id)
 
   if (workspace.status !== 'ready') {
     return <Notice title="This workspace is stopped" body="Start the workspace from the dashboard to browse files and open terminals." />
@@ -18,15 +19,22 @@ export function CodeView({ workspace }: { workspace: Workspace }) {
       <aside className="w-[280px] shrink-0 border-r border-line bg-panel">
         <FileTree
           workspaceId={workspace.id}
-          activePath={active?.path ?? null}
-          onOpen={(path, line) => setActive({ path, line })}
-          onPathChanged={(from, to) => setActive((a) => (a && (a.path === from || a.path.startsWith(from + '/')) ? (to ? { path: to + a.path.slice(from.length) } : null) : a))}
+          activePath={files.active}
+          onOpen={files.open}
+          onPathChanged={files.pathChanged}
         />
       </aside>
       <main className="flex min-w-0 flex-1 flex-col bg-bg">
-        <div className="grid flex-1 place-items-center text-sm text-muted">
-          {active ? <span className="font-mono">{active.path}</span> : 'Select a file to open it.'}
-        </div>
+        <EditorPane
+          workspaceId={workspace.id}
+          tabs={files.tabs}
+          active={files.active}
+          onActivate={(p) => { files.setActive(p); void files.checkDisk(p) }}
+          onClose={files.close}
+          onEdit={files.edit}
+          onSave={files.save}
+          onReload={files.reload}
+        />
       </main>
     </div>
   )

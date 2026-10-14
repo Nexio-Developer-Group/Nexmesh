@@ -1,0 +1,36 @@
+// Loaded lazily (dynamic import) so the editor's weight is only paid when the
+// Code view opens a file. Workers are bundled locally: no CDN, works offline.
+import * as monaco from 'monaco-editor'
+import EditorWorker from 'monaco-editor/editor/editor.worker?worker'
+import JsonWorker from 'monaco-editor/language/json/json.worker?worker'
+import CssWorker from 'monaco-editor/language/css/css.worker?worker'
+import HtmlWorker from 'monaco-editor/language/html/html.worker?worker'
+import TsWorker from 'monaco-editor/language/typescript/ts.worker?worker'
+
+self.MonacoEnvironment = {
+  getWorker(_id: string, label: string) {
+    switch (label) {
+      case 'json': return new JsonWorker()
+      case 'css': case 'scss': case 'less': return new CssWorker()
+      case 'html': case 'handlebars': case 'razor': return new HtmlWorker()
+      case 'typescript': case 'javascript': return new TsWorker()
+      default: return new EditorWorker()
+    }
+  },
+}
+
+monaco.editor.defineTheme('nexmesh-dark', {
+  base: 'vs-dark',
+  inherit: true,
+  rules: [],
+  colors: {
+    'editor.background': '#070d1f',
+    'editorGutter.background': '#070d1f',
+    'editor.lineHighlightBackground': '#0e1730',
+    'editorLineNumber.foreground': '#4a5878',
+    'editorLineNumber.activeForeground': '#93a1be',
+    'editor.selectionBackground': '#1676fe44',
+  },
+})
+
+export default monaco

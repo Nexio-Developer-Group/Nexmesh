@@ -11,7 +11,7 @@ export default defineConfig({
     port: 5173,
     proxy: { '/api': { target: 'http://localhost:8080', changeOrigin: true } },
   },
-  build: { outDir: 'dist', sourcemap: true },
+  build: { outDir: 'dist', sourcemap: process.env.SOURCEMAP === '1' },
   test: {
     environment: 'jsdom',
     globals: true,
