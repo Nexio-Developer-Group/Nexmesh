@@ -32,6 +32,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
 	"github.com/nexio-developer-group/nexmesh/server/internal/tunnel"
@@ -60,6 +61,9 @@ type Service struct {
 	st   store.Store
 	dial *tunnel.Dialer
 	now  func() time.Time
+
+	shareOn bool
+	aud     *audit.Recorder
 }
 
 func NewService(cfg Config, st store.Store, d *tunnel.Dialer) *Service {
@@ -337,3 +341,6 @@ func (s *Service) deny(w http.ResponseWriter) {
 func (s *Service) workspace(ctx context.Context, wsID string) (*domain.Workspace, error) {
 	return s.st.GetWorkspace(ctx, wsID)
 }
+
+// SetClock replaces the time source (tests).
+func (s *Service) SetClock(f func() time.Time) { s.now = f }

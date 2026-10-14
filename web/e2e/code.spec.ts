@@ -96,4 +96,37 @@ test.describe('Phase 2 Code view', () => {
     await term.locator('.xterm-helper-textarea').focus()
     await page.keyboard.type('kill $(cat .srv.pid)\n')
   })
+
+  test('share link: a visitor without a session sees the page until it is revoked', async ({ page, browser }) => {
+    await createWorkspace(page, unique('share'))
+    await page.getByRole('tab', { name: 'Code' }).click()
+    await expect(page.getByRole('tree', { name: 'Workspace files' }).getByText('README.md')).toBeVisible({ timeout: 20_000 })
+    const term = page.getByRole('region', { name: /Terminal 1/ })
+    await expect(term.locator('.xterm')).toBeVisible()
+    await term.locator('.xterm-helper-textarea').focus()
+    await page.keyboard.type('echo shared-page-$((5*5)) > index.html && (python3 -m http.server 8124 --bind 127.0.0.1 >/dev/null 2>&1 & echo $! > .srv2.pid)\n')
+
+    await page.getByRole('tab', { name: 'Ports' }).click()
+    const row = page.locator('li', { hasText: '8124' }).first()
+    await expect(row.getByText('Listening')).toBeVisible({ timeout: 20_000 })
+    await row.getByRole('button', { name: 'Share port 8124' }).click()
+    await page.getByRole('button', { name: 'Create link' }).click()
+    const link = await page.getByLabel('Share link').inputValue()
+    expect(link).toContain('/share/')
+    await page.getByRole('button', { name: 'Done' }).click()
+
+    const visitor = await browser.newContext()
+    const vp = await visitor.newPage()
+    await vp.goto(link)
+    await expect(vp.locator('body')).toContainText('shared-page-25', { timeout: 15_000 })
+
+    await page.getByRole('button', { name: 'Revoke link for port 8124' }).click()
+    await expect(page.getByRole('region', { name: 'Shared links' })).toBeHidden()
+    await vp.reload()
+    await expect(vp.locator('body')).toContainText('not valid')
+    await visitor.close()
+
+    await term.locator('.xterm-helper-textarea').focus()
+    await page.keyboard.type('kill $(cat .srv2.pid)\n')
+  })
 })

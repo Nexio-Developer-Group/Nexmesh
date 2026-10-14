@@ -65,3 +65,38 @@ describe('PortsPanel', () => {
     expect(await screen.findByText(/not connected/)).toBeInTheDocument()
   })
 })
+
+describe('Share links', () => {
+  const links = (enabled: boolean, active = true) => ({ enabled, links: active ? [{ id: 'shr_1', port: 3000, label: 'Demo', createdAt: '', expiresAt: '2030-01-01T00:00:00Z', revoked: false, active: true, hits: 2 }] : [] })
+
+  it('hides sharing when the instance has it off', async () => {
+    mockApi({ 'GET /api/workspaces/ws1/ports': () => listing(), 'GET /api/workspaces/ws1/shares': () => links(false, false) })
+    renderPage(<PortsPanel workspaceId="ws1" />)
+    expect(await screen.findByText(/share links are turned off/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Share port/ })).toBeNull()
+  })
+
+  it('creates a link with an expiry, shows the URL once and lists it for revocation', async () => {
+    const calls = mockApi({
+      'GET /api/workspaces/ws1/ports': () => listing(),
+      'GET /api/workspaces/ws1/shares': () => links(true),
+      'POST /api/workspaces/ws1/shares': () => ({ status: 201, body: { link: { id: 'shr_2', port: 3000 }, url: 'http://x/share/ws1/3000/?nx_share=shr_2.secret' } }),
+      'DELETE /api/workspaces/ws1/shares/': () => ({ status: 204 }),
+    })
+    renderPage(<PortsPanel workspaceId="ws1" />)
+    expect(screen.queryByRole('button', { name: 'Share port 8080' })).toBeNull()
+    await userEvent.click(await screen.findByRole('button', { name: 'Share port 3000' }))
+    expect(screen.getByText(/Anyone who has the link/)).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText('Link expires after'), '1440')
+    await userEvent.click(screen.getByRole('button', { name: 'Create link' }))
+    expect(await screen.findByLabelText('Share link')).toHaveValue('http://x/share/ws1/3000/?nx_share=shr_2.secret')
+    expect(screen.getByText(/won't be shown again/)).toBeInTheDocument()
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ port: 3000, ttlMinutes: 1440, label: '' })
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+
+    const section = screen.getByRole('region', { name: 'Shared links' })
+    expect(within(section).getByText(/opened 2×/)).toBeInTheDocument()
+    await userEvent.click(within(section).getByRole('button', { name: 'Revoke link for port 3000' }))
+    await waitFor(() => expect(calls.find((c) => c.method === 'DELETE')?.url).toBe('/api/workspaces/ws1/shares/shr_1'))
+  })
+})

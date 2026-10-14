@@ -94,3 +94,7 @@ Servers you start inside a workspace appear in **Code → Ports** and open throu
 
 - **Default (path mode):** `/api/preview/<workspace>/<port>/…`, served with a `Content-Security-Policy: sandbox` that gives the page an opaque origin (no Nexmesh cookies, no local storage). Fine for static sites and many dev servers; apps that need cookies or `localStorage`, or that use root-absolute asset paths, need subdomain mode.
 - **Subdomain mode:** set `NEXMESH_PREVIEW_DOMAIN` (e.g. `preview.example.com`) and point a wildcard DNS record `*.preview.example.com` at Nexmesh. Each port gets its own origin, `p<port>-ws-<id>.preview.example.com`, with full browser behaviour including hot-reload WebSockets. For local development use `NEXMESH_PREVIEW_DOMAIN=localhost` (browsers resolve `*.localhost` to loopback). Terminate TLS for the wildcard in your reverse proxy and forward the `Host` header.
+
+### Share links
+
+Public share links are **off by default**. Set `NEXMESH_ALLOW_SHARE_LINKS=true` to let owners create them from **Code → Ports → Share…**. A link opens one port for anyone who holds it (no Nexmesh sign-in), expires after the chosen time (5 minutes to 7 days), and can be revoked at any time; revocation applies on the visitor's next request. Only a hash of each link's secret is stored, so a link can't be recovered later, only replaced. Turning the setting back off disables every existing link immediately. Previews are sandboxed as described above.

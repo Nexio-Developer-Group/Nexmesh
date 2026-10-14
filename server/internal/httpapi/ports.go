@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 	"strconv"
@@ -185,4 +186,76 @@ func parsePort(w http.ResponseWriter, r *http.Request) (int, bool) {
 		return 0, false
 	}
 	return p, true
+}
+
+// RegisterShares mounts share-link management (owner) and the public share route.
+func (s *Server) RegisterShares(d FilesDeps, pv *preview.Service) {
+	fail := func(w http.ResponseWriter, err error) {
+		var se *preview.ShareError
+		switch {
+		case errors.As(err, &se):
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]ValidationBody{"error": {Code: "invalid", Message: se.Msg, Field: se.Field}})
+		case errors.Is(err, preview.ErrSharingDisabled):
+			WriteError(w, http.StatusForbidden, "sharing_disabled", err.Error())
+		case errors.Is(err, preview.ErrShareLimit):
+			WriteError(w, http.StatusConflict, "share_limit", err.Error())
+		default:
+			s.HandleError(w, err)
+		}
+	}
+	s.Handle("GET /api/workspaces/{id}/shares", func(w http.ResponseWriter, r *http.Request) {
+		ws, err := d.Svc.Get(r.Context(), Owner(r), r.PathValue("id"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		l, err := pv.ListShares(r.Context(), ws.ID)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"enabled": pv.SharingEnabled(), "links": l})
+	})
+	s.Handle("POST /api/workspaces/{id}/shares", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Port       int    `json:"port"`
+			TTLMinutes int    `json:"ttlMinutes"`
+			Label      string `json:"label"`
+		}
+		if !DecodeJSON(w, r, &in) {
+			return
+		}
+		ws, err := d.Svc.Get(r.Context(), Owner(r), r.PathValue("id"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		link, secret, err := pv.CreateShare(r.Context(), Owner(r), ws.ID, in.Port, time.Duration(in.TTLMinutes)*time.Minute, in.Label)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusCreated, map[string]any{"link": link, "url": pv.ShareURL(r, ws.ID, in.Port, secret)})
+	})
+	s.Handle("DELETE /api/workspaces/{id}/shares/{sid}", func(w http.ResponseWriter, r *http.Request) {
+		ws, err := d.Svc.Get(r.Context(), Owner(r), r.PathValue("id"))
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		if err := pv.RevokeShare(r.Context(), Owner(r), ws.ID, r.PathValue("sid")); err != nil {
+			fail(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+	// Public: anonymous visitors with a share link (not under /api, so no session is required).
+	s.Handle("/share/{id}/{port}/{rest...}", func(w http.ResponseWriter, r *http.Request) {
+		port, err := strconv.Atoi(r.PathValue("port"))
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		pv.ServeShare(w, r, r.PathValue("id"), port)
+	})
 }

@@ -37,6 +37,7 @@ type rig struct {
 	ctx    context.Context
 	port   int // upstream dev server inside the "workspace"
 	domain string
+	aud    *audit.Recorder
 }
 
 // newRig wires the real HTTP layer, agent registry, tunnel and a real agent
@@ -56,6 +57,7 @@ func newRig(t *testing.T, domainName string) *rig {
 	api := httpapi.New(log)
 	reg.Register(api)
 	api.RegisterPorts(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud}, st, pv)
+	api.RegisterShares(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud}, pv)
 	h := http.Handler(api.Handler())
 	h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if pv.ServeHost(w, r) {
@@ -107,7 +109,7 @@ func newRig(t *testing.T, domainName string) *rig {
 	srv := &http.Server{Handler: mux}
 	go srv.Serve(l)
 	t.Cleanup(func() { srv.Close() })
-	return &rig{ts: ts, pv: pv, st: st, ctx: ctx, port: l.Addr().(*net.TCPAddr).Port, domain: domainName}
+	return &rig{ts: ts, pv: pv, st: st, ctx: ctx, port: l.Addr().(*net.TCPAddr).Port, domain: domainName, aud: aud}
 }
 
 func (r *rig) host() string { return "p" + strconv.Itoa(r.port) + "-ws-abc123." + r.domain }

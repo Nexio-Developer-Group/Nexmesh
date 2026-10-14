@@ -35,7 +35,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 
 ## M5 — Ports and previews (F8)
 - [x] **T5.1** Ports panel from detection plus declared ports; per-port authenticated preview proxy
-- [ ] **T5.2** Expiring, revocable share links (off by default)
+- [x] **T5.2** Expiring, revocable share links (off by default)
 
 ## M6 — Resume, reproducibility, visibility
 - [ ] **T6.1** Audit log viewer with filters and CSV/JSON export (F27)

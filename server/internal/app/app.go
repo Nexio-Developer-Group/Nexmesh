@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/agentapi"
@@ -165,7 +166,9 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterVariables(envSvc)
 	api.RegisterGitCredentials(gitSvc)
 	pv := preview.NewService(preview.Config{Domain: cfg.PreviewDomain, Key: fpKey}, st, tunnel.NewDialer(agents))
+	pv.EnableSharing(cfg.AllowShareLinks, aud)
 	api.RegisterPorts(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud}, st, pv)
+	api.RegisterShares(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud}, pv)
 	agents.Tap(func(ws, method string, params json.RawMessage) {
 		if method == "ports.changed" {
 			var p any
@@ -198,11 +201,11 @@ func withPreviewHost(next http.Handler, pv *preview.Service) http.Handler {
 	})
 }
 
-// withUI routes /api, /agent and /healthz to the API and everything else to the UI.
+// withUI routes /api, /agent, /share and /healthz to the API and everything else to the UI.
 func withUI(api, ui http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path
-		if p == "/healthz" || len(p) >= 5 && p[:5] == "/api/" || len(p) >= 7 && p[:7] == "/agent/" {
+		if p == "/healthz" || strings.HasPrefix(p, "/api/") || strings.HasPrefix(p, "/agent/") || strings.HasPrefix(p, "/share/") {
 			api.ServeHTTP(w, r)
 			return
 		}

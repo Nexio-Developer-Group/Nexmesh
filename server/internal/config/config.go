@@ -30,6 +30,10 @@ type Config struct {
 	// for local development). Empty serves previews sandboxed under /api/preview.
 	PreviewDomain string
 
+	// AllowShareLinks (NEXMESH_ALLOW_SHARE_LINKS=true) lets owners create
+	// expiring public preview links. Off by default.
+	AllowShareLinks bool
+
 	// AuthDisabled (NEXMESH_AUTH=disabled) skips sign-in; every request acts as one local user. Development and tests only.
 	AuthDisabled bool
 	// AllowSignup lets additional users register after the first (owner) account.
@@ -57,6 +61,7 @@ func Load() Config {
 		MasterKeyFile:       env("NEXMESH_MASTER_KEY_FILE", "nexmesh-master.key"),
 		AllowPrivateEgress:  os.Getenv("NEXMESH_ALLOW_PRIVATE_EGRESS") == "true",
 		PreviewDomain:       os.Getenv("NEXMESH_PREVIEW_DOMAIN"),
+		AllowShareLinks:     os.Getenv("NEXMESH_ALLOW_SHARE_LINKS") == "true",
 		AuthDisabled:        os.Getenv("NEXMESH_AUTH") == "disabled",
 		AllowSignup:         os.Getenv("NEXMESH_ALLOW_SIGNUP") == "true",
 		AllowLoopbackEgress: os.Getenv("NEXMESH_DEV_ALLOW_LOOPBACK_EGRESS") == "true",
