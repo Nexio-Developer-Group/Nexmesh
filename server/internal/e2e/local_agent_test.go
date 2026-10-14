@@ -105,6 +105,12 @@ func TestFakeDriverRunsLocalAgent(t *testing.T) {
 	if _, b := do("GET", "/api/workspaces/"+id, ""); strings.Contains(b, "s3cr3t") {
 		t.Fatalf("workspace payload leaked a secret: %s", b)
 	}
+	if c, b := do("POST", "/api/workspaces/"+id+"/variables/import", `{"content":"IMPORTED_API_KEY=imp-secret-9\nPLAIN=1\n","secrets":"auto"}`); c != 200 || strings.Contains(b, "imp-secret-9") || !strings.Contains(b, "IMPORTED_API_KEY") {
+		t.Fatalf("import: %d %s", c, b)
+	}
+	if c, b := do("GET", "/api/workspaces/"+id+"/variables/export", ""); c != 200 || !strings.Contains(b, "IMPORTED_API_KEY=\n") || strings.Contains(b, "imp-secret-9") || strings.Contains(b, "s3cr3t") {
+		t.Fatalf("export: %d %s", c, b)
+	}
 	if c, _ := do("DELETE", "/api/workspaces/"+id+"?confirmName=local-dev", ""); c != 202 && c != 204 && c != 200 {
 		t.Logf("delete returned %d (informational)", c)
 	}

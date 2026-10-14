@@ -155,6 +155,10 @@ func ValidateName(name string) error {
 }
 
 func (s *Service) Set(ctx context.Context, owner, wsID string, in SetInput) (*Row, error) {
+	return s.set(ctx, owner, wsID, in, false)
+}
+
+func (s *Service) set(ctx context.Context, owner, wsID string, in SetInput, quiet bool) (*Row, error) {
 	if err := ValidateName(in.Name); err != nil {
 		return nil, err
 	}
@@ -218,7 +222,9 @@ func (s *Service) Set(ctx context.Context, owner, wsID string, in SetInput) (*Ro
 	if existing != nil {
 		action = "variable.updated"
 	}
-	s.aud.User(ctx, owner, wsID, action, in.Name, map[string]any{"secret": in.Secret, "componentId": in.ComponentID, "valueChanged": in.Value != nil})
+	if !quiet {
+		s.aud.User(ctx, owner, wsID, action, in.Name, map[string]any{"secret": in.Secret, "componentId": in.ComponentID, "valueChanged": in.Value != nil})
+	}
 	return &Row{Name: v.Name, ComponentID: v.ComponentID, Secret: v.Secret, Value: v.Value, Description: v.Description, UpdatedAt: v.UpdatedAt}, nil
 }
 
@@ -309,4 +315,70 @@ func (s *Service) DeleteAllSecrets(ctx context.Context, w *domain.Workspace) {
 			_ = s.sec.Delete(ctx, secretID(w.ID, v.ComponentID, v.Name))
 		}
 	}
+}
+
+const maxImport = 500 << 10
+
+// Import applies a .env file. secretMode is "auto" (guess from the name),
+// "all" or "none". With dryRun nothing is written.
+func (s *Service) Import(ctx context.Context, owner, wsID, content, secretMode string, overwrite, dryRun bool) (*ImportResult, error) {
+	if len(content) > maxImport {
+		return nil, bad("content", "File is larger than %d KB.", maxImport>>10)
+	}
+	w, err := s.workspace(ctx, owner, wsID)
+	if err != nil {
+		return nil, err
+	}
+	vars, perrs := ParseDotenv(content)
+	res := &ImportResult{Created: []string{}, Updated: []string{}, Skipped: []string{}, Secrets: []string{}, Errors: perrs, DryRun: dryRun}
+	if res.Errors == nil {
+		res.Errors = []LineError{}
+	}
+	if len(vars) == 0 && len(perrs) == 0 {
+		return nil, bad("content", "No variables found in that file.")
+	}
+	if len(vars) > MaxVariables {
+		return nil, bad("content", "At most %d variables can be imported at once.", MaxVariables)
+	}
+	for _, v := range vars {
+		secret := secretMode == "all" || (secretMode != "none" && LooksSecret(v.Name))
+		exists := find(w.Variables, v.Name, "") != nil
+		if exists && !overwrite {
+			res.Skipped = append(res.Skipped, v.Name)
+			continue
+		}
+		if secret {
+			res.Secrets = append(res.Secrets, v.Name)
+		}
+		if exists {
+			res.Updated = append(res.Updated, v.Name)
+		} else {
+			res.Created = append(res.Created, v.Name)
+		}
+		if dryRun {
+			continue
+		}
+		val := v.Value
+		if _, err := s.set(ctx, owner, wsID, SetInput{Name: v.Name, Secret: secret, Value: &val}, true); err != nil {
+			var ve *ValidationError
+			if errors.As(err, &ve) {
+				res.Errors = append(res.Errors, LineError{v.Line, v.Name + ": " + ve.Msg})
+				continue
+			}
+			return nil, err
+		}
+	}
+	if !dryRun {
+		s.aud.User(ctx, owner, wsID, "variable.imported", "", map[string]any{"created": len(res.Created), "updated": len(res.Updated), "skipped": len(res.Skipped), "secrets": len(res.Secrets)})
+	}
+	return res, nil
+}
+
+// Export renders the names-only template.
+func (s *Service) Export(ctx context.Context, owner, wsID string) (string, error) {
+	l, err := s.List(ctx, owner, wsID)
+	if err != nil {
+		return "", err
+	}
+	return ExportNames(l), nil
 }

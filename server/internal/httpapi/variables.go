@@ -50,4 +50,35 @@ func (s *Server) RegisterVariables(svc *envvars.Service) {
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
+	s.Handle("POST /api/workspaces/{id}/variables/import", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Content   string `json:"content"`
+			Secrets   string `json:"secrets"` // auto | all | none
+			Overwrite bool   `json:"overwrite"`
+			DryRun    bool   `json:"dryRun"`
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		if !DecodeJSON(w, r, &in) {
+			return
+		}
+		if in.Secrets == "" {
+			in.Secrets = "auto"
+		}
+		res, err := svc.Import(r.Context(), Owner(r), r.PathValue("id"), in.Content, in.Secrets, in.Overwrite, in.DryRun)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, res)
+	})
+	s.Handle("GET /api/workspaces/{id}/variables/export", func(w http.ResponseWriter, r *http.Request) {
+		out, err := svc.Export(r.Context(), Owner(r), r.PathValue("id"))
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Disposition", `attachment; filename=".env.example"`)
+		_, _ = w.Write([]byte(out))
+	})
 }
