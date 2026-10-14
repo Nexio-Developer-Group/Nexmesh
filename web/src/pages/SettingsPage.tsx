@@ -6,11 +6,12 @@ import { Logo } from '@/components/ui/Logo'
 import { UserMenu } from '@/layouts/TopBar'
 import { CodeAgentTab } from '@/features/settings/CodeAgentTab'
 import { GeneralTab } from '@/features/settings/GeneralTab'
+import { ActivityTab } from '@/features/activity/ActivityTab'
 import { GitCredentialsTab } from '@/features/git/GitCredentialsTab'
 import { VariablesTab } from '@/features/variables/VariablesTab'
 import { ResourcesTab } from '@/features/settings/ResourcesTab'
 
-const TABS = [['general', 'General'], ['resources', 'Resources'], ['variables', 'Variables'], ['git', 'Git credentials'], ['agent', 'Code Agent']] as const
+const TABS = [['general', 'General'], ['resources', 'Resources'], ['variables', 'Variables'], ['git', 'Git credentials'], ['agent', 'Code Agent'], ['activity', 'Activity']] as const
 type Tab = (typeof TABS)[number][0]
 
 export default function SettingsPage() {
@@ -45,7 +46,7 @@ export default function SettingsPage() {
           </ul>
         </nav>
         <main className="min-w-0 flex-1 overflow-y-auto bg-bg p-8">
-          {!ws ? <p className="text-muted">Loading…</p> : tab === 'general' ? <GeneralTab key={`${ws.name}|${ws.description}`} workspace={ws} /> : tab === 'resources' ? <ResourcesTab workspace={ws} /> : tab === 'variables' ? <VariablesTab workspaceId={ws.id} /> : tab === 'git' ? <GitCredentialsTab workspaceId={ws.id} /> : <CodeAgentTab workspaceId={ws.id} />}
+          {!ws ? <p className="text-muted">Loading…</p> : tab === 'general' ? <GeneralTab key={`${ws.name}|${ws.description}`} workspace={ws} /> : tab === 'resources' ? <ResourcesTab workspace={ws} /> : tab === 'variables' ? <VariablesTab workspaceId={ws.id} /> : tab === 'git' ? <GitCredentialsTab workspaceId={ws.id} /> : tab === 'activity' ? <ActivityTab workspaceId={ws.id} /> : <CodeAgentTab workspaceId={ws.id} />}
         </main>
       </div>
     </div>

@@ -60,6 +60,7 @@ func filesRig(t *testing.T, status string) (*httptest.Server, store.Store, strin
 	be, _ := secrets.NewStoreBackend(st, make([]byte, 32))
 	creds := gitcred.NewService(st, secrets.New(be), aud)
 	api.RegisterGitCredentials(creds)
+	api.RegisterAudit(aud, wsSvc)
 	api.RegisterGit(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud}, gitops.NewService(reg, creds, aud))
 	ts := httptest.NewServer(api.Handler())
 	t.Cleanup(ts.Close)

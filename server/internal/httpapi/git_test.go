@@ -3,6 +3,8 @@ package httpapi_test
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,5 +98,36 @@ func TestGitAPIEndToEnd(t *testing.T) {
 		if !seen[a] {
 			t.Errorf("missing audit %s", a)
 		}
+	}
+}
+
+func TestAuditAPIFiltersExportsAndIsOwnerScoped(t *testing.T) {
+	ts, st, _ := filesRig(t, domain.WSReady)
+	base := ts.URL + "/api/workspaces/ws1"
+	_, _ = req(t, "PUT", base+"/files/content", `{"path":"a.txt","content":"x"}`)
+	_, _ = req(t, "POST", base+"/exec", `{"command":"echo hi"}`)
+	_ = st // events are written by the handlers above
+
+	c, b := req(t, "GET", base+"/audit", "")
+	if c != 200 || !strings.Contains(b, "workspace.file_written") || !strings.Contains(b, "workspace.command_run") {
+		t.Fatalf("audit list: %d %s", c, b)
+	}
+	if c, b = req(t, "GET", base+"/audit?action=workspace.command_run", ""); c != 200 || strings.Contains(b, "file_written") || !strings.Contains(b, "command_run") {
+		t.Fatalf("action filter: %d %s", c, b)
+	}
+	if c, b = req(t, "GET", base+"/audit?actor=agent", ""); c != 200 || strings.Contains(b, "workspace.") {
+		t.Fatalf("actor filter: %d %s", c, b)
+	}
+	if c, _ = req(t, "GET", base+"/audit?from=not-a-date", ""); c != 422 {
+		t.Fatalf("bad date: %d", c)
+	}
+	r, _ := http.Get(base + "/audit/export?format=csv")
+	body, _ := io.ReadAll(r.Body)
+	r.Body.Close()
+	if r.StatusCode != 200 || !strings.HasPrefix(r.Header.Get("Content-Type"), "text/csv") || !strings.Contains(r.Header.Get("Content-Disposition"), "attachment") || !strings.HasPrefix(string(body), "time,actor_type") {
+		t.Fatalf("csv export: %d %v %q", r.StatusCode, r.Header, body)
+	}
+	if c, _ = req(t, "GET", ts.URL+"/api/workspaces/other/audit", ""); c != 404 {
+		t.Fatalf("foreign workspace audit = %d", c)
 	}
 }

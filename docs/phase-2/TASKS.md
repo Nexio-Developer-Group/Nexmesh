@@ -38,7 +38,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T5.2** Expiring, revocable share links (off by default)
 
 ## M6 — Resume, reproducibility, visibility
-- [ ] **T6.1** Audit log viewer with filters and CSV/JSON export (F27)
+- [x] **T6.1** Audit log viewer with filters and CSV/JSON export (F27)
 - [ ] **T6.2** Card logs and health history (F5)
 - [ ] **T6.3** Idle auto-stop, snapshots and resume (F7)
 - [ ] **T6.4** Stack templates (F3)
