@@ -55,6 +55,7 @@ func NewService(st store.Store, drv runtime.Driver, eng *ops.Engine, bus *events
 	eng.Register("start_workspace", s.startWorkspace)
 	eng.Register("stop_workspace", s.stopWorkspace)
 	eng.Register("apply_settings", s.applySettingsHandler)
+	s.registerSnapshotOps(eng)
 	return s
 }
 
@@ -233,6 +234,9 @@ func (s *Service) Delete(ctx context.Context, owner, id, confirmName string) err
 	}
 	if confirmName != w.Name {
 		return ErrConfirmName
+	}
+	for _, sn := range w.Snapshots { // before the container goes: the Docker driver needs its image
+		_ = s.drv.DeleteSnapshot(ctx, id, sn.ID)
 	}
 	if err := s.drv.RemoveWorkspace(ctx, id); err != nil {
 		return err

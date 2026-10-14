@@ -88,6 +88,14 @@ type Driver interface {
 	RecreateWorkspace(ctx context.Context, spec WorkspaceSpec, progress func(step, detail string)) error
 	InspectWorkspace(ctx context.Context, id string) (Observed, error)
 
+	// Snapshots capture the workspace's files (not its services' data) so they
+	// can be restored later. SnapshotWorkspace works on a running or stopped
+	// workspace and returns the archive size; RestoreSnapshot replaces the
+	// workspace's files and requires it to be stopped.
+	SnapshotWorkspace(ctx context.Context, id, snapshotID string) (sizeBytes int64, err error)
+	RestoreSnapshot(ctx context.Context, id, snapshotID string) error
+	DeleteSnapshot(ctx context.Context, id, snapshotID string) error
+
 	// Exec runs a command inside the workspace container, streaming output.
 	Exec(ctx context.Context, id string, cmd []string, out io.Writer) error
 

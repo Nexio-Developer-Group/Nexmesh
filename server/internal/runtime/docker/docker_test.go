@@ -196,3 +196,35 @@ func TestServiceCommandAndEnvArePassedThrough(t *testing.T) {
 		t.Fatalf("%s", create)
 	}
 }
+
+func TestSnapshotsRunInAHelperContainerWithoutNetwork(t *testing.T) {
+	r := &rec{reply: map[string]string{"inspect": "ubuntu:24.04\n", "run": "1234\n"}}
+	d := newDriver(t, r)
+	size, err := d.SnapshotWorkspace(context.Background(), "ws_abc", "snap_1")
+	if err != nil || size != 1234 {
+		t.Fatalf("snapshot: %v %d", err, size)
+	}
+	run := r.find("run")
+	joined := strings.Join(run, " ")
+	for _, want := range []string{"--rm", "--network none", "--cap-drop ALL", "no-new-privileges", "nexmesh-ws_abc-home:/data:ro", "nexmesh-snapshots:/snap", "tar czf /snap/ws_abc/snap_1.tgz"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("helper missing %q in %s", want, joined)
+		}
+	}
+	if strings.Contains(joined, "/var/run/docker.sock") || strings.Contains(joined, "--privileged") {
+		t.Fatal("helper must not get the socket or privileges")
+	}
+
+	// Identifiers are validated before they reach a shell script.
+	for _, bad := range []string{"x; rm -rf /", "a b", "../x", ""} {
+		if _, err := d.SnapshotWorkspace(context.Background(), "ws_abc", bad); err == nil {
+			t.Errorf("snapshot id %q accepted", bad)
+		}
+		if err := d.DeleteSnapshot(context.Background(), "ws_abc", bad); err == nil {
+			t.Errorf("delete id %q accepted", bad)
+		}
+	}
+	if _, err := d.SnapshotWorkspace(context.Background(), "ws; id", "snap_1"); err == nil {
+		t.Error("workspace id with shell metacharacters accepted")
+	}
+}

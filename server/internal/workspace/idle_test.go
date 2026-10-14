@@ -25,6 +25,7 @@ type idleRig struct {
 	ctx     context.Context
 	busy    *bool
 	checked *int
+	drv     *runtime.Fake
 }
 
 func newIdleRig(t *testing.T) *idleRig {
@@ -42,11 +43,14 @@ func newIdleRig(t *testing.T) *idleRig {
 	tr := idle.NewTracker()
 	tr.SetClock(func() time.Time { return now })
 	busy, checked := false, 0
-	svc.WithIdle(tr, func(context.Context, string) (bool, []string) { checked++; return busy, []string{"a process is running in Terminal 1"} })
+	svc.WithIdle(tr, func(context.Context, string) (bool, []string) {
+		checked++
+		return busy, []string{"a process is running in Terminal 1"}
+	})
 	w := &domain.Workspace{ID: "ws1", OwnerID: "u1", Name: "w", Status: domain.WSReady, CPU: 2, RAMGB: 4, StorageGB: 20, IdleStopMinutes: 30}
 	_ = st.CreateWorkspace(ctx, w)
 	_ = drv.CreateWorkspace(ctx, runtime.WorkspaceSpec{ID: "ws1", Resources: runtime.Resources{CPU: 2, RAMGB: 4, StorageGB: 20}}, func(string, string) {})
-	return &idleRig{svc: svc, st: st, tr: tr, now: &now, ctx: ctx, busy: &busy, checked: &checked}
+	return &idleRig{svc: svc, st: st, tr: tr, now: &now, ctx: ctx, busy: &busy, checked: &checked, drv: drv}
 }
 
 func (r *idleRig) waitStatus(t *testing.T, want string) *domain.Workspace {
@@ -171,3 +175,5 @@ func TestIdleSettingValidationAndDefault(t *testing.T) {
 		t.Fatalf("default idle: %v %+v", err, w)
 	}
 }
+
+func timeSleep() { time.Sleep(10 * time.Millisecond) }

@@ -15,6 +15,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -354,4 +355,85 @@ func (d *Driver) ServiceLogs(ctx context.Context, ws, name string, tail int) (st
 
 func (d *Driver) InspectService(ctx context.Context, ws, name string) (runtime.Observed, error) {
 	return d.inspect(ctx, svcCtrName(ws, name))
+}
+
+const snapshotVolume = "nexmesh-snapshots"
+
+var safeID = regexp.MustCompile(`^[a-z0-9_]+$`)
+
+func checkSnap(snap string) error {
+	if !safeID.MatchString(snap) {
+		return fmt.Errorf("invalid snapshot id")
+	}
+	return nil
+}
+
+// snapshotImage is the image of the workspace container, which has tar and sh.
+func (d *Driver) snapshotImage(ctx context.Context, id string) (string, error) {
+	img, err := d.out(ctx, "inspect", "--format", "{{.Config.Image}}", ctrName(id))
+	if err != nil || img == "" {
+		return "", runtime.ErrNotFound
+	}
+	return img, nil
+}
+
+// helper runs a short-lived container with no network that sees the workspace
+// volume and the snapshot volume.
+func (d *Driver) helper(ctx context.Context, id, mode, script string) (string, error) {
+	if !safeID.MatchString(id) {
+		return "", fmt.Errorf("invalid workspace id")
+	}
+	img, err := d.snapshotImage(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	return d.out(ctx, "run", "--rm", "--network", "none", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+		"-v", volName(id)+":/data"+mode, "-v", snapshotVolume+":/snap",
+		"--entrypoint", "sh", img, "-c", script)
+}
+
+// SnapshotWorkspace archives the workspace volume into the shared snapshot
+// volume. A running workspace is captured as-is (crash-consistent).
+func (d *Driver) SnapshotWorkspace(ctx context.Context, id, snap string) (int64, error) {
+	if err := checkSnap(snap); err != nil {
+		return 0, err
+	}
+	out, err := d.helper(ctx, id, ":ro", "set -e; mkdir -p /snap/"+id+"; tar czf /snap/"+id+"/"+snap+".tgz -C /data .; stat -c %s /snap/"+id+"/"+snap+".tgz")
+	if err != nil {
+		return 0, err
+	}
+	n, _ := strconv.ParseInt(strings.TrimSpace(lastLine(out)), 10, 64)
+	return n, nil
+}
+
+// RestoreSnapshot replaces the workspace volume's contents; the workspace must be stopped.
+func (d *Driver) RestoreSnapshot(ctx context.Context, id, snap string) error {
+	if err := checkSnap(snap); err != nil {
+		return err
+	}
+	obs, err := d.InspectWorkspace(ctx, id)
+	if err != nil {
+		return err
+	}
+	if obs.Running {
+		return fmt.Errorf("the workspace must be stopped before restoring a snapshot")
+	}
+	_, err = d.helper(ctx, id, "", "set -e; test -f /snap/"+id+"/"+snap+".tgz; find /data -mindepth 1 -delete; tar xzf /snap/"+id+"/"+snap+".tgz -C /data")
+	return err
+}
+
+func (d *Driver) DeleteSnapshot(ctx context.Context, id, snap string) error {
+	if err := checkSnap(snap); err != nil {
+		return err
+	}
+	_, err := d.helper(ctx, id, ":ro", "rm -f /snap/"+id+"/"+snap+".tgz")
+	return err
+}
+
+func lastLine(s string) string {
+	s = strings.TrimSpace(s)
+	if i := strings.LastIndex(s, "\n"); i >= 0 {
+		return s[i+1:]
+	}
+	return s
 }

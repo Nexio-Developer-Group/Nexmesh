@@ -69,6 +69,7 @@ func (d WorkspaceDeps) dto(ctx context.Context, w *domain.Workspace) workspaceDT
 	cp := *w
 	cp.Variables = nil // served by the variables API
 	cp.GitCredentials = nil
+	cp.Snapshots = nil // served by the snapshots API
 	out := workspaceDTO{Workspace: &cp}
 	if d.Summary != nil {
 		out.Summary = d.Summary.Summary(ctx, w.ID)

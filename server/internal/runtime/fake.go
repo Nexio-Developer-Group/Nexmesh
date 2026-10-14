@@ -1,8 +1,13 @@
 package runtime
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
+
 	"context"
 	"fmt"
+	"github.com/nexio-developer-group/nexmesh/server/internal/runtime/snapfs"
 	"io"
 	"strings"
 	"sync"
@@ -29,6 +34,13 @@ type Fake struct {
 	// workspace's files too.
 	Runner func(spec WorkspaceSpec) (stop func(remove bool))
 	stops  map[string]func(remove bool)
+
+	// SnapshotDir, when set, names the directory holding a workspace's files
+	// (the local agent's root); snapshots are then real tar.gz archives under
+	// SnapshotRoot. Without it snapshots are bookkeeping only.
+	SnapshotDir  func(workspaceID string) string
+	SnapshotRoot string
+	snaps        map[string]int64 // workspace/snapshot -> size, for the bookkeeping mode
 }
 
 func (f *Fake) launch(spec WorkspaceSpec) {
@@ -311,4 +323,62 @@ func (f *Fake) Shutdown() {
 	for id := range f.stops {
 		f.halt(id, false)
 	}
+}
+
+func (f *Fake) snapPath(ws, snap string) string {
+	return filepath.Join(f.SnapshotRoot, ws, snap+".tgz")
+}
+
+func (f *Fake) SnapshotWorkspace(_ context.Context, id, snap string) (int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.fail("snapshot"); err != nil {
+		return 0, err
+	}
+	if _, err := f.get(id); err != nil {
+		return 0, err
+	}
+	if f.SnapshotDir != nil && f.SnapshotRoot != "" {
+		return snapfs.Create(f.SnapshotDir(id), f.snapPath(id, snap))
+	}
+	if f.snaps == nil {
+		f.snaps = map[string]int64{}
+	}
+	f.snaps[id+"/"+snap] = 1024
+	return 1024, nil
+}
+
+func (f *Fake) RestoreSnapshot(_ context.Context, id, snap string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.fail("restore"); err != nil {
+		return err
+	}
+	w, err := f.get(id)
+	if err != nil {
+		return err
+	}
+	if w.running {
+		return errors.New("the workspace must be stopped before restoring a snapshot")
+	}
+	if f.SnapshotDir != nil && f.SnapshotRoot != "" {
+		if _, err := os.Stat(f.snapPath(id, snap)); err != nil {
+			return ErrNotFound
+		}
+		return snapfs.Restore(f.snapPath(id, snap), f.SnapshotDir(id))
+	}
+	if _, ok := f.snaps[id+"/"+snap]; !ok {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func (f *Fake) DeleteSnapshot(_ context.Context, id, snap string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	delete(f.snaps, id+"/"+snap)
+	if f.SnapshotRoot != "" {
+		_ = os.Remove(f.snapPath(id, snap))
+	}
+	return nil
 }

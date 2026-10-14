@@ -20,6 +20,15 @@ terminal opens a real shell in this directory.
 control plane instead of in a container.)
 `
 
+// localWorkspaceBase is the directory holding one subdirectory of files per
+// local workspace (and, beside it, their snapshots).
+func localWorkspaceBase() string {
+	if b := os.Getenv("NEXMESH_FAKE_WORKSPACE_DIR"); b != "" {
+		return b
+	}
+	return filepath.Join(os.TempDir(), "nexmesh-fake-workspaces")
+}
+
 // localAgentRunner starts an in-process workspace agent for the fake driver so
 // local development and end-to-end tests get real files, shells and ports.
 // Each workspace gets its own directory that survives stop/start.
@@ -29,10 +38,7 @@ func localAgentRunner(addr string, log *slog.Logger) func(spec runtime.Workspace
 		port = "8080"
 	}
 	control := "http://127.0.0.1:" + port
-	base := os.Getenv("NEXMESH_FAKE_WORKSPACE_DIR")
-	if base == "" {
-		base = filepath.Join(os.TempDir(), "nexmesh-fake-workspaces")
-	}
+	base := localWorkspaceBase()
 	return func(spec runtime.WorkspaceSpec) func(bool) {
 		dir := filepath.Join(base, spec.ID)
 		if err := os.MkdirAll(dir, 0o755); err != nil {

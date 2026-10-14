@@ -20,6 +20,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -105,6 +106,9 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 			}
 			if cfg.Addr != "" {
 				f.Runner = localAgentRunner(cfg.Addr, log)
+				base := localWorkspaceBase()
+				f.SnapshotDir = func(id string) string { return filepath.Join(base, id) }
+				f.SnapshotRoot = base + "-snapshots"
 			}
 			drv = f
 			log.Warn("using fake runtime driver: no real containers are created")
@@ -182,6 +186,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterComponents(compSvc)
 	api.RegisterVariables(envSvc)
 	api.RegisterAudit(aud, wsSvc)
+	api.RegisterSnapshots(wsSvc)
 	api.RegisterGitCredentials(gitSvc)
 	pv := preview.NewService(preview.Config{Domain: cfg.PreviewDomain, Key: fpKey}, st, tunnel.NewDialer(agents))
 	pv.EnableSharing(cfg.AllowShareLinks, aud)

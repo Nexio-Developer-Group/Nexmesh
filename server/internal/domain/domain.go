@@ -52,6 +52,8 @@ type Workspace struct {
 	IdleStopMinutes int `json:"idleStopMinutes"`
 	// StopReason says why the workspace is stopped: "user" or "idle".
 	StopReason string `json:"stopReason,omitempty"`
+	// Snapshots are saved copies of the workspace's files that can be restored.
+	Snapshots []Snapshot `json:"snapshots,omitempty"`
 	// Ports are ports the user declared (named) for previews; detection adds the rest.
 	Ports []DeclaredPort `json:"ports,omitempty"`
 	// ShareLinks are expiring, revocable public preview links (off by default).
@@ -263,4 +265,22 @@ type HealthSample struct {
 	Healthy   bool      `json:"healthy"`
 	LatencyMS int64     `json:"latencyMs,omitempty"`
 	Message   string    `json:"message,omitempty"`
+}
+
+// Snapshot states.
+const (
+	SnapCreating = "creating"
+	SnapReady    = "ready"
+	SnapFailed   = "failed"
+)
+
+// Snapshot is a saved copy of a workspace's files.
+type Snapshot struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	State     string    `json:"state"`
+	SizeBytes int64     `json:"sizeBytes"`
+	Error     string    `json:"error,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+	CreatedBy string    `json:"createdBy"`
 }
