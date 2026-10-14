@@ -21,7 +21,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T2.1** Variable store: workspace and component scopes, secret vs plain, write-only secrets, precedence
 - [x] **T2.2** Effective environment (variables + connection variables) delivered to the agent; every process the agent starts receives it
 - [x] **T2.3** `.env` import and names-only export; API
-- [ ] **T2.4** Variables UI (read-only generated rows with their source)
+- [x] **T2.4** Variables UI (read-only generated rows with their source)
 
 ## M3 — Editor, terminal and files UI (F9)
 - [ ] **T3.1** Workspace shell: Code view with file tree (create, rename, move, delete, search, upload, download)
