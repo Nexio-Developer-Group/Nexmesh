@@ -93,10 +93,13 @@ type profileTest struct {
 func (s *Service) profileFields(ctx context.Context, c *domain.Component, def *catalog.Component, env string, in ConnectionInput) (map[string]any, map[string]string) {
 	plain, sec := splitFields(def, in.Fields)
 	stored := s.secretsFor(ctx, profilePendingID(c.ID, env), profileSecretID(c.ID, env))
-	for _, name := range def.SecretFields() {
-		if _, ok := sec[name]; !ok {
-			if v, ok := stored[name]; ok {
-				sec[name] = v
+	for _, f := range def.Connection.Fields {
+		if f.Type != "password" || !fieldVisible(f, plain) {
+			continue
+		}
+		if _, ok := sec[f.Name]; !ok {
+			if v, ok := stored[f.Name]; ok {
+				sec[f.Name] = v
 			}
 		}
 	}

@@ -41,7 +41,8 @@
           "frontend",
           "messaging",
           "scripting",
-          "hosting"
+          "hosting",
+          "external"
         ]
       },
       "uniqueItems": true
@@ -286,6 +287,27 @@
               },
               "help": {
                 "type": "string"
+              },
+              "showWhen": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "field",
+                  "in"
+                ],
+                "description": "Show this field only while another field has one of these values.",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "in": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1
+                  }
+                }
               }
             }
           }

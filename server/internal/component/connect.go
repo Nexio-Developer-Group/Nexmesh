@@ -130,6 +130,23 @@ func splitFields(def *catalog.Component, in map[string]any) (plain map[string]an
 	return plain, secret
 }
 
+// fieldVisible applies a field's showWhen rule to the values entered so far.
+func fieldVisible(f catalog.Field, values map[string]any) bool {
+	if f.ShowWhen == nil {
+		return true
+	}
+	cur := ""
+	if v := values[f.ShowWhen.Field]; v != nil {
+		cur = fmt.Sprint(v)
+	}
+	for _, v := range f.ShowWhen.In {
+		if v == cur {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Service) secretsFor(ctx context.Context, ids ...string) map[string]string {
 	out := map[string]string{}
 	for _, id := range ids {
@@ -149,10 +166,13 @@ func (s *Service) secretsFor(ctx context.Context, ids ...string) map[string]stri
 func (s *Service) merge(ctx context.Context, c *domain.Component, def *catalog.Component, in ConnectionInput) (map[string]any, map[string]string) {
 	plain, sec := splitFields(def, in.Fields)
 	stored := s.secretsFor(ctx, pendingID(c.ID), activeID(c.ID))
-	for _, name := range def.SecretFields() {
-		if _, ok := sec[name]; !ok {
-			if v, ok := stored[name]; ok {
-				sec[name] = v
+	for _, f := range def.Connection.Fields {
+		if f.Type != "password" || !fieldVisible(f, plain) {
+			continue // a credential for an option that is not selected is not carried over
+		}
+		if _, ok := sec[f.Name]; !ok {
+			if v, ok := stored[f.Name]; ok {
+				sec[f.Name] = v
 			}
 		}
 	}

@@ -34,6 +34,8 @@ func Names(componentID, connName string) []string {
 		return []string{p + "_BOOTSTRAP_SERVERS", p + "_USERNAME", p + "_PASSWORD"}
 	case "redis":
 		return []string{p + "_URI", p + "_HOST", p + "_PORT", p + "_PASSWORD"}
+	case "externalapi":
+		return []string{p + "_URL", p + "_API_KEY_HEADER", p + "_API_KEY", p + "_TOKEN", p + "_USERNAME", p + "_PASSWORD"}
 	}
 	return []string{p + "_URI", p + "_HOST", p + "_PORT", p + "_DATABASE", p + "_USERNAME", p + "_PASSWORD"}
 }
@@ -151,6 +153,24 @@ func Build(componentID, connName string, fields map[string]any) map[string]strin
 		if v != "" {
 			out[p+"_"+k] = v
 		}
+	}
+	if componentID == "externalapi" {
+		set("URL", strings.TrimRight(s(fields, "baseUrl"), "/"))
+		switch s(fields, "authType") {
+		case "apiKey":
+			if h := s(fields, "apiKeyHeader"); h != "" {
+				set("API_KEY_HEADER", h)
+			} else {
+				set("API_KEY_HEADER", "X-API-Key")
+			}
+			set("API_KEY", s(fields, "apiKey"))
+		case "bearer":
+			set("TOKEN", s(fields, "token"))
+		case "basic":
+			set("USERNAME", s(fields, "username"))
+			set("PASSWORD", s(fields, "password"))
+		}
+		return out
 	}
 	if componentID == "kafka" {
 		set("BOOTSTRAP_SERVERS", s(fields, "bootstrapServers"))

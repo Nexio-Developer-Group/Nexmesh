@@ -66,7 +66,16 @@ function ConnectForm({ workspaceId, component: c, def, editing, profileEnv, onCa
   const edit = useEditConnection(workspaceId, c.id)
   const parse = useParseConnectionString()
 
-  const body = useMemo<ConnectionBody>(() => ({ connName, environment, fields: { ...fields, ...Object.fromEntries(Object.entries(secrets).filter(([, v]) => v !== '')) } }), [connName, environment, fields, secrets])
+  // Fields can depend on another field (for example the credential that goes with the chosen authentication type).
+  const visible = (f: CatalogField) => !f.showWhen || f.showWhen.in.includes(String(fields[f.showWhen.field] ?? ''))
+  const hidden = new Set(fieldsDef.filter((f) => !visible(f)).map((f) => f.name))
+  const body = useMemo<ConnectionBody>(() => {
+    const all = { ...fields, ...Object.fromEntries(Object.entries(secrets).filter(([, v]) => v !== '')) }
+    // A hidden field's value (a key typed before switching authentication type) is never sent.
+    for (const n of hidden) delete all[n]
+    return { connName, environment, fields: all }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connName, environment, fields, secrets, fieldsDef])
   const key = JSON.stringify(body)
   const heldSecret = !profileEnv && !!c.lastTest?.passed && c.observedState === 'test_passed'
   const [passedKey, setPassedKey] = useState<string | null>(() => (!editing && heldSecret ? key : null))
@@ -124,8 +133,8 @@ function ConnectForm({ workspaceId, component: c, def, editing, profileEnv, onCa
   const runTest = () => test.mutate(body, { onSuccess: (r) => setPassedKey(r.passed ? key : null) })
   const submit = () => (editing ? edit : save).mutate(body, { onSuccess: onSaved })
 
-  const basic = fieldsDef.filter((f) => !f.advanced)
-  const advanced = fieldsDef.filter((f) => f.advanced)
+  const basic = fieldsDef.filter((f) => !f.advanced && visible(f))
+  const advanced = fieldsDef.filter((f) => f.advanced && visible(f))
   const tlsOn = fields.tls === true || fields.srv === true || ['SSL', 'SASL_SSL'].includes(String(fields.securityProtocol)) || (!!fields.sslMode && fields.sslMode !== 'disabled')
 
   return (

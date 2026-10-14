@@ -26,3 +26,4 @@ wiring:
   consumes:
   - database
   - messaging
+  - external

@@ -136,7 +136,7 @@ func CheckPair(from, to *catalog.Component) error {
 }
 
 func isSecretName(n string) bool {
-	return strings.HasSuffix(n, "_PASSWORD") || strings.HasSuffix(n, "_URI")
+	return strings.HasSuffix(n, "_PASSWORD") || strings.HasSuffix(n, "_URI") || strings.HasSuffix(n, "_API_KEY") || strings.HasSuffix(n, "_TOKEN")
 }
 
 // Preview validates a line without storing it.

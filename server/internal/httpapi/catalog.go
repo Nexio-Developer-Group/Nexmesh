@@ -19,6 +19,7 @@ var categoryLabels = map[string]string{
 	"messaging": "Event queues and messaging",
 	"scripting": "Scripting",
 	"hosting":   "Hosting and web infrastructure",
+	"external":  "External services",
 }
 
 // RegisterCatalog adds GET /api/catalog.

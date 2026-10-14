@@ -16,7 +16,7 @@ const (
 	WireHealthy     = "healthy"
 	WireDegraded    = "degraded"
 	WireUnreachable = "unreachable"
-	WirePending     = "pending" // the provider is not installed or connected yet
+	WirePending     = "pending"  // the provider is not installed or connected yet
 	WireInactive    = "inactive" // labelled for an environment that is not the active one
 )
 

@@ -423,3 +423,24 @@ func TestFingerprintDependsOnKeyAndValues(t *testing.T) {
 	}
 	_ = fmt.Sprint
 }
+
+func TestFieldVisibilityFollowsTheControllingField(t *testing.T) {
+	f := catalog.Field{Name: "apiKey", Type: "password", ShowWhen: &catalog.ShowWhen{Field: "authType", In: []string{"apiKey"}}}
+	cases := []struct {
+		values map[string]any
+		want   bool
+	}{
+		{map[string]any{"authType": "apiKey"}, true},
+		{map[string]any{"authType": "bearer"}, false},
+		{map[string]any{}, false},
+		{nil, false},
+	}
+	for _, c := range cases {
+		if got := fieldVisible(f, c.values); got != c.want {
+			t.Errorf("%v: %v, want %v", c.values, got, c.want)
+		}
+	}
+	if !fieldVisible(catalog.Field{Name: "host"}, nil) {
+		t.Error("a field without a rule is always visible")
+	}
+}

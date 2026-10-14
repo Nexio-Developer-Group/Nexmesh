@@ -46,7 +46,7 @@ func TestCatalogEndpoint(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
-	if len(body.Components) != 18 || len(body.Categories) != 6 {
+	if len(body.Components) != 19 || len(body.Categories) != 7 {
 		t.Fatalf("%d components, %d categories", len(body.Components), len(body.Categories))
 	}
 }

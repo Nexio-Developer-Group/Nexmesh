@@ -1,0 +1,119 @@
+schemaVersion: 1
+id: externalapi
+name: External API
+monogram: Ap
+order: 19
+categories:
+- external
+kind: service
+description: A third-party HTTP service your project calls, such as a payment, email or maps API.
+supportedModes:
+- connect
+versions:
+  default: any
+  supported:
+  - any
+connection:
+  schemes: []
+  defaultPort: 443
+  envPrefix: API
+  fields:
+  - name: baseUrl
+    label: Base URL
+    type: string
+    required: true
+    advanced: false
+    placeholder: https://api.example.com/v1
+  - name: authType
+    label: Authentication
+    type: select
+    required: true
+    advanced: false
+    default: none
+    options:
+    - none
+    - apiKey
+    - bearer
+    - basic
+  - name: apiKeyHeader
+    label: API key header
+    type: string
+    required: false
+    advanced: false
+    default: X-API-Key
+    help: Used when Authentication is apiKey.
+    showWhen:
+      field: authType
+      in:
+      - apiKey
+  - name: apiKey
+    label: API key
+    type: password
+    required: false
+    advanced: false
+    showWhen:
+      field: authType
+      in:
+      - apiKey
+  - name: token
+    label: Bearer token
+    type: password
+    required: false
+    advanced: false
+    showWhen:
+      field: authType
+      in:
+      - bearer
+  - name: username
+    label: Username
+    type: string
+    required: false
+    advanced: false
+    help: Used when Authentication is basic.
+    showWhen:
+      field: authType
+      in:
+      - basic
+  - name: password
+    label: Password
+    type: password
+    required: false
+    advanced: false
+    showWhen:
+      field: authType
+      in:
+      - basic
+  - name: healthPath
+    label: Health check path
+    type: string
+    required: false
+    advanced: true
+    default: /
+    help: A read-only GET request is sent here to test the connection.
+  - name: expectStatus
+    label: Expected status
+    type: number
+    required: false
+    advanced: true
+    default: 200
+  - name: headers
+    label: Extra headers
+    type: textarea
+    required: false
+    advanced: true
+    help: 'One "Name: value" per line. Not for secrets; use the authentication fields above.'
+  - name: caCertificate
+    label: CA certificate
+    type: textarea
+    required: false
+    advanced: true
+    help: PEM. Leave empty to use system roots.
+  - name: tlsInsecure
+    label: Skip certificate verification
+    type: boolean
+    required: false
+    advanced: true
+    default: false
+    help: Encrypts the connection but does not check the server identity. Only use for testing.
+wiring:
+  provides: true

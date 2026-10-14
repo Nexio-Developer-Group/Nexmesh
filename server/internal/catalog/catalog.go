@@ -102,6 +102,13 @@ type Field struct {
 	Placeholder string   `json:"placeholder,omitempty" yaml:"placeholder,omitempty"`
 	Options     []string `json:"options,omitempty" yaml:"options,omitempty"`
 	Help        string   `json:"help,omitempty" yaml:"help,omitempty"`
+	// ShowWhen hides the field unless another field has one of the listed values.
+	ShowWhen *ShowWhen `json:"showWhen,omitempty" yaml:"showWhen,omitempty"`
+}
+
+type ShowWhen struct {
+	Field string   `json:"field" yaml:"field"`
+	In    []string `json:"in" yaml:"in"`
 }
 
 func (c *Component) SupportsMode(m string) bool { return slices.Contains(c.SupportedModes, m) }
@@ -130,7 +137,7 @@ func (c *Catalog) Get(id string) (*Component, bool) { v, ok := c.byID[id]; retur
 func (c *Catalog) All() []*Component                { return c.order }
 
 // Categories in display order (PRD Section 8).
-var CategoryOrder = []string{"database", "backend", "frontend", "messaging", "scripting", "hosting"}
+var CategoryOrder = []string{"database", "backend", "frontend", "messaging", "scripting", "hosting", "external"}
 
 // Load reads every *.yaml in dir/components, validates it against
 // dir/schema/component.schema.json and the cross-field rules.

@@ -32,4 +32,5 @@ wiring:
   consumes:
   - database
   - messaging
+  - external
   provides: true

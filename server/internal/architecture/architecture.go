@@ -24,6 +24,7 @@ var Layers = []Layer{
 	{ID: "data", Label: "Data"},
 	{ID: "messaging", Label: "Messaging"},
 	{ID: "infrastructure", Label: "Infrastructure"},
+	{ID: "external", Label: "External services"},
 }
 
 type Layer struct {
@@ -94,6 +95,8 @@ func LayerOf(def *catalog.Component) string {
 			return "messaging"
 		case "hosting":
 			return "infrastructure"
+		case "external":
+			return "external"
 		}
 	}
 	switch def.Kind {

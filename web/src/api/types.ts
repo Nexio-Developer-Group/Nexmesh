@@ -47,6 +47,8 @@ export interface CatalogField {
   placeholder?: string
   options?: string[]
   help?: string
+  /** Hidden unless another field has one of these values. */
+  showWhen?: { field: string; in: string[] }
 }
 
 export interface CatalogComponent {

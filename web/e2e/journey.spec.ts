@@ -176,7 +176,7 @@ test.describe('Connect mode against real Redis', () => {
     await page.getByRole('button', { name: 'Add Redis to canvas' }).click()
     await page.getByRole('tab', { name: 'connect' }).click()
     await page.getByLabel('Connection name').fill('shared-cache')
-    await page.getByRole('radio', { name: 'staging' }).click()
+    await page.getByRole('radiogroup', { name: 'Environment', exact: true }).getByRole('radio', { name: 'staging' }).click()
     await page.getByLabel(/^Host/).fill('127.0.0.1')
     await page.getByLabel(/^Port/).fill(redisPort!)
     await page.getByText('Advanced').click() // Redis credentials and TLS live under Advanced

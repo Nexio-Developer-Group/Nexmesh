@@ -160,11 +160,13 @@ func TestPhase1Acceptance(t *testing.T) {
 
 	// §15: "The sidebar shows the defined technology categories and catalog entries."
 	cat := h.must(200, "GET", "/api/catalog", "")
-	if got := len(cat["categories"].([]any)); got != 6 {
+	// Six categories and 18 entries are the PRD Section 8 catalog; Phase 3 adds the
+	// External services category with one connect-only entry (F16).
+	if got := len(cat["categories"].([]any)); got != 7 {
 		t.Fatalf("categories: %d", got)
 	}
 	comps := cat["components"].([]any)
-	if len(comps) != 18 {
+	if len(comps) != 19 {
 		t.Fatalf("catalog entries: %d", len(comps))
 	}
 	connectable := map[string]bool{}
@@ -181,7 +183,10 @@ func TestPhase1Acceptance(t *testing.T) {
 			t.Errorf("%s must support Connect", id)
 		}
 	}
-	if len(connectable) != 5 {
+	if !connectable["externalapi"] {
+		t.Errorf("the External API card (F16) supports Connect")
+	}
+	if len(connectable) != 6 {
 		t.Errorf("only service-type components support Connect: %v", connectable)
 	}
 

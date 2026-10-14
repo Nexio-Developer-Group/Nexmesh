@@ -91,11 +91,12 @@ type session interface {
 type opener func(t *Target, p Params) (session, *StageError)
 
 var openers = map[string]opener{
-	"redis":    openRedis,
-	"mysql":    openMySQL,
-	"mongodb":  openMongo,
-	"rabbitmq": openRabbit,
-	"kafka":    openKafka,
+	"redis":       openRedis,
+	"mysql":       openMySQL,
+	"mongodb":     openMongo,
+	"rabbitmq":    openRabbit,
+	"kafka":       openKafka,
+	"externalapi": openHTTP,
 }
 
 // Supported reports whether a probe exists for the component.
@@ -351,6 +352,10 @@ func validate(p Params) (*Target, *StageError) {
 		t.Port = pt
 		proto := str(p.Fields, "securityProtocol")
 		t.UseTLS = proto == "SSL" || proto == "SASL_SSL"
+	} else if p.Def.ID == "externalapi" {
+		if e := externalTarget(p, t); e != nil {
+			return nil, e
+		}
 	} else {
 		t.Host = str(p.Fields, "host")
 		if strings.Contains(t.Host, "://") || strings.ContainsAny(t.Host, " /@?#") {

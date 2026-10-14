@@ -9,18 +9,22 @@ func TestShippedCatalogLoads(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(cat.All()) != 18 {
-		t.Fatalf("want 18 entries, got %d", len(cat.All()))
+	// 18 technologies from PRD Section 8 plus the External API card (F16).
+	if len(cat.All()) != 19 {
+		t.Fatalf("want 19 entries, got %d", len(cat.All()))
 	}
-	// Mode matrix from PRD 11.2.
-	connectable := map[string]bool{"mongodb": true, "mysql": true, "redis": true, "kafka": true, "rabbitmq": true}
+	// Mode matrix from PRD 11.2. The External API card is connect-only.
+	connectable := map[string]bool{"mongodb": true, "mysql": true, "redis": true, "kafka": true, "rabbitmq": true, "externalapi": true}
 	for _, c := range cat.All() {
 		if got := c.SupportsMode(ModeConnect); got != connectable[c.ID] {
 			t.Errorf("%s connect support = %v, want %v", c.ID, got, connectable[c.ID])
 		}
-		if !c.SupportsMode(ModeInstall) {
+		if c.ID != "externalapi" && !c.SupportsMode(ModeInstall) {
 			t.Errorf("%s must be installable", c.ID)
 		}
+	}
+	if ext, _ := cat.Get("externalapi"); ext.SupportsMode(ModeInstall) || len(ext.SecretFields()) != 3 {
+		t.Errorf("external API: connect only, with three credential fields (api key, token, password): %v", ext.SecretFields())
 	}
 	m, _ := cat.Get("mongodb")
 	if len(m.SecretFields()) != 1 || m.SecretFields()[0] != "password" {

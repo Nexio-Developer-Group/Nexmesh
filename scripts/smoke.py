@@ -364,6 +364,43 @@ def _():
     assert not call("GET", W("/wires"))["wires"]
 
 
+@check("external API card: test (wrong key, right key), add, variables, line, disconnect")
+def _():
+    import http.server, threading
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            ok = self.path == "/v1/health" and self.headers.get("X-API-Key") == "right-key"
+            self.send_response(200 if ok else (401 if self.path == "/v1/health" else 404))
+            self.end_headers()
+            self.wfile.write(b"ok")
+        def log_message(self, *a): pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        card = call("POST", W("/components"), {"catalogId": "externalapi"})
+        base = f"/components/{card['id']}/connection"
+        fields = {"baseUrl": f"http://127.0.0.1:{srv.server_address[1]}/v1", "authType": "apiKey", "apiKey": "wrong", "healthPath": "/health"}
+        body = {"connName": "billing", "environment": "development", "fields": fields}
+        r = call("POST", W(base + "/test"), body)
+        assert not r["passed"] and r["failedStage"] == "authentication", r
+        time.sleep(1.1)
+        body["fields"] = dict(fields, apiKey="right-key")
+        r = call("POST", W(base + "/test"), body)
+        assert r["passed"], r
+        c = call("POST", W(base), body)
+        assert c["mode"] == "connected" and "right-key" not in json.dumps(c)
+        gen = json.dumps(call("GET", W("/variables"))["generated"])
+        assert "BILLING_URL" in gen and "BILLING_API_KEY" in gen, gen
+        be = call("POST", W("/components"), {"catalogId": "nestjs"})
+        w = call("POST", W("/wires"), {"fromId": be["id"], "toId": card["id"], "confirm": True})
+        assert w["state"] == "healthy" and "BILLING_API_KEY" in w["variables"], w
+        call("DELETE", W(f"/wires/{w['id']}"))
+        call("DELETE", W(base))
+        assert "right-key" not in json.dumps(call("GET", W(f"/components/{card['id']}")))
+    finally:
+        srv.shutdown()
+
+
 @check("architecture view: layers, drift, exports without secrets")
 def _():
     v = call("GET", W("/architecture"))
