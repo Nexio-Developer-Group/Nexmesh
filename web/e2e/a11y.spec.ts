@@ -66,3 +66,57 @@ test('Phase 2 screens have no serious accessibility violations', async ({ page }
   await page.getByRole('button', { name: 'Add variable' }).click()
   await check(page, 'add variable dialog')
 })
+
+test('Phase 3 screens have no serious accessibility violations', async ({ page }) => {
+  await page.goto('/new')
+  await page.getByLabel('Workspace name').fill('a11y-p3')
+  await page.getByRole('button', { name: 'Create Code Space' }).click()
+  await page.waitForURL(/\/w\/ws_[a-f0-9]+$/, { timeout: 30_000 })
+  const url = page.url()
+  const ws = url.split('/w/')[1]
+  await expect.poll(async () => (await page.request.get(`/api/workspaces/${ws}/files`)).status(), { timeout: 20_000 }).toBe(200)
+
+  // Architecture view and the agent panel with its three sections.
+  await page.getByRole('tab', { name: 'Architecture' }).click()
+  await check(page, 'architecture view')
+  await page.getByRole('tab', { name: 'Canvas' }).click()
+  await page.getByRole('button', { name: 'Code Agent' }).click()
+  await check(page, 'agent chat')
+  const panel = page.getByRole('complementary', { name: 'Code Agent' })
+  await panel.getByRole('tab', { name: 'Settings' }).click()
+  await check(page, 'agent settings')
+  await panel.getByRole('button', { name: 'Show what the agent can see' }).click()
+  await expect(page.getByLabel('Agent context')).toBeVisible()
+  await check(page, 'agent context dialog')
+  await page.keyboard.press('Escape')
+
+  // A change set open for review, with a file and diff.
+  await page.request.put(`/api/workspaces/${ws}/files/content`, { data: { path: 'a.txt', content: 'one\ntwo\nthree\n' } })
+  const made = await page.request.post(`/api/workspaces/${ws}/changes`, { data: { title: 'Edit a', changes: [{ path: 'a.txt', content: 'one\n2\nthree\n' }, { path: 'b/new.txt', content: 'x\n' }] } })
+  expect(made.status()).toBe(201)
+  await panel.getByRole('tab', { name: 'Changes' }).click()
+  await check(page, 'agent changes')
+  await panel.getByRole('button', { name: 'Review Edit a' }).click()
+  await expect(page.getByRole('dialog', { name: 'Edit a' }).getByText('b/new.txt')).toBeVisible()
+  await check(page, 'change review dialog')
+  await page.keyboard.press('Escape')
+
+  // Explain dialog for a card.
+  await page.getByRole('button', { name: 'Add Redis to canvas' }).click()
+  await page.getByRole('button', { name: 'Explain' }).click()
+  await expect(page.getByLabel('Text that will be sent')).toBeVisible()
+  await check(page, 'explain dialog')
+  await page.keyboard.press('Escape')
+
+  // Rules and gates settings, with their dialogs.
+  await page.goto(url + '/settings?tab=rules')
+  await expect(page.getByRole('heading', { name: 'Agent rules' })).toBeVisible()
+  await check(page, 'rules')
+  await page.getByRole('button', { name: 'New rule' }).click()
+  await check(page, 'new rule dialog')
+  await page.keyboard.press('Escape')
+  await page.goto(url + '/settings?tab=gates')
+  await expect(page.getByRole('heading', { name: 'Quality gates' })).toBeVisible()
+  await page.getByRole('button', { name: 'Add a gate' }).click()
+  await check(page, 'quality gates')
+})
