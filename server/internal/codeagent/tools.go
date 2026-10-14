@@ -10,6 +10,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/changeset"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/modelprovider"
+	"github.com/nexio-developer-group/nexmesh/server/internal/secretscan"
 	"github.com/nexio-developer-group/nexmesh/server/internal/wsfs"
 )
 
@@ -249,6 +250,8 @@ func (s *Service) exec(ctx context.Context, rc *runCtx, call modelprovider.ToolC
 		if res.Truncated {
 			note += "\n[output truncated]"
 		}
+		// Whatever a command printed may include credentials from the environment or a file.
+		out, _ = secretscan.Scrub(out)
 		return fmt.Sprintf("exit code %d\n%s%s", res.ExitCode, out, note), CallOK, ""
 	}
 	return denied("there is no tool called "+call.Name+"; the agent can only use the tools it was given", call.Name)

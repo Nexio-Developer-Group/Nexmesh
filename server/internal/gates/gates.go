@@ -553,3 +553,21 @@ func (s *Service) Verdict(ctx context.Context, wsID, setID, hash string) changes
 	v.Passed = len(v.Failing) == 0
 	return v
 }
+
+// ForgetWorkspace cancels gate runs for a workspace that is being deleted.
+func (s *Service) ForgetWorkspace(wsID string) {
+	s.mu.Lock()
+	var as []*active
+	for _, a := range s.runs {
+		if a.ws == wsID {
+			as = append(as, a)
+		}
+	}
+	s.mu.Unlock()
+	for _, a := range as {
+		a.cancel()
+	}
+	for _, a := range as {
+		<-a.done
+	}
+}

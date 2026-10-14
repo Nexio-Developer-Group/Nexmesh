@@ -263,6 +263,12 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		return vals
 	})
 	api.RegisterCodeAgent(caSvc)
+	wsSvc.WithCleanup(func(_ context.Context, w *domain.Workspace) {
+		caSvc.ForgetWorkspace(w.ID)
+		gateSvc.ForgetWorkspace(w.ID)
+		tracker.Forget(w.ID)
+		metricsSvc.Forget(w.ID)
+	})
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
 	defSvc := definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud).WithAgent(agents).WithPhase3(definition.P3{Wires: wireSvc, Rules: rulesSvc, Gates: gateSvc, Agent: caSvc})

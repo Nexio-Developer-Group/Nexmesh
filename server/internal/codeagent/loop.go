@@ -55,8 +55,18 @@ func (s *Service) Send(ctx context.Context, owner, wsID, id, text string) (*Sess
 		s.mu.Unlock()
 		return nil, verr("session", "busy", "The agent is still working on the last message.")
 	}
+	n := 0
+	for _, o := range s.runs {
+		if o.ws == wsID {
+			n++
+		}
+	}
+	if n >= MaxConcurrentRuns {
+		s.mu.Unlock()
+		return nil, verr("session", "too_many_runs", "The agent is already working on several conversations in this workspace. Wait for one to finish.")
+	}
 	rctx, cancel := context.WithTimeout(context.Background(), MaxRunTime)
-	r := &run{cancel: cancel, approval: make(chan bool, 1), done: make(chan struct{})}
+	r := &run{ws: wsID, cancel: cancel, approval: make(chan bool, 1), done: make(chan struct{})}
 	s.runs[id] = r
 	s.mu.Unlock()
 

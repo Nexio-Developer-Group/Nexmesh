@@ -26,6 +26,8 @@ const (
 	MaxToolOutput  = 16 << 10
 	MaxFileToModel = 64 << 10
 	MaxTurns       = 200
+	// MaxConcurrentRuns bounds model spend and load per workspace.
+	MaxConcurrentRuns = 3
 )
 
 // Session statuses.
@@ -81,6 +83,7 @@ type Service struct {
 }
 
 type run struct {
+	ws       string
 	cancel   context.CancelFunc
 	approval chan bool
 	done     chan struct{}
@@ -406,3 +409,22 @@ func slimArgs(a map[string]any) map[string]any {
 }
 
 func itoa(n int) string { return strconv.Itoa(n) }
+
+// ForgetWorkspace stops runs for a workspace that is being deleted, so nothing
+// writes records for it afterwards.
+func (s *Service) ForgetWorkspace(wsID string) {
+	s.mu.Lock()
+	var rs []*run
+	for _, r := range s.runs {
+		if r.ws == wsID {
+			rs = append(rs, r)
+		}
+	}
+	s.mu.Unlock()
+	for _, r := range rs {
+		r.cancel()
+	}
+	for _, r := range rs {
+		<-r.done
+	}
+}

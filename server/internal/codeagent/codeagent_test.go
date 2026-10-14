@@ -774,3 +774,77 @@ func TestAssistGuards(t *testing.T) {
 		t.Fatal("expired preview was accepted")
 	}
 }
+
+func TestCommandOutputIsScrubbedOfCredentialShapedText(t *testing.T) {
+	f := newFx(t, use(ToolRun, map[string]any{"command": "go test ./..."}), say("ok"))
+	f.svc.SetSettings(f.ctx, "u1", f.ws, Settings{Level: LevelExecute})
+	f.fs.mu.Lock()
+	f.fs.ran = nil
+	f.fs.mu.Unlock()
+	orig := f.svc.fs
+	f.svc.fs = leakyRunFS{orig.(*fakeFS)}
+	s := f.send(t, f.session(t), "run tests")
+	res := s.Turns[1].Calls[0].Result
+	if strings.Contains(res, "AKIAIOSFODNN7ABCDEFG") || strings.Contains(res, "supersecret123") || !strings.Contains(res, "[hidden]") {
+		t.Fatalf("output not scrubbed: %q", res)
+	}
+	for _, r := range f.model.reqs {
+		for _, m := range r.Messages {
+			if strings.Contains(m.Content, "AKIAIOSFODNN7ABCDEFG") {
+				t.Fatal("credential reached the model")
+			}
+		}
+	}
+}
+
+type leakyRunFS struct{ *fakeFS }
+
+func (leakyRunFS) Run(context.Context, string, string, int) (*wsfs.RunResult, error) {
+	return &wsfs.RunResult{Stdout: "aws key AKIAIOSFODNN7ABCDEFG\nDB_PASSWORD=supersecret123\nPASS"}, nil
+}
+
+func TestConcurrentRunsPerWorkspaceAreCapped(t *testing.T) {
+	release := make(chan struct{})
+	block := func(modelprovider.ChatRequest) (*modelprovider.ChatResponse, *modelprovider.Error) {
+		<-release
+		return &modelprovider.ChatResponse{Text: "x"}, nil
+	}
+	f := newFx(t, block, block, block, block, block)
+	var ids []string
+	for i := 0; i < MaxConcurrentRuns; i++ {
+		s := f.session(t)
+		ids = append(ids, s.ID)
+		if _, err := f.svc.Send(f.ctx, "u1", f.ws, s.ID, "go"); err != nil {
+			t.Fatalf("run %d: %v", i, err)
+		}
+	}
+	extra := f.session(t)
+	if _, err := f.svc.Send(f.ctx, "u1", f.ws, extra.ID, "one too many"); vcode(err) != "too_many_runs" {
+		t.Fatal(err)
+	}
+	close(release)
+	for _, id := range ids {
+		f.svc.Wait(id)
+	}
+	if _, err := f.svc.Send(f.ctx, "u1", f.ws, extra.ID, "now fine"); err != nil {
+		t.Fatalf("after the others finished: %v", err)
+	}
+	f.svc.Wait(extra.ID)
+}
+
+func TestForgetWorkspaceStopsRuns(t *testing.T) {
+	f := newFx(t, use(ToolRun, map[string]any{"command": "make deploy"}))
+	f.svc.SetSettings(f.ctx, "u1", f.ws, Settings{Level: LevelExecute})
+	s := f.session(t)
+	f.svc.Send(f.ctx, "u1", f.ws, s.ID, "deploy")
+	for i := 0; i < 200; i++ {
+		if cur, _ := f.svc.GetSession(f.ctx, "u1", f.ws, s.ID); cur.Status == StatusAwaiting {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	f.svc.ForgetWorkspace(f.ws) // returns only once the run has ended
+	if f.svc.active(s.ID) != nil {
+		t.Fatal("run still active")
+	}
+}

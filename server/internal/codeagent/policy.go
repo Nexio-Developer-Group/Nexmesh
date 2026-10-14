@@ -97,7 +97,7 @@ var forbiddenCmd = []*regexp.Regexp{
 // safeStart lists commands that only read, build or test.
 var safeStart = []*regexp.Regexp{
 	regexp.MustCompile(`^(ls|pwd|echo|true|false|date|whoami|uname|which|wc|head|tail|sort|uniq|diff|stat|file|tree|du|df|basename|dirname|realpath)(\s|$)`),
-	regexp.MustCompile(`^(cat|grep|egrep|fgrep|rg|less|more)(\s|$)`),
+	regexp.MustCompile(`^(cat|grep|egrep|fgrep)(\s|$)`),
 	regexp.MustCompile(`^find\s`),
 	regexp.MustCompile(`^git\s+(status|diff|log|show|branch|rev-parse|ls-files|blame|remote\s+-v|config\s+--get)(\s|$)`),
 	regexp.MustCompile(`^go\s+(test|vet|build|version|list|env\s+GO\w+)(\s|$)`),
@@ -107,6 +107,11 @@ var safeStart = []*regexp.Regexp{
 	regexp.MustCompile(`^make\s+(test|check|lint|build|verify)[\w:-]*(\s|$)`),
 	regexp.MustCompile(`^(node|python3?|go|java|rustc)\s+(--version|-v|version)(\s|$)`),
 }
+
+// recursiveSearch matches grep forms that walk directories, which would read
+// files that hold secrets; search_files is the secret-aware way to search.
+var recursiveSearch = regexp.MustCompile(`^(?:e|f)?grep\s+(?:.*\s)?(?:-[a-zA-Z]*[rR][a-zA-Z]*|--recursive|--dereference-recursive)(\s|$)`)
+var globChars = regexp.MustCompile(`[*?\[]`)
 
 var unsafeFind = regexp.MustCompile(`(?i)\s-(delete|exec|execdir|ok|fprint\w*)\b`)
 var shellMeta = regexp.MustCompile("[><`]|\\$\\(|\\$\\{")
@@ -144,6 +149,12 @@ func ClassifyCommand(cmd string) (CommandVerdict, string) {
 		}
 		if unsafeFind.MatchString(seg) {
 			return CmdRisky, "find with -delete or -exec can change files."
+		}
+		if recursiveSearch.MatchString(seg) || strings.HasPrefix(seg, "rg ") || seg == "rg" {
+			return CmdRisky, "A recursive search can read files that hold secrets. The agent's own search skips them."
+		}
+		if globChars.MatchString(seg) && (strings.HasPrefix(seg, "cat ") || strings.HasPrefix(seg, "head ") || strings.HasPrefix(seg, "tail ") || strings.HasPrefix(seg, "grep ") || strings.HasPrefix(seg, "wc ") || strings.HasPrefix(seg, "diff ") || strings.HasPrefix(seg, "sort ") || strings.HasPrefix(seg, "uniq ")) {
+			return CmdRisky, "It uses wildcards, which could match files that hold secrets."
 		}
 		for _, f := range strings.Fields(seg) {
 			if !strings.HasPrefix(f, "-") && SecretPath(f) {
