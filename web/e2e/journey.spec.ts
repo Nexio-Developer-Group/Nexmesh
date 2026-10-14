@@ -54,7 +54,7 @@ test.describe('Phase 1 journey', () => {
     await createWorkspace(page, unique('tabs'))
     await page.getByRole('button', { name: 'Add NestJS to canvas' }).click()
     await expect(page.getByRole('complementary', { name: 'NestJS properties' })).toBeVisible()
-    await expect(page.getByRole('tab')).toHaveCount(0)
+    await expect(page.getByRole('complementary', { name: 'NestJS properties' }).getByRole('tab')).toHaveCount(0)
     await page.getByRole('button', { name: 'Install', exact: true }).first().click()
     // Requires Node.js first: the error is specific.
     await page.getByRole('dialog').getByRole('button', { name: 'Install', exact: true }).click()

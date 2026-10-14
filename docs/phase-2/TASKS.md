@@ -26,7 +26,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 ## M3 — Editor, terminal and files UI (F9)
 - [x] **T3.1** Workspace shell: Code view with file tree (create, rename, move, delete, search, upload, download)
 - [x] **T3.2** Tabbed Monaco editor with save, dirty state, conflict detection
-- [ ] **T3.3** xterm.js terminals with tabs and reconnect
+- [x] **T3.3** xterm.js terminals with tabs and reconnect
 
 ## M4 — Git (F10)
 - [ ] **T4.1** Git provider credentials as secrets (token); revoke removes them

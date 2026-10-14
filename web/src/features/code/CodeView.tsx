@@ -1,6 +1,7 @@
 import type { Workspace } from '@/api/types'
 import { EditorPane } from './EditorPane'
 import { FileTree } from './FileTree'
+import { TerminalPanel } from './terminal/TerminalPanel'
 import { useOpenFiles } from './useOpenFiles'
 
 /** Code view: file tree, editor and terminal for a running workspace. */
@@ -35,6 +36,7 @@ export function CodeView({ workspace }: { workspace: Workspace }) {
           onSave={files.save}
           onReload={files.reload}
         />
+        <TerminalPanel workspaceId={workspace.id} />
       </main>
     </div>
   )
