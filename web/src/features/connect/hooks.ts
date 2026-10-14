@@ -46,3 +46,17 @@ export function useConnections(ws: string, enabled: boolean, deps: unknown[] = [
     enabled,
   })
 }
+
+export interface ImportCandidate {
+  source: string
+  catalogId: string
+  name: string
+  fields: Record<string, unknown>
+  secrets: string[]
+  missing: string[]
+  notes?: string[]
+}
+export interface ImportResponse { format: 'connection-string' | 'env' | 'compose'; candidates: ImportCandidate[]; skipped: { source: string; reason: string }[] }
+
+export const useImportConnections = () =>
+  useMutation({ mutationFn: (v: { content: string; catalogId?: string }) => api.post<ImportResponse>('/api/connections/import', v) })

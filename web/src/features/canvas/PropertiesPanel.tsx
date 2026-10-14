@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 import type { CanvasComponent, CatalogComponent } from '@/api/types'
 import { ModeBadge, StatusBadge } from '@/components/ui/StatusBadge'
+import { usePrefill } from '@/features/connect/prefill'
 import { Monogram } from './TechNode'
 
 interface Props {
@@ -20,7 +21,8 @@ interface Props {
  */
 export function PropertiesPanel({ component: c, def, onClose, renderInstall, renderConnect, renderActivity }: Props) {
   const both = def.supportedModes.includes('install') && def.supportedModes.includes('connect')
-  const initialTab = (): 'install' | 'connect' => (c.mode === 'connected' || (c.mode === '' && c.suggestedMode === 'connect') ? 'connect' : 'install')
+  const initialTab = (): 'install' | 'connect' =>
+    c.mode === 'connected' || (c.mode === '' && (c.suggestedMode === 'connect' || !!usePrefill.getState().byComponent[c.id])) ? 'connect' : 'install'
   const [tab, setTab] = useState<'install' | 'connect'>(initialTab)
   useEffect(() => {
     setTab(initialTab())

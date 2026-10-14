@@ -3,13 +3,15 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { ApiError } from '@/api/client'
 import type { CanvasComponent, CatalogComponent, CatalogField } from '@/api/types'
 import { Button } from '@/components/ui/Button'
+import { ImportConnectionDialog } from './ImportConnectionDialog'
+import { usePrefill } from './prefill'
 import { Field } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
 import { relativeTime } from '@/lib/format'
 import { TestResultList } from './TestResultList'
 import {
   useConnections, useDisconnect, useEditConnection, useParseConnectionString, useRetest, useRotate, useSaveConnection, useTestConnection,
-  type ConnectionBody,
+  type ConnectionBody, type ImportCandidate,
 } from './hooks'
 
 const ENVS = ['development', 'staging', 'production'] as const
@@ -40,10 +42,14 @@ function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSave
   workspaceId: string; component: CanvasComponent; def: CatalogComponent; editing: boolean; onCancel: () => void; onSaved: () => void
 }) {
   const fieldsDef = def.connection?.fields ?? []
-  const [connName, setConnName] = useState(c.connName ?? '')
+  // Values imported from a .env/compose file wait in memory for this form to open.
+  const [pre] = useState(() => usePrefill.getState().take(c.id))
+  const [connName, setConnName] = useState(pre?.connName || c.connName || '')
   const [environment, setEnvironment] = useState<string>(c.environment || 'development')
-  const [fields, setFields] = useState<Record<string, unknown>>(() => initialFields(def, c))
-  const [secrets, setSecrets] = useState<Record<string, string>>({})
+  const [fields, setFields] = useState<Record<string, unknown>>(() => ({ ...initialFields(def, c), ...(pre?.fields ?? {}) }))
+  const [secrets, setSecrets] = useState<Record<string, string>>(pre?.secrets ?? {})
+  const [importing, setImporting] = useState(false)
+  const defs = useMemo(() => new Map([[def.id, def]]), [def])
   const [uri, setUri] = useState('')
   const [uriError, setUriError] = useState<string | undefined>()
   const test = useTestConnection(workspaceId, c.id)
@@ -86,6 +92,20 @@ function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSave
   }, [uri])
 
   const set = (name: string, v: unknown) => setFields((p) => ({ ...p, [name]: v }))
+  const applyImport = (cand: ImportCandidate) => {
+    const plain: Record<string, unknown> = {}
+    const sec: Record<string, string> = {}
+    for (const f of fieldsDef) {
+      const v = cand.fields[f.name]
+      if (v === undefined) continue
+      if (f.type === 'password') sec[f.name] = String(v)
+      else plain[f.name] = v
+    }
+    setFields((p) => ({ ...p, ...plain }))
+    setSecrets((p) => ({ ...p, ...sec }))
+    if (!connName) setConnName(cand.name)
+    setImporting(false)
+  }
   const testErr = test.error instanceof ApiError ? test.error : null
   const saveErr = (save.error ?? edit.error) as ApiError | null
   const running = test.isPending
@@ -121,6 +141,12 @@ function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSave
           </div>
         </fieldset>
 
+        {!editing && (
+          <div className="-mb-2 flex items-center justify-between rounded-lg border border-dashed border-line-strong px-3 py-2 text-[13px]">
+            <span className="text-muted">Have a .env file, connection string or compose file?</span>
+            <button type="button" className="font-semibold text-link hover:underline" onClick={() => setImporting(true)}>Import…</button>
+          </div>
+        )}
         {def.connection?.schemes && def.connection.schemes.length > 0 && (
           <Field label="Paste connection string" optional mono value={uri} onChange={(e) => { setUri(e.target.value); setUriError(undefined) }}
             placeholder={`${def.connection.schemes[0]}://user:password@host:${def.connection.defaultPort ?? ''}/db`} autoComplete="off" spellCheck={false}
@@ -167,6 +193,7 @@ function ConnectForm({ workspaceId, component: c, def, editing, onCancel, onSave
         </p>
         {editing && <button className="mx-auto mt-2 block text-xs text-muted hover:text-fg" onClick={onCancel}>Cancel editing</button>}
       </div>
+      {importing && <ImportConnectionDialog catalogId={def.id} defs={defs} onPick={applyImport} onClose={() => setImporting(false)} />}
     </div>
   )
 }

@@ -17,6 +17,8 @@ import { ComponentActivity } from '@/features/health/ComponentActivity'
 import { InstallTab } from '@/features/canvas/InstallTab'
 import { applyComponentEvent, applyOperationEvent, useAddComponent, useComponents, useMoveComponent } from '@/features/canvas/hooks'
 import { osLabel } from '@/lib/format'
+import { ImportConnectionDialog } from '@/features/connect/ImportConnectionDialog'
+import { usePrefill } from '@/features/connect/prefill'
 import { TemplatesDialog } from '@/features/templates/TemplatesDialog'
 import { CodeView } from '@/features/code/CodeView'
 
@@ -31,6 +33,7 @@ export default function WorkspacePage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [runtimesOpen, setRuntimesOpen] = useState(false)
   const [templatesOpen, setTemplatesOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [params, setParams] = useSearchParams()
   const view = params.get('view') === 'code' ? 'code' : 'canvas'
   const setView = (v: 'canvas' | 'code') => setParams(v === 'code' ? { view: 'code' } : {}, { replace: true })
@@ -87,6 +90,7 @@ export default function WorkspacePage() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-3">
+          <Button size="sm" onClick={() => setImportOpen(true)} disabled={ws?.status !== 'ready'}>Import connection</Button>
           <Button size="sm" onClick={() => setTemplatesOpen(true)} disabled={ws?.status !== 'ready'}>Templates</Button>
           <Button size="sm" onClick={() => setRuntimesOpen(true)}>Runtimes</Button>
           <Link to={`/w/${id}/settings`}><Button size="sm">Workspace settings</Button></Link>
@@ -95,6 +99,24 @@ export default function WorkspacePage() {
       </header>
 
       {view === 'code' && ws && <CodeView workspace={ws} />}
+      {importOpen && <ImportConnectionDialog defs={defs} onClose={() => setImportOpen(false)} onPick={(cand) => {
+        // A Draft card is created and the values wait in memory for its Connect form; nothing is saved or tested yet.
+        const n = comps.length
+        add.mutate({ catalogId: cand.catalogId, x: 40 + (n % 3) * 250, y: 40 + Math.floor(n / 3) * 230 }, { onSuccess: (c) => {
+          const def = defs.get(cand.catalogId)
+          const plain: Record<string, unknown> = {}
+          const sec: Record<string, string> = {}
+          for (const f of def?.connection?.fields ?? []) {
+            const v = cand.fields[f.name]
+            if (v === undefined) continue
+            if (f.type === 'password') sec[f.name] = String(v)
+            else plain[f.name] = v
+          }
+          usePrefill.getState().set(c.id, { connName: cand.name, fields: plain, secrets: sec })
+          setSelectedId(c.id)
+          setImportOpen(false)
+        } })
+      }} />}
       {templatesOpen && id && <TemplatesDialog workspaceId={id} defs={defs} canvasHasCards={comps.length > 0} onClose={() => setTemplatesOpen(false)} />}
       <div className={view === 'code' ? 'hidden' : 'flex min-h-0 flex-1'}>
         {catalog && (

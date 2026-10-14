@@ -2,11 +2,16 @@ package httpapi
 
 import (
 	"encoding/json"
+	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
+	"github.com/nexio-developer-group/nexmesh/server/internal/component"
+	"github.com/nexio-developer-group/nexmesh/server/internal/events"
+	"github.com/nexio-developer-group/nexmesh/server/internal/store"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -81,5 +86,38 @@ func TestRequestsForAWorkspaceAreTracked(t *testing.T) {
 	res.Body.Close()
 	if act.open != 1 || act.ended != 1 || len(act.touched) != 1 {
 		t.Fatalf("event streams hold the workspace open for their lifetime: open=%d ended=%d", act.open, act.ended)
+	}
+}
+
+func TestConnectionImportEndpoint(t *testing.T) {
+	cat, err := catalog.Load("../../../catalog")
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := store.NewMemory()
+	bus := events.NewBus()
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	s := New(log)
+	s.RegisterConnections(component.NewService(st, cat, bus, audit.New(st, log)))
+	ts := httptest.NewServer(s.Handler())
+	defer ts.Close()
+	post := func(body string) (int, string, string) {
+		res, err := http.Post(ts.URL+"/api/connections/import", "application/json", strings.NewReader(body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		b, _ := io.ReadAll(res.Body)
+		return res.StatusCode, string(b), res.Header.Get("Cache-Control")
+	}
+	c, b, cc := post(`{"content":"REDIS_URL=redis://:pw@cache:6379/0"}`)
+	if c != 200 || !strings.Contains(b, `"catalogId":"redis"`) || !strings.Contains(b, `"host":"cache"`) || cc != "no-store" {
+		t.Fatalf("import: %d %s cache=%q", c, b, cc)
+	}
+	if c, b, _ = post(`{"content":"nothing useful here"}`); c != 422 || !strings.Contains(b, "unrecognized_input") || !strings.Contains(b, "Supported:") {
+		t.Fatalf("unrecognised: %d %s", c, b)
+	}
+	if c, _, _ = post(`{"content":"REDIS_URL=redis://cache:6379","catalogId":"mongodb"}`); c != 422 {
+		t.Fatalf("filtered to the wrong type: %d", c)
 	}
 }

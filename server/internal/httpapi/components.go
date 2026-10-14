@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/component"
+	"github.com/nexio-developer-group/nexmesh/server/internal/connimport"
 	"github.com/nexio-developer-group/nexmesh/server/internal/connstr"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 )
@@ -196,6 +197,31 @@ func (s *Server) RegisterConnections(svc *component.Service) {
 		}
 		// Returned only to the caller, never stored: it may contain the password.
 		WriteJSON(w, http.StatusOK, map[string]any{"fields": fields})
+	})
+
+	// Import from a .env file, connection string or docker-compose file (PRD F14).
+	// Like parse, the response can contain passwords and goes only to the caller.
+	imp := connimport.New(svc.Catalog())
+	s.Handle("POST /api/connections/import", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Content   string `json:"content"`
+			CatalogID string `json:"catalogId"`
+		}
+		if !DecodeJSONLimit(w, r, &in, 512<<10) {
+			return
+		}
+		res, err := imp.Import(in.Content, in.CatalogID)
+		if err != nil {
+			var ie *connimport.Error
+			if errors.As(err, &ie) {
+				WriteError(w, http.StatusUnprocessableEntity, "unrecognized_input", ie.Msg)
+				return
+			}
+			s.HandleError(w, err)
+			return
+		}
+		w.Header().Set("Cache-Control", "no-store")
+		WriteJSON(w, http.StatusOK, res)
 	})
 
 	s.Handle("POST "+base+"/test", func(w http.ResponseWriter, r *http.Request) {

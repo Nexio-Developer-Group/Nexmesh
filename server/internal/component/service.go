@@ -238,3 +238,6 @@ func (s *Service) Suggest(ctx context.Context, id, mode, version string) (*domai
 	s.publish(c)
 	return c, nil
 }
+
+// Catalog exposes the technology catalog the service was built with.
+func (s *Service) Catalog() *catalog.Catalog { return s.cat }
