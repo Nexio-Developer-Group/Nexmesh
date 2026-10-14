@@ -10,12 +10,12 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/nexio-developer-group/nexmesh/server/internal/agent/procgroup"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/agentproto"
@@ -197,7 +197,7 @@ func (r *Runner) Run(ctx context.Context, p Params) (*Result, error) {
 	cmd := exec.Command("git", p.Args...)
 	cmd.Dir = dir
 	cmd.Env = env
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	procgroup.Isolate(cmd)
 	out, errb := &capped{}, &capped{}
 	cmd.Stdout, cmd.Stderr = out, errb
 	if err := cmd.Start(); err != nil {
@@ -210,7 +210,7 @@ func (r *Runner) Run(ctx context.Context, p Params) (*Result, error) {
 	select {
 	case werr = <-done:
 	case <-cctx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		procgroup.Kill(cmd)
 		werr = <-done
 		res.TimedOut = ctx.Err() == nil
 	}

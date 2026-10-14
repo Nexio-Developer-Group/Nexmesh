@@ -1,5 +1,20 @@
 # Download, install and set up Nexmesh
 
+## Quickest start (one command)
+
+Install **Go 1.26+** and **Node.js 22** first, then from the repository folder:
+
+| System | Command |
+| :-- | :-- |
+| Windows | double-click `start.cmd`, or run `.\start.cmd` in PowerShell |
+| macOS / Linux | `./start.sh` |
+
+It installs pnpm if needed, builds the web app once, and starts everything on **http://localhost:8080** (one process, one URL; the browser opens by itself on Windows). Later runs start in seconds. Use `start.cmd -Rebuild` / `./start.sh --rebuild` after pulling new code.
+
+This mode uses the fake runtime and keeps data in memory, so workspaces are lost when you stop it. On Windows the editor, files, Git and the canvas work; **terminals need WSL or Docker** (see path B). For real, persistent workspaces use Docker (path B).
+
+The rest of this guide is the detailed version.
+
 Three ways to run Nexmesh. Pick one:
 
 | Path | Use it for | Needs Docker |
@@ -32,6 +47,8 @@ cd nexmesh
 Check: `go version && node -v && pnpm -v && docker compose version`.
 
 ## Path A: try it locally (no Docker)
+
+`start.cmd` / `start.sh` do all of the following for you; read on only if you want the manual steps (two terminals, hot reload).
 
 Runs the control plane with an in-memory store and a fake runtime. With a workspace directory set, the editor, terminal, Git and port previews work on real files and processes on your machine, so use a throwaway directory.
 

@@ -7,8 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/nexio-developer-group/nexmesh/server/internal/agent/procgroup"
 	"os/exec"
-	"syscall"
 	"time"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/agentproto"
@@ -73,9 +73,9 @@ func (r *Runner) Run(ctx context.Context, p Params) (*Result, error) {
 	cctx, cancel := context.WithTimeout(ctx, to)
 	defer cancel()
 
-	cmd := exec.Command("/bin/sh", "-c", p.Command)
+	cmd := procgroup.Shell(p.Command)
 	cmd.Dir = r.Root
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	procgroup.Isolate(cmd)
 	if r.Env != nil {
 		extra, err := r.Env(ctx)
 		if err != nil {
@@ -102,7 +102,7 @@ func (r *Runner) Run(ctx context.Context, p Params) (*Result, error) {
 	select {
 	case werr = <-done:
 	case <-cctx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		procgroup.Kill(cmd)
 		werr = <-done
 		res.TimedOut = ctx.Err() == nil
 	}

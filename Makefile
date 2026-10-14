@@ -1,4 +1,7 @@
-.PHONY: verify dev-server dev-web test build lint acceptance it it-services
+.PHONY: start verify dev-server dev-web test build lint acceptance it it-services
+
+start:
+	./start.sh
 
 verify:
 	./scripts/verify.sh

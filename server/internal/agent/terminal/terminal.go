@@ -8,13 +8,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/nexio-developer-group/nexmesh/server/internal/agent/procgroup"
 	"os"
 	"os/exec"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/creack/pty"
@@ -133,6 +134,9 @@ func (m *Manager) Open(ctx context.Context, p OpenParams) (*Info, error) {
 	cmd := exec.Command(m.shell)
 	cmd.Dir = m.root
 	cmd.Env = env
+	if runtime.GOOS == "windows" {
+		return nil, agentproto.Errf("unsupported", "Terminals are not available when the workspace runs natively on Windows. Use WSL or Docker (docs/INSTALL.md).")
+	}
 	f, err := pty.StartWithSize(cmd, &pty.Winsize{Cols: p.Cols, Rows: p.Rows})
 	if err != nil {
 		return nil, agentproto.Errf("start_failed", "Could not start a shell: %v", err)
@@ -238,8 +242,7 @@ func (m *Manager) Close(id string) error {
 		return err
 	}
 	if !s.info().Exited && s.cmd.Process != nil {
-		_ = syscall.Kill(-s.cmd.Process.Pid, syscall.SIGHUP)
-		_ = s.cmd.Process.Signal(syscall.SIGHUP)
+		procgroup.Hangup(s.cmd)
 		go func() {
 			time.Sleep(2 * time.Second)
 			if !s.info().Exited {
