@@ -102,3 +102,38 @@ export function useWorkspaceEvents(id: string | undefined, onEvent?: (type: stri
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, qc])
 }
+
+// --- auth ---
+
+export interface Me { id: string; email: string; name: string; role: string }
+
+export const authKeys = { me: ['me'] as const, status: ['auth-status'] as const }
+
+export const useMe = () =>
+  useQuery({ queryKey: authKeys.me, queryFn: async () => (await api.get<{ user: Me }>('/api/auth/me')).user, retry: false, staleTime: Infinity })
+
+export const useAuthStatus = () =>
+  useQuery({ queryKey: authKeys.status, queryFn: () => api.get<{ enabled: boolean; signupOpen: boolean }>('/api/auth/status') })
+
+export function useSignIn(mode: 'login' | 'register') {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { email: string; password: string; name?: string }) =>
+      api.post<{ user: Me }>(mode === 'login' ? '/api/auth/login' : '/api/auth/register', v),
+    onSuccess: (r) => {
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'me' })
+      qc.setQueryData(authKeys.me, r.user)
+    },
+  })
+}
+
+export function useSignOut() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post('/api/auth/logout'),
+    onSuccess: () => {
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'me' })
+      qc.invalidateQueries({ queryKey: authKeys.me })
+    },
+  })
+}

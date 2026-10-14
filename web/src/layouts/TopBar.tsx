@@ -1,12 +1,35 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { useMe, useSignOut } from '@/api/hooks'
 import { Link } from 'react-router-dom'
 import { Logo } from '@/components/ui/Logo'
 
 export function UserMenu() {
+  const { data: me } = useMe()
+  const signOut = useSignOut()
+  const [open, setOpen] = useState(false)
+  const initials = (me?.name ?? '?').split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
   return (
-    <span aria-label="Account" className="grid size-8 place-items-center rounded-full bg-neutral-bg text-xs font-bold text-fg">
-      AK
-    </span>
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="Account"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="grid size-8 place-items-center rounded-full bg-neutral-bg text-xs font-bold text-fg"
+      >
+        {initials}
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 top-10 z-50 w-56 rounded-card border border-line bg-panel p-3 shadow-lg">
+          <p className="truncate text-[13px] font-semibold">{me?.name}</p>
+          <p className="mb-2 truncate text-xs text-muted">{me?.email}</p>
+          <button role="menuitem" type="button" onClick={() => signOut.mutate()} className="w-full rounded-lg border border-line-strong px-3 py-1.5 text-left text-[13px] hover:border-blue">
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 

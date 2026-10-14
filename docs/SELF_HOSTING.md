@@ -83,3 +83,7 @@ make dev-web      # Vite dev server on :5173, proxies /api to :8080
 make acceptance   # walks the Phase 1 acceptance criteria in-process
 make it-services && make it   # probe integration tests against real services
 ```
+
+## Accounts and sign-in
+
+Nexmesh requires sign-in. On a fresh instance the first visit offers **Create owner account**; that account owns the instance. Additional accounts can register only when `NEXMESH_ALLOW_SIGNUP=true`. Sessions are 14-day HttpOnly, SameSite=Lax cookies (marked `Secure` when `NEXMESH_PUBLIC_URL` is https or a proxy sets `X-Forwarded-Proto: https`); state-changing requests with a foreign `Origin` are rejected. `NEXMESH_AUTH=disabled` skips sign-in and acts as one local user. Use it for local development and automated tests only, never on a network others can reach.

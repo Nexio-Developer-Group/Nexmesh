@@ -1,7 +1,7 @@
 .PHONY: dev-server dev-web test build lint acceptance it it-services
 
 dev-server:
-	cd server && NEXMESH_AUTH=disabled NEXMESH_DRIVER=fake NEXMESH_STORE=memory go run ./cmd/nexmesh
+	cd server && NEXMESH_DRIVER=fake NEXMESH_STORE=memory go run ./cmd/nexmesh
 
 dev-web:
 	cd web && pnpm dev

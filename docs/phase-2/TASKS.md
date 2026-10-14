@@ -6,7 +6,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 
 ## M0 — Foundations
 - [x] **T0.1** Accounts and sessions: argon2id passwords, HttpOnly session cookie, Origin check on unsafe methods, first user = owner, `NEXMESH_AUTH=disabled` dev mode, per-user ownership everywhere
-- [ ] **T0.2** Sign-in / sign-up screens (design prompt P1), auth guard, user menu with sign-out
+- [x] **T0.2** Sign-in / sign-up screens (design prompt P1), auth guard, user menu with sign-out
 - [ ] **T0.3** Agent transport: outbound WebSocket (request/response + events) replacing HTTP heartbeats; presence, reconnect with backoff
 
 ## M1 — Workspace agent capabilities (F9 backend, F8 detection)
