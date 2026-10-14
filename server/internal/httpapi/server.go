@@ -2,9 +2,12 @@
 package httpapi
 
 import (
+	"bufio"
 	"encoding/json"
+	"errors"
 	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 )
@@ -58,6 +61,18 @@ type statusWriter struct {
 }
 
 func (w *statusWriter) WriteHeader(code int) { w.status = code; w.ResponseWriter.WriteHeader(code) }
+
+// Hijack lets WebSocket upgrades through the logging wrapper.
+func (w *statusWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := w.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("hijacking not supported")
+	}
+	w.status = http.StatusSwitchingProtocols
+	return h.Hijack()
+}
+
+func (w *statusWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 
 // Flush keeps SSE working through the logging wrapper.
 func (w *statusWriter) Flush() {

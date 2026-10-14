@@ -1,8 +1,9 @@
 // Package agentapi is the control-plane side of the workspace agent link.
 // Agents always dial out (PRD 20.3.4), so workspaces need no inbound ports.
-// The Phase 1 transport is HTTPS request/response with heartbeats; the same
-// protocol messages move onto a bidirectional gRPC stream in Phase 2, when
-// terminals and command execution need server-initiated traffic.
+// The primary link is one WebSocket per workspace carrying request/response
+// and event frames in both directions (see package agentproto), which is what
+// terminals and file operations use. The HTTP hello/heartbeat endpoints remain
+// for simple probes and older agents.
 package agentapi
 
 import (
@@ -49,6 +50,9 @@ type Registry struct {
 	bus *events.Bus
 	mu  sync.Mutex
 	now func() time.Time
+
+	lsOnce sync.Once
+	link   *linkState
 }
 
 func NewRegistry(st store.Store, bus *events.Bus) *Registry {
@@ -133,6 +137,7 @@ func (r *Registry) WithEnv(p EnvProvider) *Registry { r.env = p; return r }
 
 // Register mounts the agent endpoints on the API server.
 func (r *Registry) Register(s *httpapi.Server) {
+	s.Handle("GET /agent/v1/workspaces/{id}/ws", r.serveLink)
 	s.Handle("GET /agent/v1/workspaces/{id}/env", func(w http.ResponseWriter, req *http.Request) {
 		id := req.PathValue("id")
 		if !r.authenticate(req, id) {
