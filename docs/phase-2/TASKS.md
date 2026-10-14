@@ -10,7 +10,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T0.3** Agent transport: outbound WebSocket (request/response + events) replacing HTTP heartbeats; presence, reconnect with backoff
 
 ## M1 — Workspace agent capabilities (F9 backend, F8 detection)
-- [ ] **T1.1** Agent file operations confined to the workspace root: list, read, write, mkdir, rename, delete, stat, search (symlink and `..` escapes rejected)
+- [x] **T1.1** Agent file operations confined to the workspace root: list, read, write, mkdir, rename, delete, stat, search (symlink and `..` escapes rejected)
 - [ ] **T1.2** Agent terminals: PTY sessions that outlive the browser, scrollback buffer, resize, attach
 - [ ] **T1.3** Agent command execution with limits, and listening-port detection
 - [ ] **T1.4** Control-plane file/exec API with ownership checks and audit
