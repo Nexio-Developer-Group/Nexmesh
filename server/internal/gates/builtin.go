@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/nexio-developer-group/nexmesh/server/internal/secretscan"
 	"regexp"
 	"sort"
 	"strings"
@@ -15,23 +16,6 @@ const (
 	BuiltinSecrets = "builtin:secrets"
 	BuiltinDeps    = "builtin:deps"
 )
-
-type secretPattern struct {
-	name string
-	re   *regexp.Regexp
-}
-
-var secretPatterns = []secretPattern{
-	{"private key", regexp.MustCompile(`-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----`)},
-	{"AWS access key", regexp.MustCompile(`\bAKIA[0-9A-Z]{16}\b`)},
-	{"GitHub token", regexp.MustCompile(`\bgh[pousr]_[A-Za-z0-9]{30,}\b`)},
-	{"Slack token", regexp.MustCompile(`\bxox[baprs]-[A-Za-z0-9-]{10,}\b`)},
-	{"Stripe live key", regexp.MustCompile(`\b[sr]k_live_[A-Za-z0-9]{16,}\b`)},
-	{"Google API key", regexp.MustCompile(`\bAIza[0-9A-Za-z_-]{35}\b`)},
-	{"Anthropic or OpenAI key", regexp.MustCompile(`\bsk-(?:ant-)?[A-Za-z0-9_-]{24,}\b`)},
-	{"hard-coded credential", regexp.MustCompile(`(?i)\b(?:api[_-]?key|secret|token|passwd|password)\b\s*[:=]\s*['"][^'"\s]{12,}['"]`)},
-	{"connection string with password", regexp.MustCompile(`\b[a-z][a-z0-9+.-]*://[^\s:/@'"]+:[^\s@'"]{4,}@[^\s'"]+`)},
-}
 
 var placeholderRe = regexp.MustCompile(`(?i)(example|placeholder|changeme|your[_-]|<[^>]+>|xxxx|\*\*\*\*|dummy|sample|fake|test)`)
 
@@ -82,11 +66,8 @@ func (s *Service) scanSecrets(ctx context.Context, wsID string) (ok bool, log st
 					if len(line) > 2000 {
 						continue
 					}
-					for _, p := range secretPatterns {
-						if m := p.re.FindString(line); m != "" && !placeholderRe.MatchString(m) {
-							findings = append(findings, fmt.Sprintf("%s:%d  possible %s (%s)", e.Path, i+1, p.name, mask(m)))
-							break
-						}
+					if name, m, ok := secretscan.Find(line); ok && !placeholderRe.MatchString(m) {
+						findings = append(findings, fmt.Sprintf("%s:%d  possible %s (%s)", e.Path, i+1, name, mask(m)))
 					}
 				}
 			}

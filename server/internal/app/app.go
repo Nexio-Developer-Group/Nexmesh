@@ -247,7 +247,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 			return nil, err
 		}
 		return c, nil
-	}).WithContext(archSvc, envSvc).WithCanvas(canvasOps{cat: cat, comps: compSvc, wires: wireSvc}).WithRules(func(ctx context.Context, wsID string) ([]string, error) {
+	}).WithContext(archSvc, envSvc).WithCanvas(canvasOps{cat: cat, comps: compSvc, wires: wireSvc}).WithCards(compSvc).WithRules(func(ctx context.Context, wsID string) ([]string, error) {
 		return rulesSvc.ContextTexts(ctx, wsID), nil
 	}).WithSecretValues(func(ctx context.Context, wsID string) []string {
 		env, err := envSvc.Environment(ctx, wsID)

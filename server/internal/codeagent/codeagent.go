@@ -72,6 +72,8 @@ type Service struct {
 	rules   func(ctx context.Context, wsID string) ([]string, error)
 	secrets func(ctx context.Context, wsID string) []string
 	canvas  CanvasOps
+	cards   CardSource
+	book    *previewBook
 	now     func() time.Time
 
 	mu   sync.Mutex

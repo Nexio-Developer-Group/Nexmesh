@@ -138,4 +138,33 @@ func (s *Server) RegisterCodeAgent(svc *codeagent.Service) {
 		}
 		WriteJSON(w, http.StatusOK, p)
 	})
+	// Explain and Diagnose on one card (PRD F19): preview first, then send exactly that.
+	s.Handle("POST /api/workspaces/{id}/components/{cid}/assist/preview", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Kind string `json:"kind"`
+		}
+		if !DecodeJSON(w, r, &in) {
+			return
+		}
+		pv, err := svc.PreviewAssist(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid"), in.Kind)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusOK, pv)
+	})
+	s.Handle("POST /api/workspaces/{id}/components/{cid}/assist", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			PreviewID string `json:"previewId"`
+		}
+		if !DecodeJSON(w, r, &in) {
+			return
+		}
+		sess, err := svc.SendAssist(r.Context(), Owner(r), r.PathValue("id"), r.PathValue("cid"), in.PreviewID)
+		if err != nil {
+			s.HandleError(w, err)
+			return
+		}
+		WriteJSON(w, http.StatusAccepted, sess.Public())
+	})
 }

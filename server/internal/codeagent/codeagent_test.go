@@ -14,6 +14,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/architecture"
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/changeset"
+	"github.com/nexio-developer-group/nexmesh/server/internal/component"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/envvars"
 	"github.com/nexio-developer-group/nexmesh/server/internal/modelprovider"
@@ -679,3 +680,97 @@ func TestAutoAcceptIsOptInAndRespectsGates(t *testing.T) {
 type stubGater struct{ v changeset.GateVerdict }
 
 func (g stubGater) Verdict(context.Context, string, string, string) changeset.GateVerdict { return g.v }
+
+type fakeCards struct{}
+
+func (fakeCards) Get(_ context.Context, _, _, id string) (*domain.Component, error) {
+	if id != "n1" {
+		return nil, store.ErrNotFound
+	}
+	return &domain.Component{ID: "n1", CatalogID: "redis", Mode: domain.ModeConnected, Version: "7.4", Observed: "unreachable", Desired: "connected", Message: "connection refused",
+		LastTest: &domain.TestResult{Passed: false, FailedStage: "authentication", Message: "Host reachable but authentication failed", Stages: []domain.StageResult{{Stage: "network", Status: "passed"}, {Stage: "authentication", Status: "failed"}}}}, nil
+}
+func (fakeCards) Health(context.Context, string, string, string, int) (*component.HealthHistory, error) {
+	return &component.HealthHistory{UptimePercent: 40, Samples: []*domain.HealthSample{{At: time.Unix(1700000000, 0), State: "unreachable", LatencyMS: 0, Message: "AUTH failed for " + dbSecret}}}, nil
+}
+func (fakeCards) Logs(context.Context, string, string, string, int) (string, error) {
+	return "starting\nconnecting with password=hunter2hunter2\nBearer abcdefghijklmnopqrstuvwxyz0123 rejected\nerror: " + dbSecret + "\n", nil
+}
+
+func TestAssistPreviewIsScrubbedAndSentExactly(t *testing.T) {
+	f := newFx(t, say("Check your Redis password."))
+	f.svc.WithCards(fakeCards{})
+	pv, err := f.svc.PreviewAssist(f.ctx, "u1", f.ws, "n1", AssistDiagnose)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []string{"S3CR3T", "hunter2hunter2", "abcdefghijklmnopqrstuvwxyz0123", dbSecret} {
+		if strings.Contains(pv.Text, bad) {
+			t.Fatalf("preview leaks %q:\n%s", bad, pv.Text)
+		}
+	}
+	for _, want := range []string{"Redis", "authentication", "Usual causes for this stage", "Uptime", "[hidden]", "FastAPI -> Redis", "propose it as a change set"} {
+		if !strings.Contains(pv.Text, want) {
+			t.Fatalf("preview lacks %q:\n%s", want, pv.Text)
+		}
+	}
+	if pv.Redactions == 0 || len(pv.Sections) < 4 {
+		t.Fatalf("%+v", pv)
+	}
+	// What is sent is exactly the preview, as the first user message.
+	sess, err := f.svc.SendAssist(f.ctx, "u1", f.ws, "n1", pv.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.svc.Wait(sess.ID)
+	got := f.model.reqs[0].Messages[0]
+	if got.Role != "user" || got.Content != strings.TrimSpace(pv.Text) {
+		t.Fatalf("sent text differs from the preview:\n--- sent\n%s\n--- preview\n%s", got.Content, pv.Text)
+	}
+	for _, m := range f.model.reqs[0].Messages {
+		if strings.Contains(m.Content, "S3CR3T") || strings.Contains(m.Content, "hunter2hunter2") {
+			t.Fatal("a secret reached the model")
+		}
+	}
+	done, _ := f.svc.GetSession(f.ctx, "u1", f.ws, sess.ID)
+	if done.Title != "Diagnose: Redis" || done.Status != StatusIdle {
+		t.Fatalf("%q %s", done.Title, done.Status)
+	}
+	// A preview is single use.
+	if _, err := f.svc.SendAssist(f.ctx, "u1", f.ws, "n1", pv.ID); vcode(err) != "preview_expired" {
+		t.Fatal(err)
+	}
+}
+
+func TestAssistGuards(t *testing.T) {
+	f := newFx(t, say("x"))
+	f.svc.WithCards(fakeCards{})
+	if _, err := f.svc.PreviewAssist(f.ctx, "u1", f.ws, "n1", "fix"); vcode(err) != "invalid_kind" {
+		t.Fatal(err)
+	}
+	if _, err := f.svc.PreviewAssist(f.ctx, "u1", f.ws, "nope", AssistExplain); !errors.Is(err, store.ErrNotFound) {
+		t.Fatal(err)
+	}
+	if _, err := f.svc.PreviewAssist(f.ctx, "u2", f.ws, "n1", AssistExplain); !errors.Is(err, store.ErrNotFound) {
+		t.Fatal("ownership")
+	}
+	pv, _ := f.svc.PreviewAssist(f.ctx, "u1", f.ws, "n1", AssistExplain)
+	if _, err := f.svc.SendAssist(f.ctx, "u2", f.ws, "n1", pv.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Fatal("another user must not send my preview")
+	}
+	if _, err := f.svc.SendAssist(f.ctx, "u1", f.ws, "other-card", pv.ID); vcode(err) != "preview_expired" {
+		t.Fatal("a preview is bound to its card")
+	}
+	if _, err := f.svc.SendAssist(f.ctx, "u1", f.ws, "n1", "prv_unknown"); vcode(err) != "preview_expired" {
+		t.Fatal("unknown preview")
+	}
+	if !strings.Contains(pv.Text, "Do not change anything") {
+		t.Fatal("explain must not ask for changes")
+	}
+	// Expiry.
+	pv2, _ := f.svc.PreviewAssist(f.ctx, "u1", f.ws, "n1", AssistExplain)
+	f.svc.now = func() time.Time { return time.Now().Add(time.Hour) }
+	if _, err := f.svc.SendAssist(f.ctx, "u1", f.ws, "n1", pv2.ID); vcode(err) != "preview_expired" {
+		t.Fatal("expired preview was accepted")
+	}
+}
