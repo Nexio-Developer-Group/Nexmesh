@@ -16,6 +16,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/idle"
 	"github.com/nexio-developer-group/nexmesh/server/internal/preview"
+	"github.com/nexio-developer-group/nexmesh/server/internal/stacks"
 	"github.com/nexio-developer-group/nexmesh/server/internal/tunnel"
 	"log/slog"
 	"net/http"
@@ -187,6 +188,11 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterVariables(envSvc)
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
+	if tpls, err := catalog.LoadTemplates(cfg.CatalogDir, cat); err != nil {
+		return nil, fmt.Errorf("templates: %w", err)
+	} else {
+		api.RegisterStacks(stacks.NewService(st, cat, tpls, compSvc, aud))
+	}
 	api.RegisterGitCredentials(gitSvc)
 	pv := preview.NewService(preview.Config{Domain: cfg.PreviewDomain, Key: fpKey}, st, tunnel.NewDialer(agents))
 	pv.EnableSharing(cfg.AllowShareLinks, aud)

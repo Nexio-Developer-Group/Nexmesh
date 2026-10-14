@@ -20,9 +20,10 @@ interface Props {
  */
 export function PropertiesPanel({ component: c, def, onClose, renderInstall, renderConnect, renderActivity }: Props) {
   const both = def.supportedModes.includes('install') && def.supportedModes.includes('connect')
-  const [tab, setTab] = useState<'install' | 'connect'>(c.mode === 'connected' ? 'connect' : 'install')
+  const initialTab = (): 'install' | 'connect' => (c.mode === 'connected' || (c.mode === '' && c.suggestedMode === 'connect') ? 'connect' : 'install')
+  const [tab, setTab] = useState<'install' | 'connect'>(initialTab)
   useEffect(() => {
-    setTab(c.mode === 'connected' ? 'connect' : 'install')
+    setTab(initialTab())
   }, [c.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -39,6 +40,7 @@ export function PropertiesPanel({ component: c, def, onClose, renderInstall, ren
         <div className="mt-3 flex items-center gap-2">
           <StatusBadge state={c.observedState} />
           <ModeBadge mode={c.mode} />
+          {c.mode === '' && c.suggestedMode && <span className="text-xs text-muted">Template suggests <strong>{c.suggestedMode === 'install' ? 'Install' : 'Connect'}</strong></span>}
         </div>
       </div>
       {both && (

@@ -208,3 +208,33 @@ func (s *Service) Summary(ctx context.Context, wsID string) string {
 	}
 	return out
 }
+
+// Suggest records a template's hint (preferred mode and version) on a Draft
+// card. It never changes the card's mode or installs anything.
+func (s *Service) Suggest(ctx context.Context, id, mode, version string) (*domain.Component, error) {
+	c, err := s.st.UpdateComponent(ctx, id, func(c *domain.Component) error {
+		if c.Observed != domain.StateDraft {
+			return ErrBadComponent
+		}
+		def, ok := s.cat.Get(c.CatalogID)
+		if !ok {
+			return ErrUnknownCatalog
+		}
+		if mode == domain.ModeInstalled || mode == "install" {
+			if def.SupportsMode("install") {
+				c.SuggestedMode = "install"
+			}
+		} else if mode == "connect" && def.SupportsMode("connect") {
+			c.SuggestedMode = "connect"
+		}
+		if version != "" && def.HasVersion(version) {
+			c.Version = version
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	s.publish(c)
+	return c, nil
+}

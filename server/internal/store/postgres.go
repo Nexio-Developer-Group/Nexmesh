@@ -358,3 +358,21 @@ func (p *Postgres) ListHealth(ctx context.Context, id string, limit int) ([]*dom
 	}
 	return docList[domain.HealthSample](ctx, p, "SELECT data FROM health_samples WHERE component_id=$1 ORDER BY at DESC LIMIT $2", id, limit)
 }
+
+func (p *Postgres) PutTemplate(ctx context.Context, t *domain.Template) error {
+	b, _ := json.Marshal(t)
+	return p.exec(ctx, "INSERT INTO templates (id, owner_id, name, data) VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO UPDATE SET data=EXCLUDED.data, name=EXCLUDED.name",
+		t.ID, t.OwnerID, t.Name, b)
+}
+
+func (p *Postgres) GetTemplate(ctx context.Context, id string) (*domain.Template, error) {
+	return docGet[domain.Template](ctx, p, "templates", id)
+}
+
+func (p *Postgres) ListTemplates(ctx context.Context, owner string) ([]*domain.Template, error) {
+	return docList[domain.Template](ctx, p, "SELECT data FROM templates WHERE owner_id=$1 ORDER BY created_at", owner)
+}
+
+func (p *Postgres) DeleteTemplate(ctx context.Context, id string) error {
+	return p.exec(ctx, "DELETE FROM templates WHERE id=$1", id)
+}

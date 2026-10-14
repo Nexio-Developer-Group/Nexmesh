@@ -1,0 +1,8 @@
+schemaVersion: 1
+id: go-kafka
+name: Go service with Kafka
+description: A Go event consumer and producer on Kafka. Kafka needs at least 1 GB of memory.
+order: 4
+components:
+  - { id: go, x: 40, y: 40, suggestedMode: install }
+  - { id: kafka, x: 290, y: 40, suggestedMode: install }

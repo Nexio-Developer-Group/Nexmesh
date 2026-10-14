@@ -1,0 +1,9 @@
+schemaVersion: 1
+id: node-api-mysql
+name: Node API with MySQL
+description: A NestJS API on Node.js using MySQL for relational data.
+order: 3
+components:
+  - { id: nodejs, x: 40, y: 40, suggestedMode: install }
+  - { id: nestjs, x: 290, y: 40, suggestedMode: install }
+  - { id: mysql, x: 540, y: 40, suggestedMode: install }

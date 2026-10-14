@@ -181,3 +181,37 @@ func TestStoreUsersSessionsHealth(t *testing.T) {
 		})
 	}
 }
+
+func TestStoreTemplates(t *testing.T) {
+	for name, s := range impls(t) {
+		t.Run(name, func(t *testing.T) {
+			ctx := context.Background()
+			owner := NewID("u")
+			tpl := &domain.Template{ID: NewID("tpl"), OwnerID: owner, Name: "My stack", Description: "d", CreatedAt: time.Now().UTC(),
+				Components: []domain.TemplateComponent{{CatalogID: "redis", X: 40, Y: 40, SuggestedMode: "install"}}}
+			if err := s.PutTemplate(ctx, tpl); err != nil {
+				t.Fatal(err)
+			}
+			dup := *tpl
+			dup.ID = NewID("tpl")
+			if err := s.PutTemplate(ctx, &dup); err != ErrConflict {
+				t.Fatalf("duplicate name for one owner: %v", err)
+			}
+			other := *tpl
+			other.ID, other.OwnerID = NewID("tpl"), NewID("u")
+			if err := s.PutTemplate(ctx, &other); err != nil {
+				t.Fatalf("same name for another owner: %v", err)
+			}
+			if got, err := s.GetTemplate(ctx, tpl.ID); err != nil || len(got.Components) != 1 || got.Components[0].CatalogID != "redis" {
+				t.Fatalf("get: %v %+v", err, got)
+			}
+			if l, _ := s.ListTemplates(ctx, owner); len(l) != 1 {
+				t.Fatalf("list is owner-scoped: %d", len(l))
+			}
+			_ = s.DeleteTemplate(ctx, tpl.ID)
+			if _, err := s.GetTemplate(ctx, tpl.ID); err != ErrNotFound {
+				t.Fatalf("after delete: %v", err)
+			}
+		})
+	}
+}

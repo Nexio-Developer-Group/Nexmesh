@@ -68,3 +68,44 @@ func TestShippedProvidersLoad(t *testing.T) {
 		t.Fatalf("%v", got)
 	}
 }
+
+func TestShippedTemplatesAreValid(t *testing.T) {
+	cat, err := Load("../../../catalog")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts, err := LoadTemplates("../../../catalog", cat)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ts) < 6 {
+		t.Fatalf("expected the curated set, got %d", len(ts))
+	}
+	for _, tpl := range ts {
+		// Templates never run scripts or carry secrets: only the declared fields exist.
+		seenPos := map[[2]float64]bool{}
+		for _, c := range tpl.Components {
+			p := [2]float64{c.X, c.Y}
+			if seenPos[p] {
+				t.Errorf("%s: two cards at %v would overlap", tpl.ID, p)
+			}
+			seenPos[p] = true
+		}
+	}
+}
+
+func TestTemplateValidationRejectsBadReferences(t *testing.T) {
+	cat, _ := Load("../../../catalog")
+	for name, comps := range map[string][]TemplateComponent{
+		"unknown":     {{ID: "cobol"}},
+		"bad mode":    {{ID: "react", SuggestedMode: "connect"}},
+		"bad version": {{ID: "redis", Version: "0.0.1"}},
+	} {
+		if err := cat.ValidateTemplateComponents(comps); err == nil {
+			t.Errorf("%s accepted", name)
+		}
+	}
+	if err := cat.ValidateTemplateComponents([]TemplateComponent{{ID: "redis", SuggestedMode: "connect", Version: "7.4.1"}}); err != nil {
+		t.Fatal(err)
+	}
+}

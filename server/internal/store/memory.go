@@ -23,12 +23,13 @@ type Memory struct {
 	users    map[string][]byte
 	sessions map[string][]byte
 	health   map[string][]domain.HealthSample
+	tpls     map[string][]byte
 }
 
 func NewMemory() *Memory {
 	return &Memory{
 		ws: map[string][]byte{}, comps: map[string][]byte{}, ops: map[string][]byte{},
-		agents: map[string][]byte{}, users: map[string][]byte{}, sessions: map[string][]byte{}, health: map[string][]domain.HealthSample{}, secrets: map[string]*domain.SecretRecord{},
+		agents: map[string][]byte{}, users: map[string][]byte{}, sessions: map[string][]byte{}, health: map[string][]domain.HealthSample{}, tpls: map[string][]byte{}, secrets: map[string]*domain.SecretRecord{},
 	}
 }
 
@@ -385,4 +386,37 @@ func (m *Memory) ListHealth(_ context.Context, id string, limit int) ([]*domain.
 		out = append(out, &cp)
 	}
 	return out, nil
+}
+
+func (m *Memory) PutTemplate(_ context.Context, t *domain.Template) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for id, b := range m.tpls {
+		var o domain.Template
+		_ = json.Unmarshal(b, &o)
+		if o.OwnerID == t.OwnerID && o.Name == t.Name && id != t.ID {
+			return ErrConflict
+		}
+	}
+	put(m.tpls, t.ID, t)
+	return nil
+}
+
+func (m *Memory) GetTemplate(_ context.Context, id string) (*domain.Template, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return get[domain.Template](m.tpls, id)
+}
+
+func (m *Memory) ListTemplates(_ context.Context, owner string) ([]*domain.Template, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return all(m.tpls, func(t *domain.Template) bool { return t.OwnerID == owner }, func(a, b *domain.Template) bool { return a.CreatedAt.Before(b.CreatedAt) }), nil
+}
+
+func (m *Memory) DeleteTemplate(_ context.Context, id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.tpls, id)
+	return nil
 }

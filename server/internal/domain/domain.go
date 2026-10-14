@@ -147,11 +147,13 @@ type Component struct {
 	Desired     string         `json:"desiredState"`
 	Observed    string         `json:"observedState"`
 	Message     string         `json:"message,omitempty"`
-	Progress    int            `json:"progress"`
-	X           float64        `json:"x"`
-	Y           float64        `json:"y"`
-	CreatedAt   time.Time      `json:"createdAt"`
-	UpdatedAt   time.Time      `json:"updatedAt"`
+	// SuggestedMode and SuggestedVersion come from a stack template: hints only, nothing is installed until the user confirms.
+	SuggestedMode string    `json:"suggestedMode,omitempty"`
+	Progress      int       `json:"progress"`
+	X             float64   `json:"x"`
+	Y             float64   `json:"y"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
 type TestResult struct {
@@ -283,4 +285,24 @@ type Snapshot struct {
 	Error     string    `json:"error,omitempty"`
 	CreatedAt time.Time `json:"createdAt"`
 	CreatedBy string    `json:"createdBy"`
+}
+
+// TemplateComponent is one card of a saved template.
+type TemplateComponent struct {
+	CatalogID     string  `json:"id"`
+	X             float64 `json:"x"`
+	Y             float64 `json:"y"`
+	SuggestedMode string  `json:"suggestedMode,omitempty"`
+	Version       string  `json:"version,omitempty"`
+}
+
+// Template is a personal stack template saved from a canvas. It holds no
+// settings, connection values, names or secrets.
+type Template struct {
+	ID          string              `json:"id"`
+	OwnerID     string              `json:"ownerId"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Components  []TemplateComponent `json:"components"`
+	CreatedAt   time.Time           `json:"createdAt"`
 }

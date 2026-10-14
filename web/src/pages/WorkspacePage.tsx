@@ -17,6 +17,7 @@ import { ComponentActivity } from '@/features/health/ComponentActivity'
 import { InstallTab } from '@/features/canvas/InstallTab'
 import { applyComponentEvent, applyOperationEvent, useAddComponent, useComponents, useMoveComponent } from '@/features/canvas/hooks'
 import { osLabel } from '@/lib/format'
+import { TemplatesDialog } from '@/features/templates/TemplatesDialog'
 import { CodeView } from '@/features/code/CodeView'
 
 export default function WorkspacePage() {
@@ -29,6 +30,7 @@ export default function WorkspacePage() {
   const move = useMoveComponent(id ?? '')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [runtimesOpen, setRuntimesOpen] = useState(false)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
   const [params, setParams] = useSearchParams()
   const view = params.get('view') === 'code' ? 'code' : 'canvas'
   const setView = (v: 'canvas' | 'code') => setParams(v === 'code' ? { view: 'code' } : {}, { replace: true })
@@ -85,6 +87,7 @@ export default function WorkspacePage() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-3">
+          <Button size="sm" onClick={() => setTemplatesOpen(true)} disabled={ws?.status !== 'ready'}>Templates</Button>
           <Button size="sm" onClick={() => setRuntimesOpen(true)}>Runtimes</Button>
           <Link to={`/w/${id}/settings`}><Button size="sm">Workspace settings</Button></Link>
           <UserMenu />
@@ -92,6 +95,7 @@ export default function WorkspacePage() {
       </header>
 
       {view === 'code' && ws && <CodeView workspace={ws} />}
+      {templatesOpen && id && <TemplatesDialog workspaceId={id} defs={defs} canvasHasCards={comps.length > 0} onClose={() => setTemplatesOpen(false)} />}
       <div className={view === 'code' ? 'hidden' : 'flex min-h-0 flex-1'}>
         {catalog && (
           <CatalogSidebar catalog={catalog} onCanvas={comps} onAdd={addNext} runtimes={runtimes} onInstallRuntime={() => setRuntimesOpen(true)} disabled={ws?.status !== 'ready'} />

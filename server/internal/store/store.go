@@ -63,6 +63,11 @@ type Store interface {
 	// ListHealth returns samples newest first.
 	ListHealth(ctx context.Context, componentID string, limit int) ([]*domain.HealthSample, error)
 
+	PutTemplate(ctx context.Context, t *domain.Template) error // ErrConflict when the owner already has that name
+	GetTemplate(ctx context.Context, id string) (*domain.Template, error)
+	ListTemplates(ctx context.Context, ownerID string) ([]*domain.Template, error)
+	DeleteTemplate(ctx context.Context, id string) error
+
 	PutSession(ctx context.Context, s *domain.Session) error
 	GetSession(ctx context.Context, id string) (*domain.Session, error)
 	DeleteSession(ctx context.Context, id string) error

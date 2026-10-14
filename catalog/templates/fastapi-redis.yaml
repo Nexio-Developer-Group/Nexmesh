@@ -1,0 +1,9 @@
+schemaVersion: 1
+id: fastapi-redis
+name: FastAPI with Redis
+description: A Python FastAPI service with Redis for caching and background state.
+order: 2
+components:
+  - { id: python, x: 40, y: 40, suggestedMode: install }
+  - { id: fastapi, x: 290, y: 40, suggestedMode: install }
+  - { id: redis, x: 540, y: 40, suggestedMode: install }

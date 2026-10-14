@@ -91,6 +91,8 @@ export interface CanvasComponent {
   settings: Record<string, unknown>
   connection?: Record<string, unknown>
   connName?: string
+  /** Hint from a stack template; nothing happens until the user confirms. */
+  suggestedMode?: 'install' | 'connect'
   environment?: 'development' | 'staging' | 'production' | ''
   lastTest?: TestResult
   desiredState: string

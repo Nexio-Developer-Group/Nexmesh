@@ -1,0 +1,9 @@
+schemaVersion: 1
+id: static-site
+name: Static site
+description: Plain HTML and CSS with JavaScript, served by Nginx.
+order: 6
+components:
+  - { id: htmlcss, x: 40, y: 40, suggestedMode: install }
+  - { id: javascript, x: 290, y: 40, suggestedMode: install }
+  - { id: nginx, x: 540, y: 40, suggestedMode: install }

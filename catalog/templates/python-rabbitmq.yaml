@@ -1,0 +1,9 @@
+schemaVersion: 1
+id: python-rabbitmq
+name: Python workers with RabbitMQ
+description: Python worker processes consuming jobs from RabbitMQ, with Redis for results.
+order: 5
+components:
+  - { id: python, x: 40, y: 40, suggestedMode: install }
+  - { id: rabbitmq, x: 290, y: 40, suggestedMode: install }
+  - { id: redis, x: 540, y: 40, suggestedMode: install }

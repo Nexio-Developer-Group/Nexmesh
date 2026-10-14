@@ -1,0 +1,10 @@
+schemaVersion: 1
+id: react-nestjs-mongodb
+name: React, NestJS and MongoDB
+description: A single-page React app talking to a NestJS API backed by MongoDB.
+order: 1
+components:
+  - { id: nodejs, x: 40, y: 40, suggestedMode: install }
+  - { id: react, x: 290, y: 40, suggestedMode: install }
+  - { id: nestjs, x: 540, y: 40, suggestedMode: install }
+  - { id: mongodb, x: 790, y: 40, suggestedMode: install }
