@@ -151,6 +151,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterComponents(compSvc)
 	api.RegisterConnections(compSvc)
 	api.RegisterAgent(agentSvc)
+	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	var h http.Handler = api.Handler()
 	if opt.WithUI {
 		h = withUI(h, webui.Handler())
