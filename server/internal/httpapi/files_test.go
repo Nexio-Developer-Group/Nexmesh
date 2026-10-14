@@ -1,12 +1,17 @@
 package httpapi_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -168,5 +173,41 @@ func TestFilesAPINotReadyOrOffline(t *testing.T) {
 	_ = st.CreateWorkspace(context.Background(), &domain.Workspace{ID: "ws2", OwnerID: "local", Name: "two", Status: domain.WSReady})
 	if c, b := req(t, "GET", ts.URL+"/api/workspaces/ws2/files", ""); c != 409 || !strings.Contains(b, "agent_offline") {
 		t.Fatalf("offline: %d %s", c, b)
+	}
+}
+
+func TestFilesAPIBinaryRoundTripAndLargeWrite(t *testing.T) {
+	ts, _, root := filesRig(t, domain.WSReady)
+	base := ts.URL + "/api/workspaces/ws1"
+	bin := []byte{0x89, 'P', 'N', 'G', 0, 0xff, 0xfe, 1, 2, 3}
+	enc := base64.StdEncoding.EncodeToString(bin)
+	if c, b := req(t, "PUT", base+"/files/content", `{"path":"logo.png","content":"`+enc+`","encoding":"base64"}`); c != 200 {
+		t.Fatalf("binary upload: %d %s", c, b)
+	}
+	got, _ := os.ReadFile(filepath.Join(root, "logo.png"))
+	if !bytes.Equal(got, bin) {
+		t.Fatalf("on-disk bytes differ: %v", got)
+	}
+	r, _ := http.Get(base + "/files/download?path=logo.png")
+	body, _ := io.ReadAll(r.Body)
+	r.Body.Close()
+	if r.StatusCode != 200 || !bytes.Equal(body, bin) || !strings.Contains(r.Header.Get("Content-Disposition"), `filename=logo.png`) || r.Header.Get("X-Content-Type-Options") != "nosniff" {
+		t.Fatalf("download: %d %q %v", r.StatusCode, body, r.Header)
+	}
+	// Reading a binary file as text reports binary instead of garbage.
+	if c, b := req(t, "GET", base+"/files/content?path=logo.png", ""); c != 200 || !strings.Contains(b, `"binary":true`) {
+		t.Fatalf("binary read: %d %s", c, b)
+	}
+	// A ~4.5 MB file travels through the whole path.
+	big := strings.Repeat("0123456789abcdef", 280000)
+	payload, _ := json.Marshal(map[string]string{"path": "big.txt", "content": big})
+	if c, b := req(t, "PUT", base+"/files/content", string(payload)); c != 200 {
+		t.Fatalf("big write: %d %.200s", c, b)
+	}
+	if fi, err := os.Stat(filepath.Join(root, "big.txt")); err != nil || fi.Size() != int64(len(big)) {
+		t.Fatalf("big file on disk: %v %v", fi, err)
+	}
+	if c, _ := req(t, "GET", base+"/files/download?path=nope", ""); c != 404 {
+		t.Fatalf("download missing = %d", c)
 	}
 }

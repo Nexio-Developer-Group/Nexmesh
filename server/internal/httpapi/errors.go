@@ -49,7 +49,12 @@ func (s *Server) HandleError(w http.ResponseWriter, err error) {
 
 // DecodeJSON reads a bounded JSON body.
 func DecodeJSON(w http.ResponseWriter, r *http.Request, v any) bool {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	return DecodeJSONLimit(w, r, v, 1<<20)
+}
+
+// DecodeJSONLimit is DecodeJSON with a custom body size cap.
+func DecodeJSONLimit(w http.ResponseWriter, r *http.Request, v any, limit int64) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	dec := jsonDecoder(r)
 	if err := dec.Decode(v); err != nil {
 		WriteError(w, http.StatusBadRequest, "bad_request", "Request body is not valid JSON for this endpoint.")

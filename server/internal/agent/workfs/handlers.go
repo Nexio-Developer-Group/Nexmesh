@@ -2,6 +2,7 @@ package workfs
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"time"
 
@@ -43,9 +44,19 @@ func (f *FS) Install(a installer) {
 		return f.Stat(p.Path)
 	})
 	a.Handle("fs.read", func(_ context.Context, raw json.RawMessage) (any, error) {
-		p, err := decode[pathP](raw)
+		p, err := decode[struct {
+			Path     string `json:"path"`
+			Encoding string `json:"encoding"`
+		}](raw)
 		if err != nil {
 			return nil, err
+		}
+		if p.Encoding == "base64" {
+			b, mt, err := f.ReadBytes(p.Path)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]any{"path": p.Path, "content": base64.StdEncoding.EncodeToString(b), "encoding": "base64", "size": len(b), "modTime": mt}, nil
 		}
 		return f.Read(p.Path)
 	})
@@ -53,10 +64,18 @@ func (f *FS) Install(a installer) {
 		p, err := decode[struct {
 			Path     string    `json:"path"`
 			Content  string    `json:"content"`
+			Encoding string    `json:"encoding"`
 			Expected time.Time `json:"expectedModTime"`
 		}](raw)
 		if err != nil {
 			return nil, err
+		}
+		if p.Encoding == "base64" {
+			b, err := base64.StdEncoding.DecodeString(p.Content)
+			if err != nil {
+				return nil, agentproto.Errf("bad_params", "Content is not valid base64.")
+			}
+			return f.WriteBytes(p.Path, b, p.Expected, 0o644)
 		}
 		return f.Write(p.Path, p.Content, p.Expected, 0o644)
 	})

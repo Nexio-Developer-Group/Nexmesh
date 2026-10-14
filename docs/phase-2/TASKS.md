@@ -24,7 +24,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T2.4** Variables UI (read-only generated rows with their source)
 
 ## M3 — Editor, terminal and files UI (F9)
-- [ ] **T3.1** Workspace shell: Code view with file tree (create, rename, move, delete, search, upload, download)
+- [x] **T3.1** Workspace shell: Code view with file tree (create, rename, move, delete, search, upload, download)
 - [ ] **T3.2** Tabbed Monaco editor with save, dirty state, conflict detection
 - [ ] **T3.3** xterm.js terminals with tabs and reconnect
 

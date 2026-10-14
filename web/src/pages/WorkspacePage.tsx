@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { useCatalog, useWorkspace, useWorkspaceEvents } from '@/api/hooks'
@@ -16,6 +16,7 @@ import { ConnectTab } from '@/features/connect/ConnectTab'
 import { InstallTab } from '@/features/canvas/InstallTab'
 import { applyComponentEvent, applyOperationEvent, useAddComponent, useComponents, useMoveComponent } from '@/features/canvas/hooks'
 import { osLabel } from '@/lib/format'
+import { CodeView } from '@/features/code/CodeView'
 
 export default function WorkspacePage() {
   const { id } = useParams()
@@ -27,6 +28,9 @@ export default function WorkspacePage() {
   const move = useMoveComponent(id ?? '')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [runtimesOpen, setRuntimesOpen] = useState(false)
+  const [params, setParams] = useSearchParams()
+  const view = params.get('view') === 'code' ? 'code' : 'canvas'
+  const setView = (v: 'canvas' | 'code') => setParams(v === 'code' ? { view: 'code' } : {}, { replace: true })
 
   useWorkspaceEvents(id, (type, data) => {
     if (!id) return
@@ -72,6 +76,12 @@ export default function WorkspacePage() {
         </nav>
         {ws && <StatusBadge state={ws.status === 'ready' ? 'running' : 'stopped'} />}
         {ws && <span className="hidden font-mono text-[11px] text-muted md:inline">{osLabel(ws.os)} · {ws.cpu} vCPU · {ws.ramGb} GB · {ws.storageGb} GB</span>}
+        <div role="tablist" aria-label="Workspace views" className="ml-4 flex rounded-[10px] border border-line-strong p-0.5 text-[13px]">
+          {(['canvas', 'code'] as const).map((v) => (
+            <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
+              className={view === v ? 'rounded-lg bg-raised px-3 py-1 font-semibold text-fg' : 'rounded-lg px-3 py-1 text-muted hover:text-fg'}>{v === 'canvas' ? 'Canvas' : 'Code'}</button>
+          ))}
+        </div>
         <div className="ml-auto flex items-center gap-3">
           <Button size="sm" onClick={() => setRuntimesOpen(true)}>Runtimes</Button>
           <Link to={`/w/${id}/settings`}><Button size="sm">Workspace settings</Button></Link>
@@ -79,7 +89,8 @@ export default function WorkspacePage() {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
+      {view === 'code' && ws && <CodeView workspace={ws} />}
+      <div className={view === 'code' ? 'hidden' : 'flex min-h-0 flex-1'}>
         {catalog && (
           <CatalogSidebar catalog={catalog} onCanvas={comps} onAdd={addNext} runtimes={runtimes} onInstallRuntime={() => setRuntimesOpen(true)} disabled={ws?.status !== 'ready'} />
         )}

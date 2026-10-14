@@ -2,9 +2,12 @@ package httpapi
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"mime"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -116,14 +119,32 @@ func (s *Server) RegisterFiles(d FilesDeps) {
 			WriteJSON(w, http.StatusOK, out)
 		}
 	})
+	s.Handle("GET /api/workspaces/{id}/files/download", func(w http.ResponseWriter, r *http.Request) {
+		var out struct {
+			Content string `json:"content"`
+		}
+		if !call(w, r, "fs.read", map[string]string{"path": q(r), "encoding": "base64"}, &out, "", nil) {
+			return
+		}
+		b, err := base64.StdEncoding.DecodeString(out.Content)
+		if err != nil {
+			WriteError(w, http.StatusBadGateway, "agent_error", "The workspace returned unreadable data.")
+			return
+		}
+		name := path.Base(q(r))
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": name}))
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		_, _ = w.Write(b)
+	})
 	s.Handle("PUT /api/workspaces/{id}/files/content", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
 			Path            string `json:"path"`
 			Content         string `json:"content"`
+			Encoding        string `json:"encoding,omitempty"`
 			ExpectedModTime string `json:"expectedModTime,omitempty"`
 		}
-		r.Body = http.MaxBytesReader(w, r.Body, 6<<20)
-		if !DecodeJSON(w, r, &in) {
+		if !DecodeJSONLimit(w, r, &in, 8<<20) {
 			return
 		}
 		var out map[string]any

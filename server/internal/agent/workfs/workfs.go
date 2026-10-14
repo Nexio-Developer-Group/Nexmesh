@@ -192,6 +192,29 @@ func (f *FS) Read(p string) (*ReadResult, error) {
 	return res, nil
 }
 
+// ReadBytes returns a file's raw bytes (downloads); it refuses directories
+// and files over MaxReadBytes.
+func (f *FS) ReadBytes(p string) ([]byte, time.Time, error) {
+	p, _ = clean(p)
+	h, err := f.root.Open(rel(p))
+	if err != nil {
+		return nil, time.Time{}, mapErr(err, p)
+	}
+	defer h.Close()
+	fi, err := h.Stat()
+	if err != nil {
+		return nil, time.Time{}, mapErr(err, p)
+	}
+	if fi.IsDir() {
+		return nil, time.Time{}, agentproto.Errf("is_directory", "%s is a directory.", display(p))
+	}
+	if fi.Size() > MaxReadBytes {
+		return nil, time.Time{}, agentproto.Errf("too_large", "File is larger than %d MB.", MaxReadBytes>>20)
+	}
+	b, err := io.ReadAll(h)
+	return b, fi.ModTime().UTC(), mapErr(err, p)
+}
+
 type WriteResult struct {
 	Size    int64     `json:"size"`
 	ModTime time.Time `json:"modTime"`
@@ -201,6 +224,11 @@ type WriteResult struct {
 // modification time differs, the write is refused so the editor never
 // overwrites changes made by the terminal or an agent.
 func (f *FS) Write(p, content string, expected time.Time, mode fs.FileMode) (*WriteResult, error) {
+	return f.WriteBytes(p, []byte(content), expected, mode)
+}
+
+// WriteBytes is Write for arbitrary (binary) content.
+func (f *FS) WriteBytes(p string, content []byte, expected time.Time, mode fs.FileMode) (*WriteResult, error) {
 	p, _ = clean(p)
 	if p == "" {
 		return nil, agentproto.Errf("is_directory", "/ is a directory.")
@@ -224,7 +252,7 @@ func (f *FS) Write(p, content string, expected time.Time, mode fs.FileMode) (*Wr
 	if err != nil {
 		return nil, mapErr(err, path.Dir(p))
 	}
-	_, werr := h.WriteString(content)
+	_, werr := h.Write(content)
 	cerr := h.Close()
 	if werr != nil || cerr != nil {
 		_ = f.root.Remove(rel(tmp))
