@@ -29,6 +29,63 @@ type Definition struct {
 	Variables     []VariableDef         `yaml:"variables,omitempty" json:"variables,omitempty"`
 	Ports         []PortDef             `yaml:"ports,omitempty" json:"ports,omitempty"`
 	Agents        []AgentDef            `yaml:"agents,omitempty" json:"agents,omitempty"`
+	// Phase 3 (PRD F1, F4, F21, F23, F17): connection lines, the active
+	// environment, quality gates, agent rules and the agent permission level.
+	Environments *EnvironmentsDef `yaml:"environments,omitempty" json:"environments,omitempty"`
+	Wires        []WireDef        `yaml:"wires,omitempty" json:"wires,omitempty"`
+	Gates        []GateDef        `yaml:"gates,omitempty" json:"gates,omitempty"`
+	Rules        []RuleDef        `yaml:"rules,omitempty" json:"rules,omitempty"`
+	AgentPolicy  *AgentPolicyDef  `yaml:"agentPolicy,omitempty" json:"agentPolicy,omitempty"`
+	// Notes explain anything left out of an export. They are ignored on import.
+	Notes []string `yaml:"notes,omitempty" json:"notes,omitempty"`
+}
+
+// EnvironmentsDef records which environment the canvas is switched to.
+type EnvironmentsDef struct {
+	Active string `yaml:"active" json:"active"`
+}
+
+// ProfileDef is the connection a card uses in one environment. Credentials are
+// named, never included.
+type ProfileDef struct {
+	Connection   map[string]any `yaml:"connection,omitempty" json:"connection,omitempty"`
+	SecretFields []string       `yaml:"secretFields,omitempty" json:"secretFields,omitempty"`
+}
+
+// WireDef is a connection line between two cards, by component key.
+type WireDef struct {
+	From        string `yaml:"from" json:"from"`
+	To          string `yaml:"to" json:"to"`
+	Name        string `yaml:"name,omitempty" json:"name,omitempty"`
+	Environment string `yaml:"environment,omitempty" json:"environment,omitempty"`
+}
+
+// GateDef is a quality gate (PRD F23).
+type GateDef struct {
+	ID         string `yaml:"id" json:"id"`
+	Name       string `yaml:"name" json:"name"`
+	Kind       string `yaml:"kind" json:"kind"`
+	Command    string `yaml:"command" json:"command"`
+	Policy     string `yaml:"policy" json:"policy"`
+	Enabled    bool   `yaml:"enabled" json:"enabled"`
+	TimeoutSec int    `yaml:"timeoutSec,omitempty" json:"timeoutSec,omitempty"`
+}
+
+// RuleDef is an agent rules file (PRD F21), carried so a new workspace starts with the same guidance.
+type RuleDef struct {
+	Name       string   `yaml:"name" json:"name"`
+	Title      string   `yaml:"title" json:"title"`
+	Scope      string   `yaml:"scope" json:"scope"`
+	Components []string `yaml:"components,omitempty" json:"components,omitempty"`
+	Paths      []string `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Protect    []string `yaml:"protect,omitempty" json:"protect,omitempty"`
+	Body       string   `yaml:"body" json:"body"`
+}
+
+// AgentPolicyDef is what the Code Agent may do. Auto-accept is deliberately
+// not carried: a definition must not switch it on in another workspace.
+type AgentPolicyDef struct {
+	Level string `yaml:"level" json:"level"`
 }
 
 type WorkspaceDef struct {
@@ -61,8 +118,10 @@ type ComponentDef struct {
 	Connection  map[string]any `yaml:"connection,omitempty" json:"connection,omitempty"`
 	// SecretFields names the credentials to re-supply after import; their values are never in the file.
 	SecretFields []string `yaml:"secretFields,omitempty" json:"secretFields,omitempty"`
-	X            float64  `yaml:"x" json:"x"`
-	Y            float64  `yaml:"y" json:"y"`
+	// Profiles are the connections for the other environments (PRD F4).
+	Profiles map[string]ProfileDef `yaml:"profiles,omitempty" json:"profiles,omitempty"`
+	X        float64               `yaml:"x" json:"x"`
+	Y        float64               `yaml:"y" json:"y"`
 }
 
 type VariableDef struct {
@@ -71,6 +130,8 @@ type VariableDef struct {
 	Value       string `yaml:"value,omitempty" json:"value,omitempty"` // plain variables only
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	Component   string `yaml:"component,omitempty" json:"component,omitempty"` // component key, empty for workspace scope
+	// Environment limits the variable to one environment; empty applies to all (PRD F4).
+	Environment string `yaml:"environment,omitempty" json:"environment,omitempty"`
 }
 
 type PortDef struct {

@@ -21,6 +21,10 @@ func startLocalApp(t *testing.T) func(method, path, body string) (int, string) {
 }
 
 func startLocalAppCfg(t *testing.T, mod func(*config.Config)) func(method, path, body string) (int, string) {
+	return startLocalAppOpts(t, mod, app.Options{})
+}
+
+func startLocalAppOpts(t *testing.T, mod func(*config.Config), opts app.Options) func(method, path, body string) (int, string) {
 	t.Helper()
 	l, _ := net.Listen("tcp", "127.0.0.1:0")
 	port := l.Addr().(*net.TCPAddr).Port
@@ -34,7 +38,7 @@ func startLocalAppCfg(t *testing.T, mod func(*config.Config)) func(method, path,
 	if mod != nil {
 		mod(&cfg)
 	}
-	a, err := app.New(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), app.Options{})
+	a, err := app.New(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), opts)
 	if err != nil {
 		t.Fatal(err)
 	}

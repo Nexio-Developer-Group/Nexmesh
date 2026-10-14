@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/Modal'
 import { groupBy } from '@/lib/group'
 import { useImportDefinition, type ImportResult } from './hooks'
 
-const TODO_LABEL: Record<string, string> = { credential: 'Connection credentials', secret_variable: 'Secret variables', agent_key: 'Code agent keys', confirm_install: 'Installs to confirm' }
+const TODO_LABEL: Record<string, string> = { credential: 'Connection credentials', secret_variable: 'Secret variables', agent_key: 'Code agent keys', confirm_install: 'Installs to confirm', review_gates: 'Quality gates to review' }
 
 /** Create a workspace from a definition file: check first, then import. */
 export function ImportDefinitionDialog({ onClose }: { onClose: () => void }) {

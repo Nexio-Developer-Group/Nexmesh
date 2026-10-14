@@ -130,11 +130,12 @@ func (s *Service) applyHandler(ctx context.Context, op *domain.Operation, p ops.
 			continue // re-supplied by the user
 		}
 		val := v.Value
-		if _, err := s.vars.Set(ctx, owner, wsID, envvars.SetInput{Name: v.Name, ComponentID: ids[v.Component], Value: &val, Description: v.Description}); err != nil {
+		if _, err := s.vars.Set(ctx, owner, wsID, envvars.SetInput{Name: v.Name, ComponentID: ids[v.Component], Environment: v.Environment, Value: &val, Description: v.Description}); err != nil {
 			p.Logf("could not set variable %s: %v", v.Name, err)
 			failures++
 		}
 	}
+	failures += s.applyPhase3(ctx, owner, wsID, d, ids, p.Logf)
 	if len(d.Ports) > 0 {
 		_, _ = s.st.UpdateWorkspace(ctx, wsID, func(x *domain.Workspace) error {
 			for _, pd := range d.Ports {

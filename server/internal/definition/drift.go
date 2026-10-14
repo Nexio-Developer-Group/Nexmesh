@@ -151,14 +151,14 @@ func (s *Service) Drift(ctx context.Context, owner, wsID string, d *Definition) 
 	}
 
 	// Variables by name and scope; values compared only for plain variables.
-	type vk struct{ name, comp string }
+	type vk struct{ name, comp, env string }
 	haveVars := map[vk]VariableDef{}
 	for _, v := range cur.Variables {
-		haveVars[vk{v.Name, v.Component}] = v
+		haveVars[vk{v.Name, v.Component, v.Environment}] = v
 	}
 	wantVars := map[vk]bool{}
 	for _, v := range d.Variables {
-		k := vk{v.Name, v.Component}
+		k := vk{v.Name, v.Component, v.Environment}
 		wantVars[k] = true
 		have, ok := haveVars[k]
 		switch {
@@ -214,6 +214,8 @@ func (s *Service) Drift(ctx context.Context, owner, wsID string, d *Definition) 
 	for name := range haveAgents {
 		add("agent", name, "", "not in the definition", "configured", "extra")
 	}
+
+	driftPhase3(d, cur, add, cmp)
 
 	sort.SliceStable(rep.Differences, func(i, j int) bool {
 		a, b := rep.Differences[i], rep.Differences[j]

@@ -265,7 +265,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterCodeAgent(caSvc)
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
-	defSvc := definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud).WithAgent(agents)
+	defSvc := definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud).WithAgent(agents).WithPhase3(definition.P3{Wires: wireSvc, Rules: rulesSvc, Gates: gateSvc, Agent: caSvc})
 	api.RegisterDefinition(defSvc)
 	api.RegisterDevContainer(defSvc, cat)
 	if tpls, err := catalog.LoadTemplates(cfg.CatalogDir, cat); err != nil {

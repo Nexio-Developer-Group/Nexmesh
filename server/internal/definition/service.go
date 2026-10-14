@@ -26,6 +26,7 @@ type Service struct {
 	eng   *ops.Engine
 	aud   *audit.Recorder
 	agent Agent
+	p3    *P3
 }
 
 func NewService(st store.Store, cat *catalog.Catalog, ws *workspace.Service, comps *component.Service, vars *envvars.Service, eng *ops.Engine, aud *audit.Recorder) *Service {
@@ -148,7 +149,7 @@ func (s *Service) Export(ctx context.Context, owner, wsID string) (*Definition, 
 		return nil, err
 	}
 	for _, v := range rows.Variables {
-		vd := VariableDef{Name: v.Name, Secret: v.Secret, Description: v.Description, Component: keys[v.ComponentID]}
+		vd := VariableDef{Name: v.Name, Secret: v.Secret, Description: v.Description, Component: keys[v.ComponentID], Environment: v.Environment}
 		if !v.Secret {
 			vd.Value = v.Value
 		}
@@ -164,6 +165,7 @@ func (s *Service) Export(ctx context.Context, owner, wsID string) (*Definition, 
 	for _, a := range cfgs {
 		d.Agents = append(d.Agents, AgentDef{Name: a.Name, Provider: a.Provider, Model: a.ModelID, Endpoint: a.Endpoint, Protocol: a.Protocol, Default: a.IsDefault, NeedsKey: a.SecretRef != ""})
 	}
+	s.exportPhase3(ctx, owner, w, cards, keys, d)
 	s.aud.User(ctx, owner, wsID, "definition.export", w.Name, map[string]any{"components": len(d.Components), "variables": len(d.Variables)})
 	return d, nil
 }

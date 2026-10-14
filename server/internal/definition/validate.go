@@ -103,7 +103,7 @@ func Validate(d *Definition, cat *catalog.Catalog) []Issue {
 		if v.Component != "" && !keys[v.Component] {
 			add(p+".component", "unknown component key %q.", v.Component)
 		}
-		id := v.Component + "|" + v.Name
+		id := v.Component + "|" + v.Environment + "|" + v.Name
 		if vnames[id] {
 			add(p+".name", "duplicate variable %q.", v.Name)
 		}
@@ -114,6 +114,7 @@ func Validate(d *Definition, cat *catalog.Catalog) []Issue {
 			add(fmt.Sprintf("ports[%d].port", i), "port must be between 1 and 65535.")
 		}
 	}
+	validatePhase3(d, keys, add)
 	return out
 }
 
@@ -158,5 +159,5 @@ func Todos(d *Definition, cat *catalog.Catalog, autoInstall bool) []Todo {
 			out = append(out, Todo{"agent_key", a.Name, "Add the API key under Code Agent and test the configuration."})
 		}
 	}
-	return out
+	return append(out, todosPhase3(d, cat)...)
 }

@@ -5,7 +5,7 @@ import { keys } from '@/api/hooks'
 
 export interface Difference { category: string; subject: string; field?: string; expected: string; actual: string; kind: 'changed' | 'missing' | 'extra' | 'unhealthy' }
 export interface DriftReport { inSync: boolean; differences: Difference[] }
-export interface Todo { kind: 'credential' | 'secret_variable' | 'agent_key' | 'confirm_install'; subject: string; detail: string }
+export interface Todo { kind: 'credential' | 'secret_variable' | 'agent_key' | 'confirm_install' | 'review_gates'; subject: string; detail: string }
 export interface ImportResult { workspace?: Workspace; todos: Todo[]; dryRun: boolean }
 
 export const useDrift = (ws: string) =>

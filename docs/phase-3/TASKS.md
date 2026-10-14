@@ -39,5 +39,5 @@ Decisions taken here for the open items in PRD Section 17:
 - [ ] **T3.7** Per-card Explain and Diagnose with context preview (F19)
 
 ## M4: Acceptance
-- [ ] **T4.0** Workspace definition carries wires, environments, gates and rules (F12 with F1, F4, F21, F23); drift covers them
+- [x] **T4.0** Workspace definition carries wires, environments, gates and rules (F12 with F1, F4, F21, F23); drift covers them
 - [ ] **T4.1** Phase 3 acceptance review, Playwright journeys, docs, security review

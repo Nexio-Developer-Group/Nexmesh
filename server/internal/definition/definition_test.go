@@ -113,3 +113,71 @@ func TestTodosListWhatTheUserMustSupply(t *testing.T) {
 		t.Fatalf("auto-install must not ask for confirmation again: %v", got)
 	}
 }
+
+func TestPhase3SectionsValidateAndNeverCarryCredentials(t *testing.T) {
+	cat, err := catalog.Load("../../../catalog")
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := func() *Definition {
+		d := sample()
+		d.Wires = []WireDef{{From: "redis", To: "mongodb", Name: "orders-db", Environment: "staging"}}
+		d.Environments = &EnvironmentsDef{Active: "staging"}
+		d.Gates = []GateDef{{ID: "tests", Name: "Tests", Kind: "test", Command: "go test ./...", Policy: "required", Enabled: true}}
+		d.Rules = []RuleDef{{Name: "style", Title: "Style", Scope: "global", Body: "Be brief."}}
+		d.AgentPolicy = &AgentPolicyDef{Level: "propose"}
+		return d
+	}
+	if issues := Validate(base(), cat); len(issues) != 0 {
+		t.Fatalf("valid definition rejected: %+v", issues)
+	}
+	cases := map[string]func(d *Definition){
+		"wires[0].from":        func(d *Definition) { d.Wires[0].From = "ghost" },
+		"wires[0].to":          func(d *Definition) { d.Wires[0].To = "ghost" },
+		"wires[0].environment": func(d *Definition) { d.Wires[0].Environment = "qa" },
+		"environments.active":  func(d *Definition) { d.Environments.Active = "qa" },
+		"gates[0].policy":      func(d *Definition) { d.Gates[0].Policy = "maybe" },
+		"gates[0].id":          func(d *Definition) { d.Gates[0].ID = "Bad ID" },
+		"gates[0].command": func(d *Definition) {
+			d.Gates[0].Command = "curl -H 'Authorization: Bearer abcdefghijklmnopqrstuvwxyz0123' x"
+		},
+		"rules[0].scope":           func(d *Definition) { d.Rules[0].Scope = "galaxy" },
+		"rules[0].paths":           func(d *Definition) { d.Rules[0].Scope = "path" },
+		"rules[0].body":            func(d *Definition) { d.Rules[0].Body = "use password = 'hunter2hunter2'" },
+		"agentPolicy.level":        func(d *Definition) { d.AgentPolicy.Level = "root" },
+		"variables[1].environment": func(d *Definition) { d.Variables[1].Environment = "qa" },
+		"components[1].profiles.staging.connection.password": func(d *Definition) {
+			d.Components[1].Profiles = map[string]ProfileDef{"staging": {Connection: map[string]any{"password": "x"}}}
+		},
+	}
+	for path, mutate := range cases {
+		d := base()
+		mutate(d)
+		found := false
+		for _, is := range Validate(d, cat) {
+			if strings.HasPrefix(is.Path, path) {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%s: no issue reported", path)
+		}
+	}
+	// A round trip keeps every section, and auto-accept has no place in the schema.
+	b, _ := Marshal(base())
+	d, err := Parse(b)
+	if err != nil || len(d.Wires) != 1 || d.Environments.Active != "staging" || d.Gates[0].ID != "tests" || d.Rules[0].Name != "style" || d.AgentPolicy.Level != "propose" {
+		t.Fatalf("%v %+v", err, d)
+	}
+	if _, err := Parse([]byte(strings.Replace(string(b), "level: propose", "level: propose\n  autoAccept: true", 1))); err == nil {
+		t.Fatal("autoAccept must be rejected as an unknown field")
+	}
+	// Imported command gates ask for review.
+	var kinds []string
+	for _, td := range Todos(base(), cat, false) {
+		kinds = append(kinds, td.Kind)
+	}
+	if !strings.Contains(strings.Join(kinds, ","), "review_gates") {
+		t.Fatalf("todos: %v", kinds)
+	}
+}
