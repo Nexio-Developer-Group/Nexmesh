@@ -228,3 +228,50 @@ func TestSnapshotsRunInAHelperContainerWithoutNetwork(t *testing.T) {
 		t.Error("workspace id with shell metacharacters accepted")
 	}
 }
+
+func TestStatsParsing(t *testing.T) {
+	r := &rec{reply: map[string]string{
+		"stats":   `{"CPUPerc":"12.50%","MemUsage":"10.5MiB / 256MiB"}`,
+		"inspect": "/data\n/data/db\n",
+		"exec":    "2048\t/data\n",
+	}}
+	d := New(Config{Runner: r})
+	s, err := d.ServiceStats(context.Background(), "ws1", "redis")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.CPUPercent != 12.5 || s.MemUsedBytes != int64(10.5*(1<<20)) || s.MemLimitBytes != 256<<20 {
+		t.Fatalf("%+v", s)
+	}
+	if s.DiskUsedBytes != 2*2048<<10 { // two mounts of 2048 KiB each
+		t.Fatalf("disk %d", s.DiskUsedBytes)
+	}
+	if s.Simulated {
+		t.Fatal("docker readings are real")
+	}
+	// The workspace's own files are measured under /workspace.
+	if _, err := d.WorkspaceStats(context.Background(), "ws1"); err != nil {
+		t.Fatal(err)
+	}
+	var sawDu bool
+	for _, c := range r.calls {
+		if c[0] == "exec" && c[len(c)-1] == "/workspace" {
+			sawDu = true
+		}
+	}
+	if !sawDu {
+		t.Fatalf("expected du of /workspace in %v", r.calls)
+	}
+	// A missing container is ErrNotFound, and garbage output is an error, not a zero reading.
+	r2 := &rec{err: map[string]error{"stats": errors.New("Error: No such container: x")}}
+	if _, err := New(Config{Runner: r2}).ServiceStats(context.Background(), "ws1", "x"); !errors.Is(err, runtime.ErrNotFound) {
+		t.Fatalf("%v", err)
+	}
+	r3 := &rec{reply: map[string]string{"stats": "not json"}}
+	if _, err := New(Config{Runner: r3}).WorkspaceStats(context.Background(), "ws1"); err == nil {
+		t.Fatal("unreadable stats output must be an error")
+	}
+	if parseSize("1.5GiB") != int64(1.5*(1<<30)) || parseSize("512kB") != 512000 || parseSize("0B") != 0 || parseSize("??") != 0 {
+		t.Fatal("parseSize")
+	}
+}

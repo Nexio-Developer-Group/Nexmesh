@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ApiError } from '@/api/client'
 import type { CanvasComponent } from '@/api/types'
 import { Button } from '@/components/ui/Button'
+import { CardMetrics } from '@/features/metrics/CardMetrics'
 import { useHealth, useLogs, type HealthSample } from './hooks'
 
 const LABEL: Record<string, string> = {
@@ -25,6 +26,7 @@ export function ComponentActivity({ workspaceId, component: c, hasLogs }: { work
   return (
     <div className="space-y-3 border-t border-line p-5">
       <HealthTimeline workspaceId={workspaceId} component={c} />
+      <CardMetrics workspaceId={workspaceId} componentId={c.id} />
       {hasLogs && <LogsView workspaceId={workspaceId} component={c} />}
     </div>
   )

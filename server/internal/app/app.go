@@ -37,6 +37,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/deployexport"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
 	"github.com/nexio-developer-group/nexmesh/server/internal/httpapi"
+	"github.com/nexio-developer-group/nexmesh/server/internal/metrics"
 	"github.com/nexio-developer-group/nexmesh/server/internal/netguard"
 	"github.com/nexio-developer-group/nexmesh/server/internal/ops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
@@ -70,6 +71,7 @@ type App struct {
 	Secrets    *secrets.Service
 
 	engine       *ops.Engine
+	metrics      *metrics.Service
 	adoptOnStart bool
 	agent        *agentapi.Registry
 	log          *slog.Logger
@@ -170,6 +172,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		agentSvc.WithRunner(opt.ModelRun)
 	}
 	wireSvc := wiring.New(st, cat, compSvc, bus, aud)
+	metricsSvc := metrics.New(st, cat, drv)
 	envSvc := envvars.NewService(st, sec, aud, wiring.Source{Base: compSvc, Wires: wireSvc})
 	agents.WithEnv(envSvc)
 	wsSvc.WithOnStart(compSvc.HealthForWorkspace).WithOnEnvChange(compSvc.HealthForWorkspace)
@@ -191,7 +194,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		}
 		return st.Busy, st.Reasons
 	})
-	wsSvc.WithCleanup(func(_ context.Context, w *domain.Workspace) { tracker.Forget(w.ID) })
+	wsSvc.WithCleanup(func(_ context.Context, w *domain.Workspace) { tracker.Forget(w.ID); metricsSvc.Forget(w.ID) })
 	api := httpapi.New(log)
 	api.WithActivity(tracker)
 	api.WithAuthAudit(aud)
@@ -204,6 +207,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc, Agent: agentSvc})
 	api.RegisterComponents(compSvc)
 	api.RegisterVariables(envSvc)
+	api.RegisterMetrics(metricsSvc)
 	api.RegisterWiring(wireSvc)
 	api.RegisterArchitecture(architecture.New(st, cat, wireSvc), aud)
 	api.RegisterDeployExport(deployexport.New(st, cat, compSvc, wireSvc, wsfs.New(agents), aud), httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
@@ -240,7 +244,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		h = withPreviewHost(withUI(api.Handler(), webui.Handler()), pv, tracker)
 	}
 	return &App{Handler: h, Store: st, Driver: drv, Bus: bus, Workspaces: wsSvc, Components: compSvc, Agents: agentSvc, Secrets: sec,
-		engine: eng, agent: agents, log: log, closer: closer, adoptOnStart: cfg.Store == "file" && cfg.Driver == "fake"}, nil
+		engine: eng, metrics: metricsSvc, agent: agents, log: log, closer: closer, adoptOnStart: cfg.Store == "file" && cfg.Driver == "fake"}, nil
 }
 
 // withPreviewHost sends requests for preview origins straight to the preview
@@ -296,6 +300,7 @@ func (a *App) Start(ctx context.Context) {
 	go a.agent.Run(ctx)
 	go a.Components.RunHealth(ctx, 30*time.Second)
 	go a.Components.RunReconciler(ctx, 15*time.Second)
+	go a.metrics.Run(ctx, metrics.Interval)
 }
 
 func (a *App) Close() {

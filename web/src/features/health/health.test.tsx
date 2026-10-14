@@ -60,7 +60,10 @@ describe('ComponentActivity', () => {
   })
 
   it('surfaces API errors', async () => {
-    mockApi({ 'GET /api/workspaces/ws1/components/c1/health': () => ({ status: 404, body: { error: { code: 'not_found', message: 'Not found.' } } }) })
+    mockApi({
+      'GET /api/workspaces/ws1/components/c1/health': () => ({ status: 404, body: { error: { code: 'not_found', message: 'Not found.' } } }),
+      'GET /api/workspaces/ws1/metrics': () => ({ at: '', limits: { cpu: 1, ramGb: 1, storageGb: 5 }, components: [] }),
+    })
     renderPage(<ComponentActivity workspaceId="ws1" component={comp} hasLogs={false} />)
     expect(await screen.findByRole('alert')).toHaveTextContent('Not found.')
   })

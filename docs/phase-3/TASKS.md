@@ -22,7 +22,7 @@ Decisions taken here for the open items in PRD Section 17:
 - [x] **T1.4** Canvas environments: labels, per-environment values, active environment, production protection (F4)
 - [x] **T1.5** External API card: catalog entry, probe, test-then-add (F16)
 - [x] **T1.6** Dockerfile and docker-compose export without secrets (F25)
-- [ ] **T1.7** Component metrics: CPU, memory, storage; latency trends for connected (F5)
+- [x] **T1.7** Component metrics: CPU, memory, storage; latency trends for connected (F5)
 
 ## M2: Tools on cards (F13)
 - [ ] **T2.1** Inspector API: read-only browse and query for MySQL, MongoDB, Redis, Kafka, RabbitMQ, with limits, timeouts and audit

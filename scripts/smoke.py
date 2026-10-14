@@ -451,6 +451,23 @@ def _():
     assert res["written"] == ["docker-compose.yml"]
 
 
+@check("metrics: workspace, installed card readings, stopped card explained")
+def _():
+    m = call("GET", W("/metrics"))
+    assert m["limits"]["cpu"] >= 1 and m["workspace"]["current"] is not None, m
+    by = {c["id"]: c for c in m["components"]}
+    red = by[S["redis"]]
+    assert red["mode"] == "installed"
+    # Redis was stopped by the lines check: no reading, with a reason. Start it again and read.
+    if red.get("current") is None:
+        assert red["unavailable"]
+        call("POST", W(f"/components/{S['redis']}/start"))
+        wait(lambda: call("GET", W(f"/components/{S['redis']}"))["observedState"] == "running", "redis running")
+        red = {c["id"]: c for c in call("GET", W("/metrics"))["components"]}[S["redis"]]
+    cur = red["current"]
+    assert cur["memLimitMb"] > 0 and 0 <= cur["memUsedMb"] <= cur["memLimitMb"] and cur["cpuPercent"] >= 0, cur
+
+
 @check("audit: events, filters, CSV export")
 def _():
     ev = call("GET", W("/audit"))["events"]

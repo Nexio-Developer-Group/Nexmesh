@@ -11,6 +11,7 @@ package docker
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -436,4 +437,82 @@ func lastLine(s string) string {
 		return s[i+1:]
 	}
 	return s
+}
+
+// ---- metrics (PRD F5)
+
+type statsLine struct {
+	CPUPerc  string `json:"CPUPerc"`
+	MemUsage string `json:"MemUsage"`
+}
+
+var sizeRE = regexp.MustCompile(`^([0-9.]+)\s*([A-Za-z]*)$`)
+
+// parseSize reads "10.5MiB" or "1.2GB" into bytes.
+func parseSize(s string) int64 {
+	m := sizeRE.FindStringSubmatch(strings.TrimSpace(s))
+	if m == nil {
+		return 0
+	}
+	v, err := strconv.ParseFloat(m[1], 64)
+	if err != nil {
+		return 0
+	}
+	mult := map[string]float64{"": 1, "B": 1, "kB": 1e3, "KB": 1e3, "KiB": 1 << 10, "MB": 1e6, "MiB": 1 << 20, "GB": 1e9, "GiB": 1 << 30, "TB": 1e12, "TiB": 1 << 40}
+	return int64(v * mult[m[2]])
+}
+
+func (d *Driver) stats(ctx context.Context, container string, dataPaths []string) (runtime.Stats, error) {
+	out, err := d.out(ctx, "stats", "--no-stream", "--format", "{{json .}}", container)
+	if err != nil {
+		if strings.Contains(err.Error(), "No such") {
+			return runtime.Stats{}, runtime.ErrNotFound
+		}
+		return runtime.Stats{}, err
+	}
+	var l statsLine
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &l); err != nil {
+		return runtime.Stats{}, fmt.Errorf("unreadable docker stats output")
+	}
+	s := runtime.Stats{DiskUsedBytes: -1}
+	s.CPUPercent, _ = strconv.ParseFloat(strings.TrimSuffix(strings.TrimSpace(l.CPUPerc), "%"), 64)
+	if used, limit, ok := strings.Cut(l.MemUsage, "/"); ok {
+		s.MemUsedBytes, s.MemLimitBytes = parseSize(used), parseSize(limit)
+	}
+	if len(dataPaths) > 0 {
+		var total int64
+		measured := false
+		for _, p := range dataPaths {
+			du, err := d.out(ctx, "exec", container, "du", "-sk", p)
+			if err != nil {
+				continue
+			}
+			if kb, err := strconv.ParseInt(strings.Fields(du + " ")[0], 10, 64); err == nil {
+				total += kb << 10
+				measured = true
+			}
+		}
+		if measured {
+			s.DiskUsedBytes = total
+		}
+	}
+	return s, nil
+}
+
+func (d *Driver) WorkspaceStats(ctx context.Context, id string) (runtime.Stats, error) {
+	return d.stats(ctx, ctrName(id), []string{"/workspace"})
+}
+
+func (d *Driver) ServiceStats(ctx context.Context, ws, name string) (runtime.Stats, error) {
+	// A service's data lives on its volume mounts.
+	out, err := d.out(ctx, "inspect", "--format", `{{range .Mounts}}{{if eq .Type "volume"}}{{.Destination}}{{"\n"}}{{end}}{{end}}`, svcCtrName(ws, name))
+	var paths []string
+	if err == nil {
+		for _, p := range strings.Split(strings.TrimSpace(out), "\n") {
+			if p = strings.TrimSpace(p); strings.HasPrefix(p, "/") {
+				paths = append(paths, p)
+			}
+		}
+	}
+	return d.stats(ctx, svcCtrName(ws, name), paths)
 }

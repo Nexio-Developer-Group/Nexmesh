@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ResourceRow } from '@/features/workspaces/ResourceRow'
 import { MIN } from '@/lib/resources'
+import { WorkspaceUsage } from '@/features/metrics/CardMetrics'
 import { useApplySettings, usePreviewSettings, type SettingsBody } from './hooks'
 
 const LABEL: Record<string, string> = { cpu: 'CPU', ramGb: 'RAM', storageGb: 'Storage', gpu: 'GPU', name: 'Name', description: 'Description' }
@@ -57,6 +58,7 @@ export function ResourcesTab({ workspace: w }: { workspace: Workspace }) {
         <h2 className="text-2xl font-extrabold tracking-tight">Resources</h2>
         <p className="mt-1 text-muted">CPU and RAM apply immediately. Storage and GPU changes restart the workspace. {host && <span className="text-faint">Host limit: {host.maxCpu} vCPU · {host.maxRamGb} GB RAM · {host.maxStorageGb} GB.</span>}</p>
       </div>
+      {w.status === 'ready' && <WorkspaceUsage workspaceId={w.id} limits={{ cpu: w.cpu, ramGb: w.ramGb, storageGb: w.storageGb }} />}
       <div className="space-y-5 rounded-card border border-line bg-panel p-6">
         <ResourceRow label="RAM" unit="GB" value={ramGb} min={MIN.ramGb} max={host?.maxRamGb ?? 24} onChange={setRam} error={fieldErr('ramGb')} />
         <ResourceRow label="CPU" unit="vCPU" value={cpu} min={MIN.cpu} max={host?.maxCpu ?? 12} onChange={setCpu} error={fieldErr('cpu')} />

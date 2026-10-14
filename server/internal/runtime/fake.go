@@ -382,3 +382,52 @@ func (f *Fake) DeleteSnapshot(_ context.Context, id, snap string) error {
 	}
 	return nil
 }
+
+// Stats for the simulated runtime are generated, and say so (Simulated). The
+// workspace's disk figure is real when its files live in a directory.
+func simulated(seed string, limit int64) Stats {
+	h := uint64(1469598103934665603)
+	for _, c := range seed {
+		h = (h ^ uint64(c)) * 1099511628211
+	}
+	// Drift slowly with time so a trend is visible without being random noise.
+	t := uint64(time.Now().Unix() / 15)
+	cpu := float64((h>>3)%700)/100 + float64((h+t*7)%300)/100
+	mem := int64(float64(limit) * (0.15 + float64((h>>9)%250)/1000 + float64((h+t*3)%100)/1000))
+	return Stats{CPUPercent: cpu, MemUsedBytes: mem, MemLimitBytes: limit, DiskUsedBytes: -1, Simulated: true}
+}
+
+func (f *Fake) WorkspaceStats(_ context.Context, id string) (Stats, error) {
+	f.mu.Lock()
+	w, err := f.get(id)
+	dirFn := f.SnapshotDir
+	f.mu.Unlock()
+	if err != nil {
+		return Stats{}, err
+	}
+	if !w.running {
+		return Stats{}, ErrNotFound
+	}
+	s := simulated(id, int64(w.spec.Resources.RAMGB)<<30)
+	if dirFn != nil {
+		var total int64
+		_ = filepath.Walk(dirFn(id), func(_ string, fi os.FileInfo, err error) error {
+			if err == nil && fi.Mode().IsRegular() {
+				total += fi.Size()
+			}
+			return nil
+		})
+		s.DiskUsedBytes = total
+	}
+	return s, nil
+}
+
+func (f *Fake) ServiceStats(_ context.Context, ws, name string) (Stats, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	s, ok := f.services[svcKey(ws, name)]
+	if !ok || !s.running {
+		return Stats{}, ErrNotFound
+	}
+	return simulated(ws+"/"+name, 256<<20), nil
+}
