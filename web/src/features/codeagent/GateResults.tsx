@@ -1,4 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { useCancelGates, useGateRun, useStartGates, type GateResult } from './hooks'
 
@@ -17,6 +19,15 @@ export function GateStatusChip({ status }: { status: GateResult['status'] | 'run
 /** Results of one gate run, per gate with its log (PRD F23). */
 export function GateResults({ workspaceId, runId }: { workspaceId: string; runId: string }) {
   const { data: run } = useGateRun(workspaceId, runId)
+  const qc = useQueryClient()
+  const finished = run && run.status !== 'running'
+  // The change set's gate verdict is computed on the server; refresh it once a run ends.
+  useEffect(() => {
+    if (finished) {
+      qc.invalidateQueries({ queryKey: ['change', workspaceId] })
+      qc.invalidateQueries({ queryKey: ['changes', workspaceId] })
+    }
+  }, [finished, run?.id, qc, workspaceId])
   if (!run) return <p className="text-xs text-muted">Loading results…</p>
   return (
     <div aria-label="Quality gate results">
