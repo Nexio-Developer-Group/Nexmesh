@@ -170,6 +170,9 @@ func (p *Postgres) DeleteWorkspace(ctx context.Context, id string) error {
 	if ct.RowsAffected() == 0 {
 		return ErrNotFound
 	}
+	if _, err = p.pool.Exec(ctx, "DELETE FROM docs WHERE workspace_id=$1", id); err != nil {
+		return err
+	}
 	_, err = p.pool.Exec(ctx, "DELETE FROM agent_configs WHERE workspace_id=$1", id)
 	return err
 }
@@ -380,4 +383,38 @@ func (p *Postgres) ListTemplates(ctx context.Context, owner string) ([]*domain.T
 
 func (p *Postgres) DeleteTemplate(ctx context.Context, id string) error {
 	return p.exec(ctx, "DELETE FROM templates WHERE id=$1", id)
+}
+
+func (p *Postgres) PutDoc(ctx context.Context, kind, ws, id string, data []byte) error {
+	return p.exec(ctx, `INSERT INTO docs (kind, id, workspace_id, data) VALUES ($1,$2,$3,$4)
+		ON CONFLICT (kind, id) DO UPDATE SET data=EXCLUDED.data, workspace_id=EXCLUDED.workspace_id, updated_at=now()`, kind, id, ws, data)
+}
+
+func (p *Postgres) GetDoc(ctx context.Context, kind, id string) ([]byte, error) {
+	var raw []byte
+	if err := p.pool.QueryRow(ctx, "SELECT data FROM docs WHERE kind=$1 AND id=$2", kind, id).Scan(&raw); err != nil {
+		return nil, mapErr(err)
+	}
+	return raw, nil
+}
+
+func (p *Postgres) ListDocs(ctx context.Context, kind, ws string) ([][]byte, error) {
+	rows, err := p.pool.Query(ctx, "SELECT data FROM docs WHERE kind=$1 AND workspace_id=$2 ORDER BY created_at, id", kind, ws)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := [][]byte{}
+	for rows.Next() {
+		var raw []byte
+		if err := rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		out = append(out, raw)
+	}
+	return out, rows.Err()
+}
+
+func (p *Postgres) DeleteDoc(ctx context.Context, kind, id string) error {
+	return p.exec(ctx, "DELETE FROM docs WHERE kind=$1 AND id=$2", kind, id)
 }

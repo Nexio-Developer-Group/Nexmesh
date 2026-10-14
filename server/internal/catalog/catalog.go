@@ -37,6 +37,14 @@ type Component struct {
 	Resources      *Resources  `json:"resources,omitempty" yaml:"resources,omitempty"`
 	Health         *Health     `json:"health,omitempty" yaml:"health,omitempty"`
 	Connection     *Connection `json:"connection,omitempty" yaml:"connection,omitempty"`
+	Wiring         *Wiring     `json:"wiring,omitempty" yaml:"wiring,omitempty"`
+}
+
+// Wiring says which cards this one may be connected to with a line (PRD F1):
+// the categories it consumes, and whether it can be the target of a line.
+type Wiring struct {
+	Consumes []string `json:"consumes,omitempty" yaml:"consumes,omitempty"`
+	Provides bool     `json:"provides,omitempty" yaml:"provides,omitempty"`
 }
 
 type Versions struct {

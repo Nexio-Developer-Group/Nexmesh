@@ -25,6 +25,7 @@ var (
 )
 
 type Service struct {
+	onRemoved []func(ctx context.Context, workspaceID, componentID string)
 	st   store.Store
 	cat  *catalog.Catalog
 	bus  *events.Bus
@@ -177,6 +178,7 @@ func (s *Service) Remove(ctx context.Context, owner, wsID, id string) error {
 	}
 	s.aud.User(ctx, owner, wsID, "component.remove", c.CatalogID, map[string]any{"componentId": id})
 	s.bus.Publish(wsID, events.Event{Type: "component_removed", Data: map[string]string{"id": id}})
+	s.fireRemoved(ctx, wsID, id)
 	return nil
 }
 

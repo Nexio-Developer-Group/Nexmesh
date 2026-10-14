@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
@@ -72,7 +73,54 @@ type Store interface {
 	GetSession(ctx context.Context, id string) (*domain.Session, error)
 	DeleteSession(ctx context.Context, id string) error
 
+	// Documents are small JSON records grouped by kind and workspace, used by
+	// features that do not need their own table (connections, change sets, ...).
+	// PutDoc inserts or replaces. ListDocs returns oldest first. Deleting a
+	// workspace deletes its documents.
+	PutDoc(ctx context.Context, kind, workspaceID, id string, data []byte) error
+	GetDoc(ctx context.Context, kind, id string) ([]byte, error)
+	ListDocs(ctx context.Context, kind, workspaceID string) ([][]byte, error)
+	DeleteDoc(ctx context.Context, kind, id string) error
+
 	Close()
+}
+
+// PutJSON stores v as a document.
+func PutJSON(ctx context.Context, s Store, kind, workspaceID, id string, v any) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	return s.PutDoc(ctx, kind, workspaceID, id, b)
+}
+
+// GetJSON loads a document into a new T.
+func GetJSON[T any](ctx context.Context, s Store, kind, id string) (*T, error) {
+	b, err := s.GetDoc(ctx, kind, id)
+	if err != nil {
+		return nil, err
+	}
+	v := new(T)
+	if err := json.Unmarshal(b, v); err != nil {
+		return nil, err
+	}
+	return v, nil
+}
+
+// ListJSON loads every document of a kind in a workspace.
+func ListJSON[T any](ctx context.Context, s Store, kind, workspaceID string) ([]*T, error) {
+	raw, err := s.ListDocs(ctx, kind, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*T, 0, len(raw))
+	for _, b := range raw {
+		v := new(T)
+		if json.Unmarshal(b, v) == nil {
+			out = append(out, v)
+		}
+	}
+	return out, nil
 }
 
 // NewID returns a random 16-byte hex identifier with a type prefix.

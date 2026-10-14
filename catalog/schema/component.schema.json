@@ -296,6 +296,24 @@
       "type": "integer",
       "minimum": 1,
       "description": "Display order within the catalog sidebar."
+    },
+    "wiring": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Which cards this card may be wired to with a connection line (PRD F1).",
+      "properties": {
+        "consumes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Categories of cards this card may draw a line to."
+        },
+        "provides": {
+          "type": "boolean",
+          "description": "Whether other cards may draw a line to this card."
+        }
+      }
     }
   }
 }

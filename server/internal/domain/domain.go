@@ -306,3 +306,19 @@ type Template struct {
 	Components  []TemplateComponent `json:"components"`
 	CreatedAt   time.Time           `json:"createdAt"`
 }
+
+// Wire is a connection line between two cards (PRD F1): the consumer needs
+// what the provider offers. It stores names only; values are resolved from the
+// provider when the environment is built, so secrets are never copied.
+type Wire struct {
+	ID          string `json:"id"`
+	WorkspaceID string `json:"workspaceId"`
+	FromID      string `json:"fromId"` // consumer card
+	ToID        string `json:"toId"`   // provider card
+	// Name is the connection name the variable names derive from, e.g. "orders-db" gives ORDERS_DB_URI.
+	Name string `json:"name"`
+	// Environment labels the line (PRD F4); empty follows the provider.
+	Environment string    `json:"environment,omitempty"`
+	Variables   []string  `json:"variables"`
+	CreatedAt   time.Time `json:"createdAt"`
+}

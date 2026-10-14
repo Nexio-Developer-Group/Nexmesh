@@ -20,3 +20,6 @@ resources:
   ramMB: 64
   storageGB: 1
 schemaVersion: 1
+wiring:
+  consumes:
+  - backend

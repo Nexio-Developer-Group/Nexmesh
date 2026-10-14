@@ -340,6 +340,30 @@ if args.redis:
         assert call("GET", "/api/agent/providers") is not None
 
 
+@check("connection lines: validate, preview, confirm, status, variables, delete")
+def _():
+    be = call("POST", W("/components"), {"catalogId": "nestjs"})
+    db = call("GET", W(f"/components/{S['redis']}"))  # the Redis installed earlier (running)
+    fe = call("POST", W("/components"), {"catalogId": "react"})
+    pair = lambda a, b, **kw: dict({"fromId": a["id"], "toId": b["id"]}, **kw)
+    expect("POST", W("/wires/preview"), pair(fe, db), 422)  # a frontend does not connect to a database
+    expect("POST", W("/wires/preview"), pair(db, be), 422)  # a database does not consume
+    pv = call("POST", W("/wires/preview"), pair(be, db, name="cache"))
+    assert {v["name"] for v in pv["variables"]} >= {"CACHE_URI", "CACHE_HOST", "CACHE_PORT"}, pv
+    assert pv["state"] == "healthy", pv
+    expect("POST", W("/wires"), pair(be, db, name="cache"), 422)  # confirmation required
+    wire = call("POST", W("/wires"), pair(be, db, name="cache", confirm=True))
+    got = [w for w in call("GET", W("/wires"))["wires"] if w["id"] == wire["id"]][0]
+    assert got["state"] == "healthy", got
+    gen = json.dumps(call("GET", W("/variables"))["generated"])
+    assert "CACHE_URI" in gen, gen
+    call("POST", W(f"/components/{db['id']}/stop"))
+    wait(lambda: [w for w in call("GET", W("/wires"))["wires"] if w["id"] == wire["id"]][0]["state"] == "unreachable", "line turns unreachable")
+    call("DELETE", W(f"/wires/{wire['id']}"))
+    assert "CACHE_URI" not in json.dumps(call("GET", W("/variables"))["generated"])
+    assert not call("GET", W("/wires"))["wires"]
+
+
 @check("audit: events, filters, CSV export")
 def _():
     ev = call("GET", W("/audit"))["events"]

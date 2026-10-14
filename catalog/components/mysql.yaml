@@ -88,3 +88,5 @@ connection:
     advanced: true
     default: 10
 schemaVersion: 1
+wiring:
+  provides: true

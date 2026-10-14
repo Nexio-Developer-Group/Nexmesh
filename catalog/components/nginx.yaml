@@ -27,3 +27,6 @@ health:
   type: tcp
   port: 80
 schemaVersion: 1
+wiring:
+  consumes:
+  - backend

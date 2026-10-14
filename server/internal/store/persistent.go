@@ -39,6 +39,7 @@ type persisted struct {
 	Sessions map[string]json.RawMessage       `json:"sessions"`
 	Health   map[string][]domain.HealthSample `json:"health"`
 	Tpls     map[string]json.RawMessage       `json:"tpls"`
+	Docs     map[string]persistedDoc          `json:"docs"`
 }
 
 // persistedSecret mirrors domain.SecretRecord, whose JSON tags deliberately
@@ -47,6 +48,12 @@ type persistedSecret struct {
 	Ciphertext []byte    `json:"ct"`
 	WrappedKey []byte    `json:"wk"`
 	CreatedAt  time.Time `json:"at"`
+}
+
+type persistedDoc struct {
+	WS   string          `json:"ws"`
+	Data json.RawMessage `json:"data"`
+	Seq  int64           `json:"seq"`
 }
 
 func rawMap(in map[string][]byte) map[string]json.RawMessage {
@@ -96,6 +103,13 @@ func (p *Persistent) load(d *persisted) {
 	m.ws, m.comps, m.ops, m.agents = byteMap(d.WS), byteMap(d.Comps), byteMap(d.Ops), byteMap(d.Agents)
 	m.users, m.sessions, m.tpls = byteMap(d.Users), byteMap(d.Sessions), byteMap(d.Tpls)
 	m.audit = d.Audit
+	m.docs = make(map[string]memDoc, len(d.Docs))
+	for k, pd := range d.Docs {
+		m.docs[k] = memDoc{ws: pd.WS, data: []byte(pd.Data), seq: pd.Seq}
+		if pd.Seq > m.docSeq {
+			m.docSeq = pd.Seq
+		}
+	}
 	for id, ps := range d.Secrets {
 		m.secrets[id] = &domain.SecretRecord{ID: id, Ciphertext: ps.Ciphertext, WrappedKey: ps.WrappedKey, CreatedAt: ps.CreatedAt}
 	}
@@ -111,7 +125,11 @@ func (p *Persistent) snapshot() ([]byte, error) {
 	for id, r := range m.secrets {
 		secs[id] = persistedSecret{Ciphertext: r.Ciphertext, WrappedKey: r.WrappedKey, CreatedAt: r.CreatedAt}
 	}
-	d := persisted{Version: 1, WS: rawMap(m.ws), Comps: rawMap(m.comps), Ops: rawMap(m.ops), Agents: rawMap(m.agents),
+	docs := make(map[string]persistedDoc, len(m.docs))
+	for k, md := range m.docs {
+		docs[k] = persistedDoc{WS: md.ws, Data: json.RawMessage(md.data), Seq: md.seq}
+	}
+	d := persisted{Version: 1, Docs: docs, WS: rawMap(m.ws), Comps: rawMap(m.comps), Ops: rawMap(m.ops), Agents: rawMap(m.agents),
 		Audit: m.audit, Secrets: secs, Users: rawMap(m.users), Sessions: rawMap(m.sessions), Health: m.health, Tpls: rawMap(m.tpls)}
 	b, err := json.Marshal(&d)
 	m.mu.Unlock()

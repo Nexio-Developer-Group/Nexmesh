@@ -28,3 +28,6 @@ resources:
 ports:
 - 5173
 schemaVersion: 1
+wiring:
+  consumes:
+  - backend

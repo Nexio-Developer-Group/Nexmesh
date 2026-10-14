@@ -23,3 +23,7 @@ resources:
   ramMB: 128
   storageGB: 1
 schemaVersion: 1
+wiring:
+  consumes:
+  - database
+  - messaging

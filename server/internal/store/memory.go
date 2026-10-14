@@ -24,12 +24,20 @@ type Memory struct {
 	sessions map[string][]byte
 	health   map[string][]domain.HealthSample
 	tpls     map[string][]byte
+	docs     map[string]memDoc // kind/id
+	docSeq   int64
+}
+
+type memDoc struct {
+	ws   string
+	data []byte
+	seq  int64
 }
 
 func NewMemory() *Memory {
 	return &Memory{
 		ws: map[string][]byte{}, comps: map[string][]byte{}, ops: map[string][]byte{},
-		agents: map[string][]byte{}, users: map[string][]byte{}, sessions: map[string][]byte{}, health: map[string][]domain.HealthSample{}, tpls: map[string][]byte{}, secrets: map[string]*domain.SecretRecord{},
+		agents: map[string][]byte{}, users: map[string][]byte{}, sessions: map[string][]byte{}, health: map[string][]domain.HealthSample{}, tpls: map[string][]byte{}, docs: map[string]memDoc{}, secrets: map[string]*domain.SecretRecord{},
 	}
 }
 
@@ -129,6 +137,11 @@ func (m *Memory) DeleteWorkspace(_ context.Context, id string) error {
 		_ = json.Unmarshal(b, &c)
 		if c.WorkspaceID == id {
 			delete(m.agents, k)
+		}
+	}
+	for k, d := range m.docs {
+		if d.ws == id {
+			delete(m.docs, k)
 		}
 	}
 	return nil
@@ -418,5 +431,57 @@ func (m *Memory) DeleteTemplate(_ context.Context, id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.tpls, id)
+	return nil
+}
+
+func (m *Memory) PutDoc(_ context.Context, kind, ws, id string, data []byte) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	k := kind + "/" + id
+	d, ok := m.docs[k]
+	if !ok {
+		m.docSeq++
+		d.seq = m.docSeq
+	}
+	d.ws, d.data = ws, append([]byte(nil), data...)
+	m.docs[k] = d
+	return nil
+}
+
+func (m *Memory) GetDoc(_ context.Context, kind, id string) ([]byte, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	d, ok := m.docs[kind+"/"+id]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return append([]byte(nil), d.data...), nil
+}
+
+func (m *Memory) ListDocs(_ context.Context, kind, ws string) ([][]byte, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	type item struct {
+		seq  int64
+		data []byte
+	}
+	var items []item
+	for k, d := range m.docs {
+		if len(k) > len(kind) && k[:len(kind)+1] == kind+"/" && d.ws == ws {
+			items = append(items, item{d.seq, d.data})
+		}
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].seq < items[j].seq })
+	out := make([][]byte, len(items))
+	for i, it := range items {
+		out[i] = append([]byte(nil), it.data...)
+	}
+	return out, nil
+}
+
+func (m *Memory) DeleteDoc(_ context.Context, kind, id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.docs, kind+"/"+id)
 	return nil
 }

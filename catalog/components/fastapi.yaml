@@ -28,3 +28,8 @@ resources:
 ports:
 - 8000
 schemaVersion: 1
+wiring:
+  consumes:
+  - database
+  - messaging
+  provides: true

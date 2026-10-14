@@ -27,3 +27,6 @@ resources:
 ports:
 - 4200
 schemaVersion: 1
+wiring:
+  consumes:
+  - backend

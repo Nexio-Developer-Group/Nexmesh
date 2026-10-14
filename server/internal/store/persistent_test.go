@@ -22,6 +22,7 @@ func TestPersistentSurvivesRestart(t *testing.T) {
 	}
 	_ = p.PutSecret(ctx, &domain.SecretRecord{ID: "s1", Ciphertext: []byte("ct"), WrappedKey: []byte("wk")})
 	_ = p.AppendAudit(ctx, &domain.AuditEvent{ID: "a1", WorkspaceID: "ws1", Action: "x"})
+	_ = p.PutDoc(ctx, "conn", "ws1", "c1", []byte(`{"a":1}`))
 	p.Close()
 
 	q, err := OpenPersistent(path)
@@ -35,6 +36,9 @@ func TestPersistentSurvivesRestart(t *testing.T) {
 	}
 	if s, err := q.GetSecret(ctx, "s1"); err != nil || string(s.WrappedKey) != "wk" {
 		t.Fatalf("secret not restored: %v", err)
+	}
+	if ds, _ := q.ListDocs(ctx, "conn", "ws1"); len(ds) != 1 || string(ds[0]) != `{"a":1}` {
+		t.Fatalf("documents not restored: %q", ds)
 	}
 	if a, _ := q.ListAudit(ctx, "ws1", 10); len(a) != 1 {
 		t.Fatalf("audit not restored: %d", len(a))

@@ -108,3 +108,5 @@ connection:
     advanced: true
     default: nexmesh
 schemaVersion: 1
+wiring:
+  provides: true

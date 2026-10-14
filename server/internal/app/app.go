@@ -42,6 +42,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/secrets"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
 	"github.com/nexio-developer-group/nexmesh/server/internal/webui"
+	"github.com/nexio-developer-group/nexmesh/server/internal/wiring"
 	"github.com/nexio-developer-group/nexmesh/server/internal/workspace"
 )
 
@@ -165,7 +166,8 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	if opt.ModelRun != nil {
 		agentSvc.WithRunner(opt.ModelRun)
 	}
-	envSvc := envvars.NewService(st, sec, aud, compSvc)
+	wireSvc := wiring.New(st, cat, compSvc, bus, aud)
+	envSvc := envvars.NewService(st, sec, aud, wiring.Source{Base: compSvc, Wires: wireSvc})
 	agents.WithEnv(envSvc)
 	wsSvc.WithOnStart(compSvc.HealthForWorkspace)
 	wsSvc.WithCleanup(envSvc.DeleteAllSecrets)
@@ -199,6 +201,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc, Agent: agentSvc})
 	api.RegisterComponents(compSvc)
 	api.RegisterVariables(envSvc)
+	api.RegisterWiring(wireSvc)
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
 	defSvc := definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud).WithAgent(agents)

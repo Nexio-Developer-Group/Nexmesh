@@ -221,3 +221,41 @@ func TestStoreTemplates(t *testing.T) {
 		})
 	}
 }
+
+func TestStoreDocuments(t *testing.T) {
+	for name, s := range impls(t) {
+		t.Run(name, func(t *testing.T) {
+			ctx := context.Background()
+			w := &domain.Workspace{ID: NewID("ws"), OwnerID: "u", Name: NewID("n"), Status: domain.WSReady}
+			if err := s.CreateWorkspace(ctx, w); err != nil {
+				t.Fatal(err)
+			}
+			k := "kind_" + NewID("k")
+			_ = s.PutDoc(ctx, k, w.ID, "b", []byte(`{"n":"b"}`))
+			_ = s.PutDoc(ctx, k, w.ID, "a", []byte(`{"n":"a"}`))
+			_ = s.PutDoc(ctx, k, "other-ws", "z", []byte(`{"n":"z"}`))
+			if err := s.PutDoc(ctx, k, w.ID, "b", []byte(`{"n":"b2"}`)); err != nil { // replace keeps position
+				t.Fatal(err)
+			}
+			got, err := s.ListDocs(ctx, k, w.ID)
+			if err != nil || len(got) != 2 || string(got[0]) != `{"n": "b2"}` && string(got[0]) != `{"n":"b2"}` || len(got[1]) == 0 {
+				t.Fatalf("list: %v %q", err, got)
+			}
+			if b, err := s.GetDoc(ctx, k, "a"); err != nil || len(b) == 0 {
+				t.Fatalf("get: %v", err)
+			}
+			if _, err := s.GetDoc(ctx, k, "nope"); err != ErrNotFound {
+				t.Fatalf("missing doc should be ErrNotFound, got %v", err)
+			}
+			_ = s.DeleteDoc(ctx, k, "a")
+			if g, _ := s.ListDocs(ctx, k, w.ID); len(g) != 1 {
+				t.Fatal("delete")
+			}
+			_ = s.DeleteWorkspace(ctx, w.ID)
+			if g, _ := s.ListDocs(ctx, k, w.ID); len(g) != 0 {
+				t.Fatal("documents must be deleted with their workspace")
+			}
+			_ = s.DeleteDoc(ctx, k, "z")
+		})
+	}
+}

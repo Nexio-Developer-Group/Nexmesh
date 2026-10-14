@@ -549,6 +549,7 @@ func (s *Service) removeHandler(ctx context.Context, op *domain.Operation, p ops
 		return err
 	}
 	s.publishRemoved(c.WorkspaceID, c.ID)
+	s.fireRemoved(ctx, c.WorkspaceID, c.ID)
 	return nil
 }
 

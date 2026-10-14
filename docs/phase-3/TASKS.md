@@ -16,7 +16,7 @@ Decisions taken here for the open items in PRD Section 17:
 - [ ] **T0.5** Release workflow that builds Linux and Windows artifacts and the installer
 
 ## M1: Structure (F1, F2, F4, F16, F25, F5 metrics)
-- [ ] **T1.1** Connections: model, catalog `connectsTo` metadata, validation, variable preview, apply and delete, line health (F1 backend)
+- [x] **T1.1** Connections: model, catalog `connectsTo` metadata, validation, variable preview, apply and delete, line health (F1 backend)
 - [ ] **T1.2** Canvas lines UI: draw, preview dialog, status colours, delete (F1 UI)
 - [ ] **T1.3** Architecture view: layers, edges, drift, Mermaid, Markdown, SVG export, highlight mode (F2)
 - [ ] **T1.4** Canvas environments: labels, per-environment values, active environment, production protection (F4)
@@ -38,4 +38,5 @@ Decisions taken here for the open items in PRD Section 17:
 - [ ] **T3.7** Per-card Explain and Diagnose with context preview (F19)
 
 ## M4: Acceptance
+- [ ] **T4.0** Workspace definition carries wires, environments, gates and rules (F12 with F1, F4, F21, F23); drift covers them
 - [ ] **T4.1** Phase 3 acceptance review, Playwright journeys, docs, security review
