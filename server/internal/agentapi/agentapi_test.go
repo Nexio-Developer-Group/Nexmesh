@@ -75,7 +75,7 @@ func TestStaleAgentMarkedDisconnected(t *testing.T) {
 
 type fakeEnv struct{}
 
-func (fakeEnv) ConnectionEnv(_ context.Context, ws string) (map[string]string, error) {
+func (fakeEnv) Environment(_ context.Context, ws string) (map[string]string, error) {
 	return map[string]string{"PROD_DB_URI": "mongodb://u:s3cret@h/db", "WS": ws}, nil
 }
 

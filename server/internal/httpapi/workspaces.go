@@ -66,7 +66,9 @@ type WorkspaceDeps struct {
 }
 
 func (d WorkspaceDeps) dto(ctx context.Context, w *domain.Workspace) workspaceDTO {
-	out := workspaceDTO{Workspace: w}
+	cp := *w
+	cp.Variables = nil // served by the variables API
+	out := workspaceDTO{Workspace: &cp}
 	if d.Summary != nil {
 		out.Summary = d.Summary.Summary(ctx, w.ID)
 	}
@@ -143,7 +145,7 @@ func (s *Server) RegisterWorkspaces(d WorkspaceDeps) {
 			}
 		}
 		if agentErr == "" {
-			WriteJSON(w, http.StatusCreated, ws)
+			WriteJSON(w, http.StatusCreated, d.dto(r.Context(), ws))
 			return
 		}
 		WriteJSON(w, http.StatusCreated, struct {

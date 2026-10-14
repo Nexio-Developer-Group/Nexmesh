@@ -44,6 +44,7 @@ type Service struct {
 	aud        *audit.Recorder
 	log        *slog.Logger
 	image      string
+	cleanup    []func(ctx context.Context, w *domain.Workspace)
 }
 
 func NewService(st store.Store, drv runtime.Driver, eng *ops.Engine, bus *events.Bus, aud *audit.Recorder, log *slog.Logger) *Service {
@@ -74,6 +75,13 @@ func ValidateName(name string) error {
 }
 
 // WithImage sets the workspace base image (default Ubuntu 24.04).
+// WithCleanup registers a hook run when a workspace is deleted, for features
+// that keep per-workspace secrets outside the workspace document.
+func (s *Service) WithCleanup(fn func(ctx context.Context, w *domain.Workspace)) *Service {
+	s.cleanup = append(s.cleanup, fn)
+	return s
+}
+
 func (s *Service) WithImage(image string) *Service {
 	if image != "" {
 		s.image = image
@@ -235,6 +243,9 @@ func (s *Service) Delete(ctx context.Context, owner, id, confirmName string) err
 		if c.SecretRef != "" {
 			_ = s.st.DeleteSecret(ctx, c.SecretRef)
 		}
+	}
+	for _, fn := range s.cleanup {
+		fn(ctx, w)
 	}
 	if err := s.st.DeleteWorkspace(ctx, id); err != nil {
 		return err

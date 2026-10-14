@@ -42,6 +42,21 @@ type Workspace struct {
 	// outbound session with the control plane (PRD 20.3.4).
 	AgentConnected bool       `json:"agentConnected"`
 	AgentLastSeen  *time.Time `json:"agentLastSeen,omitempty"`
+	// Variables are user-defined environment variables (PRD F11). Secret
+	// values live in the secrets service; only their metadata is stored here.
+	Variables []Variable `json:"variables,omitempty"`
+}
+
+// Variable is one environment variable. ComponentID is empty for
+// workspace-scoped variables. Value is set only when Secret is false.
+type Variable struct {
+	Name        string    `json:"name"`
+	ComponentID string    `json:"componentId,omitempty"`
+	Secret      bool      `json:"secret"`
+	Value       string    `json:"value,omitempty"`
+	Description string    `json:"description,omitempty"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+	UpdatedBy   string    `json:"updatedBy,omitempty"`
 }
 
 type RuntimeState struct {

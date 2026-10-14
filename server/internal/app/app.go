@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
+	"github.com/nexio-developer-group/nexmesh/server/internal/envvars"
 	"log/slog"
 	"net/http"
 	"os"
@@ -140,7 +141,9 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	if opt.ModelRun != nil {
 		agentSvc.WithRunner(opt.ModelRun)
 	}
-	agents.WithEnv(compSvc)
+	envSvc := envvars.NewService(st, sec, aud, compSvc)
+	agents.WithEnv(envSvc)
+	wsSvc.WithCleanup(envSvc.DeleteAllSecrets)
 	wsSvc.WithUsage(compSvc)
 
 	api := httpapi.New(log)
@@ -152,6 +155,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	agents.Register(api)
 	api.RegisterWorkspaces(httpapi.WorkspaceDeps{Svc: wsSvc, Driver: drv, Store: st, Bus: bus, Summary: compSvc, Agent: agentSvc})
 	api.RegisterComponents(compSvc)
+	api.RegisterVariables(envSvc)
 	api.RegisterConnections(compSvc)
 	api.RegisterAgent(agentSvc)
 	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})

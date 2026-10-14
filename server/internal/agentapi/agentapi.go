@@ -129,7 +129,7 @@ func (r *Registry) Run(ctx context.Context) {
 // EnvProvider supplies the environment (including secret values) that the
 // agent injects into processes it starts.
 type EnvProvider interface {
-	ConnectionEnv(ctx context.Context, workspaceID string) (map[string]string, error)
+	Environment(ctx context.Context, workspaceID string) (map[string]string, error)
 }
 
 // WithEnv enables GET /agent/v1/workspaces/{id}/env.
@@ -148,7 +148,7 @@ func (r *Registry) Register(s *httpapi.Server) {
 			httpapi.WriteJSON(w, http.StatusOK, map[string]any{"env": map[string]string{}})
 			return
 		}
-		env, err := r.env.ConnectionEnv(req.Context(), id)
+		env, err := r.env.Environment(req.Context(), id)
 		if err != nil {
 			httpapi.WriteError(w, http.StatusInternalServerError, "internal", "could not build environment")
 			return

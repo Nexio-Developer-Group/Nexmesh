@@ -18,7 +18,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T1.6** Local agent for the fake driver so development and E2E use real files and shells
 
 ## M2 — Secrets and environment variables (F11)
-- [ ] **T2.1** Variable store: workspace and component scopes, secret vs plain, write-only secrets, precedence
+- [x] **T2.1** Variable store: workspace and component scopes, secret vs plain, write-only secrets, precedence
 - [ ] **T2.2** Effective environment (variables + connection variables) delivered to the agent; every process the agent starts receives it
 - [ ] **T2.3** `.env` import and names-only export; API
 - [ ] **T2.4** Variables UI (read-only generated rows with their source)
