@@ -9,6 +9,8 @@ import { Field } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
 import { relativeTime } from '@/lib/format'
 import { TestResultList } from './TestResultList'
+import { InspectorDialog } from '@/features/inspector/InspectorDialog'
+import { useInspectorCaps } from '@/features/inspector/hooks'
 import {
   useConnections, useDisconnect, useEditConnection, useParseConnectionString, useRemoveProfile, useRetest, useRotate, useSaveConnection, useTestConnection,
   type ConnectionBody, type ImportCandidate,
@@ -266,6 +268,9 @@ function ConnectedView({ workspaceId, component: c, def, onEdit, onProfile }: { 
   const conns = useConnections(workspaceId, true, [c.connName, c.observedState])
   const exposed = conns.data?.find((x) => x.id === c.id)?.exposedAs ?? []
   const [rotate, setRotate] = useState(false)
+  const [inspecting, setInspecting] = useState(false)
+  // The server decides which technologies have an inspector (catalog-driven, PRD 18.4 rule 5).
+  const caps = useInspectorCaps(workspaceId, c.id)
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
   const conn = c.connection ?? {}
   const rows: [string, string][] = [
@@ -295,6 +300,7 @@ function ConnectedView({ workspaceId, component: c, def, onEdit, onProfile }: { 
       {c.lastTest && <TestResultList result={retest.data ?? c.lastTest} running={retest.isPending} />}
       {retest.error && <p role="alert" className="text-sm text-err-fg">{retest.error.message}</p>}
       <div className="grid grid-cols-2 gap-2">
+        {caps.data?.available && <Button className="col-span-2" variant="primary" onClick={() => setInspecting(true)}>Inspect data</Button>}
         <Button onClick={() => retest.mutate()} loading={retest.isPending}>Re-test</Button>
         <Button onClick={onEdit}>Edit</Button>
         <Button onClick={() => setRotate(true)}>Rotate credentials</Button>
@@ -302,6 +308,7 @@ function ConnectedView({ workspaceId, component: c, def, onEdit, onProfile }: { 
       </div>
       <p className="text-xs text-muted">Disconnect removes stored credentials. It never deletes data on the external service.</p>
 
+      {inspecting && <InspectorDialog workspaceId={workspaceId} component={c} def={def} onClose={() => setInspecting(false)} />}
       {rotate && <RotateDialog workspaceId={workspaceId} component={c} def={def} onClose={() => setRotate(false)} />}
       {confirmDisconnect && (
         <Modal title={`Disconnect ${c.connName}?`} onClose={() => setConfirmDisconnect(false)}

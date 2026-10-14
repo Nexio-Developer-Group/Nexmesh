@@ -2,7 +2,7 @@
 """Black-box smoke test: drives every shipped feature through the HTTP API of a
 running Nexmesh and prints PASS/FAIL per feature. Exit code is the failure count.
 
-  python3 scripts/smoke.py [--base http://localhost:8080] [--redis host:port]
+  python3 scripts/smoke.py [--base http://localhost:8080] [--redis host:port [--redis-pass PW]]
 
 Run the server with the fake driver and a workspace directory, for example
   NEXMESH_DRIVER=fake NEXMESH_AUTH=disabled NEXMESH_FAKE_WORKSPACE_DIR=/tmp/w \
@@ -15,6 +15,7 @@ import argparse, json, sys, time, urllib.request, urllib.error
 ap = argparse.ArgumentParser()
 ap.add_argument("--base", default="http://localhost:8080")
 ap.add_argument("--redis", default="")
+ap.add_argument("--redis-pass", default="", help="password of that Redis, if it has one")
 args = ap.parse_args()
 BASE = args.base.rstrip("/")
 results = []
@@ -327,7 +328,7 @@ if args.redis:
     def _():
         host, port = args.redis.split(":")
         c = call("POST", W("/components"), {"catalogId": "redis"})
-        fields = {"host": host, "port": int(port), "tls": False}
+        fields = {"host": host, "port": int(port), "tls": False, **({"password": args.redis_pass} if args.redis_pass else {})}
         r = call("POST", W(f"/components/{c['id']}/connection/test"), {"connName": "cache", "fields": fields})
         assert json.dumps(r).lower().count("pass") or r.get("passed"), r
         call("POST", W(f"/components/{c['id']}/connection"), {"connName": "cache", "fields": fields})
@@ -466,6 +467,33 @@ def _():
         red = {c["id"]: c for c in call("GET", W("/metrics"))["components"]}[S["redis"]]
     cur = red["current"]
     assert cur["memLimitMb"] > 0 and 0 <= cur["memUsedMb"] <= cur["memLimitMb"] and cur["cpuPercent"] >= 0, cur
+
+
+if args.redis:
+    @check("inspector: describe, browse keys, read-only enforced, audited without results")
+    def _():
+        host, port = args.redis.split(":")
+        c = call("POST", W("/components"), {"catalogId": "redis"})
+        base = f"/components/{c['id']}/connection"
+        fields = {"host": host, "port": int(port), "tls": False, **({"password": args.redis_pass} if args.redis_pass else {})}
+        call("POST", W(base + "/test"), {"connName": "inspected", "fields": fields})
+        call("POST", W(base), {"connName": "inspected", "fields": fields})
+        d = call("GET", W(f"/components/{c['id']}/inspect"))
+        assert d["available"] and d["readOnly"] and {o["name"] for o in d["ops"]} == {"keys", "get", "command"}, d
+        ins = lambda op, **a: call("POST", W(f"/components/{c['id']}/inspect"), {"op": op, "args": a})
+        out = ins("command", command="PING")
+        assert out["columns"] == ["reply"] and out["rows"], out
+        assert "columns" in ins("keys", pattern="*", limit=5)
+        expect("POST", W(f"/components/{c['id']}/inspect"), {"op": "command", "args": {"command": "FLUSHALL"}}, 422)
+        expect("POST", W(f"/components/{c['id']}/inspect"), {"op": "bogus"}, 422)
+        ev = call("GET", W("/audit"))["events"]
+        acts = [e["action"] for e in ev]
+        assert "inspect.query" in acts and "inspect.query_failed" in acts, acts
+        assert not any("result" in e.get("detail", {}) for e in ev if e["action"] == "inspect.query")
+        # An installed card explains that it cannot be inspected here.
+        inst = call("GET", W(f"/components/{S['redis']}/inspect"))
+        assert not inst["available"] and inst["reason"], inst
+        call("DELETE", W(base))
 
 
 @check("audit: events, filters, CSV export")

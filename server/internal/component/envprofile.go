@@ -7,6 +7,7 @@ import (
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
+	"github.com/nexio-developer-group/nexmesh/server/internal/probe"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
 )
 
@@ -233,4 +234,44 @@ func (s *Service) noConnection(ctx context.Context, c *domain.Component) {
 	if err == nil {
 		s.publish(c2)
 	}
+}
+
+// InspectInfo is what an inspector needs to talk to a connected service: the
+// connection in effect for the active environment, with secrets, and the guard
+// and scrubber to use. It never leaves the control plane.
+type InspectInfo struct {
+	Def         *catalog.Component
+	Component   *domain.Component
+	Fields      map[string]any
+	Environment string
+	Params      func(timeout time.Duration) probe.Params
+}
+
+// ConnectionFor resolves a connected card for an inspector.
+func (s *Service) ConnectionFor(ctx context.Context, owner, wsID, id string) (*InspectInfo, error) {
+	c, err := s.component(ctx, owner, wsID, id)
+	if err != nil {
+		return nil, err
+	}
+	if s.conn == nil {
+		return nil, ErrBadComponent
+	}
+	def, ok := s.cat.Get(c.CatalogID)
+	if !ok {
+		return nil, ErrUnknownCatalog
+	}
+	if c.Mode != domain.ModeConnected {
+		return nil, ErrBadComponent
+	}
+	ac := s.activeConn(ctx, c)
+	if ac == nil {
+		return nil, vErr("environment", "no_connection", "This card has no connection for the active environment.")
+	}
+	for _, v := range ac.Secret {
+		s.conn.Secrets.Register(v)
+	}
+	return &InspectInfo{Def: def, Component: c, Fields: ac.Fields, Environment: ac.Env,
+		Params: func(timeout time.Duration) probe.Params {
+			return probe.Params{Def: def, Fields: ac.Fields, Guard: s.conn.Guard, Scrub: s.conn.Secrets.Scrub, Timeout: timeout}
+		}}, nil
 }

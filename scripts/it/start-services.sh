@@ -81,6 +81,8 @@ start_rabbit() {
   if [ "$(id -u)" = 0 ] && id rabbitmq >/dev/null 2>&1; then chown -R rabbitmq: "$d"; fi
   setsid nohup rabbitmq-server >"$d/rabbit.out" 2>&1 </dev/null &
   for _ in $(seq 1 90); do rabbitmqctl -n nxit@localhost status >/dev/null 2>&1 && break; sleep 1; done
+  # The Management API (inspectors) listens on $NX_IT_AMQP_MGMT_PORT.
+  rabbitmq-plugins -n nxit@localhost enable rabbitmq_management >/dev/null 2>&1 || true
   rabbitmqctl -n nxit@localhost add_user app "$NX_IT_PASS" >/dev/null 2>&1 || true
   rabbitmqctl -n nxit@localhost add_vhost orders >/dev/null 2>&1 || true
   rabbitmqctl -n nxit@localhost set_permissions -p orders app '.*' '.*' '.*' >/dev/null 2>&1 || true

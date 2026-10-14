@@ -37,6 +37,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/deployexport"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
 	"github.com/nexio-developer-group/nexmesh/server/internal/httpapi"
+	"github.com/nexio-developer-group/nexmesh/server/internal/inspector"
 	"github.com/nexio-developer-group/nexmesh/server/internal/metrics"
 	"github.com/nexio-developer-group/nexmesh/server/internal/netguard"
 	"github.com/nexio-developer-group/nexmesh/server/internal/ops"
@@ -208,6 +209,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterComponents(compSvc)
 	api.RegisterVariables(envSvc)
 	api.RegisterMetrics(metricsSvc)
+	api.RegisterInspector(inspector.New(compSvc, aud))
 	api.RegisterWiring(wireSvc)
 	api.RegisterArchitecture(architecture.New(st, cat, wireSvc), aud)
 	api.RegisterDeployExport(deployexport.New(st, cat, compSvc, wireSvc, wsfs.New(agents), aud), httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})

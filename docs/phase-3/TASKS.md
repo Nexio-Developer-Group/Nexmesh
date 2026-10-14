@@ -25,8 +25,8 @@ Decisions taken here for the open items in PRD Section 17:
 - [x] **T1.7** Component metrics: CPU, memory, storage; latency trends for connected (F5)
 
 ## M2: Tools on cards (F13)
-- [ ] **T2.1** Inspector API: read-only browse and query for MySQL, MongoDB, Redis, Kafka, RabbitMQ, with limits, timeouts and audit
-- [ ] **T2.2** Inspector UI on the card
+- [x] **T2.1** Inspector API: read-only browse and query for MySQL, MongoDB, Redis, Kafka, RabbitMQ, with limits, timeouts and audit
+- [x] **T2.2** Inspector UI on the card
 
 ## M3: Agent (F17, F18, F19, F21, F23)
 - [ ] **T3.1** Chat with tool calls in the model provider layer (Anthropic, OpenAI-compatible, scripted test provider)

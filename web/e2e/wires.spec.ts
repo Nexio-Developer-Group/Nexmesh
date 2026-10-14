@@ -231,3 +231,58 @@ test.describe('Phase 3: canvas environments', () => {
     await expect(row.getByText('staging', { exact: true })).toBeVisible()
   })
 })
+
+// The inspector needs a real Redis with a password (scripts/it/start-services.sh) and redis-cli to seed it.
+test.describe('Phase 3: data inspector', () => {
+  test.skip(!dev || !pass, 'set NX_IT_REDIS_PORT and NX_IT_PASS to run')
+
+  test('browse keys, read a value, and a write is refused and audited', async ({ page }) => {
+    const { execFileSync } = await import('node:child_process')
+    try {
+      for (const args of [['set', 'e2e:inspect:greeting', 'hello-from-e2e'], ['hset', 'e2e:inspect:user', 'name', 'Ada']]) {
+        execFileSync('redis-cli', ['-p', dev!, '-a', pass!, '--no-auth-warning', ...args])
+      }
+    } catch { test.skip(true, 'redis-cli is not available to seed the data') }
+
+    const url = await createWorkspace(page, unique('insp'))
+    await page.getByRole('button', { name: 'Add Redis to canvas' }).click()
+    await page.getByRole('tab', { name: 'connect' }).click()
+    await page.getByLabel('Connection name').fill('seen-cache')
+    await page.getByLabel(/^Host/).fill('127.0.0.1')
+    await page.getByLabel(/^Port/).fill(dev!)
+    await page.getByText('Advanced').click()
+    await page.getByRole('switch', { name: /^TLS/ }).uncheck()
+    await page.getByLabel(/^Password/).fill(pass!)
+    await page.getByRole('button', { name: 'Test Connection' }).click()
+    await expect(page.getByRole('status').filter({ hasText: /Passed/ })).toBeVisible()
+    await page.getByRole('button', { name: 'Add to Workspace' }).click()
+
+    await page.getByRole('button', { name: 'Inspect data' }).click()
+    const dialog = page.getByRole('dialog', { name: /Inspect/ })
+    await expect(dialog.getByText('✓ Read-only')).toBeVisible()
+    await dialog.getByLabel(/^Pattern/).fill('e2e:inspect:*')
+    await dialog.getByRole('button', { name: 'Run' }).click()
+    const results = dialog.getByRole('region', { name: 'Results' })
+    await expect(results.getByRole('button', { name: 'e2e:inspect:greeting' })).toBeVisible()
+    await expect(results.getByText('hash')).toBeVisible()
+    await results.getByRole('button', { name: 'e2e:inspect:greeting' }).click()
+    await expect(results.getByText('hello-from-e2e')).toBeVisible()
+
+    // A write is refused with a reason, and nothing changed.
+    await dialog.getByLabel('Operation').selectOption('command')
+    await dialog.getByLabel(/^Command/).fill('SET e2e:inspect:greeting hacked')
+    await dialog.getByRole('button', { name: 'Run' }).click()
+    await expect(dialog.getByRole('alert')).toContainText('not a read command')
+    await dialog.getByLabel(/^Command/).fill('GET e2e:inspect:greeting')
+    await dialog.getByRole('button', { name: 'Run' }).click()
+    await expect(dialog.getByRole('region', { name: 'Results' }).getByText('hello-from-e2e')).toBeVisible()
+    await expect(page.locator('body')).not.toContainText(pass!)
+    await dialog.getByRole('button', { name: 'Close' }).click()
+
+    // Both the query and the refusal are in the activity log, without results.
+    await page.goto(url + '/settings?tab=activity')
+    await expect(page.getByText('inspect.query', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('inspect.query_failed', { exact: true })).toBeVisible()
+    await expect(page.locator('body')).not.toContainText('hello-from-e2e')
+  })
+})
