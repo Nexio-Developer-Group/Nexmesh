@@ -2,7 +2,7 @@
 #   .\start.cmd            (or)   powershell -ExecutionPolicy Bypass -File .\start.ps1
 # Builds the web app once, then runs everything on http://localhost:8080.
 param([switch]$Rebuild, [int]$Port = 8080)
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue'
 $root = $PSScriptRoot
 Set-Location $root
 
@@ -14,7 +14,7 @@ Need node 'Install Node.js 22 LTS from https://nodejs.org/, then reopen this win
 
 if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
   Write-Host 'Enabling pnpm...'
-  corepack enable 2>$null
+  corepack enable
   if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) { npm install -g pnpm }
 }
 
@@ -41,7 +41,8 @@ $env:NEXMESH_ADDR = ":$Port"
 $env:NEXMESH_PUBLIC_URL = "http://localhost:$Port"
 $env:NEXMESH_MASTER_KEY_FILE = Join-Path $root 'nexmesh-master.key'
 
-Write-Host "Nexmesh is starting. Open http://localhost:$Port  (Ctrl+C to stop)" -ForegroundColor Green
-Start-Job { Start-Sleep 4; Start-Process $using:("http://localhost:$Port") } | Out-Null
+Write-Host "Nexmesh is starting. Open http://localhost:${Port}  (Ctrl+C to stop)" -ForegroundColor Green
+$url = "http://localhost:$Port"
+Start-Job -ArgumentList $url -ScriptBlock { param($u) Start-Sleep 5; Start-Process $u } | Out-Null
 Set-Location (Join-Path $root 'server')
 go run ./cmd/nexmesh
