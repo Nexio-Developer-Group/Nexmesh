@@ -68,6 +68,7 @@ type WorkspaceDeps struct {
 func (d WorkspaceDeps) dto(ctx context.Context, w *domain.Workspace) workspaceDTO {
 	cp := *w
 	cp.Variables = nil // served by the variables API
+	cp.GitCredentials = nil
 	out := workspaceDTO{Workspace: &cp}
 	if d.Summary != nil {
 		out.Summary = d.Summary.Summary(ctx, w.ID)

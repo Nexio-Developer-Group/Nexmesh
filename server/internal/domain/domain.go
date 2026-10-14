@@ -45,6 +45,20 @@ type Workspace struct {
 	// Variables are user-defined environment variables (PRD F11). Secret
 	// values live in the secrets service; only their metadata is stored here.
 	Variables []Variable `json:"variables,omitempty"`
+	// GitCredentials are metadata for Git tokens; the token itself lives in
+	// the secrets service.
+	GitCredentials []GitCredential `json:"gitCredentials,omitempty"`
+}
+
+// GitCredential grants the workspace access to one Git host over HTTPS.
+type GitCredential struct {
+	ID        string    `json:"id"`
+	Label     string    `json:"label"`
+	Provider  string    `json:"provider"` // github | gitlab | bitbucket | custom
+	Host      string    `json:"host"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // Variable is one environment variable. ComponentID is empty for

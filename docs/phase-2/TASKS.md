@@ -29,7 +29,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 - [x] **T3.3** xterm.js terminals with tabs and reconnect
 
 ## M4 — Git (F10)
-- [ ] **T4.1** Git provider credentials as secrets (token); revoke removes them
+- [x] **T4.1** Git provider credentials as secrets (token); revoke removes them
 - [ ] **T4.2** Clone, status, branch, commit, pull, push, diff through the agent with credentials injected per command (never written to disk or logs)
 - [ ] **T4.3** Git panel UI and "open pull request" link
 
