@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -33,6 +34,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
 	"github.com/nexio-developer-group/nexmesh/server/internal/changeset"
+	"github.com/nexio-developer-group/nexmesh/server/internal/codeagent"
 	"github.com/nexio-developer-group/nexmesh/server/internal/component"
 	"github.com/nexio-developer-group/nexmesh/server/internal/config"
 	"github.com/nexio-developer-group/nexmesh/server/internal/deployexport"
@@ -78,6 +80,7 @@ type App struct {
 	agent        *agentapi.Registry
 	log          *slog.Logger
 	closer       func()
+	agentRuns    *codeagent.Service
 }
 
 // New builds the control plane. Nothing runs until Run is called.
@@ -212,10 +215,31 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterMetrics(metricsSvc)
 	api.RegisterInspector(inspector.New(compSvc, aud))
 	api.RegisterWiring(wireSvc)
-	api.RegisterArchitecture(architecture.New(st, cat, wireSvc), aud)
+	archSvc := architecture.New(st, cat, wireSvc)
+	api.RegisterArchitecture(archSvc, aud)
 	api.RegisterDeployExport(deployexport.New(st, cat, compSvc, wireSvc, wsfs.New(agents), aud), httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	csSvc := changeset.New(st, wsfs.New(agents), aud)
 	api.RegisterChangeSets(csSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
+	caSvc := codeagent.New(st, wsfs.New(agents), csSvc, aud, func(ctx context.Context, owner, wsID, cfgID string) (codeagent.Model, error) {
+		c, _, err := agentSvc.ChatClient(ctx, owner, wsID, cfgID)
+		if err != nil {
+			return nil, err
+		}
+		return c, nil
+	}).WithContext(archSvc, envSvc).WithSecretValues(func(ctx context.Context, wsID string) []string {
+		env, err := envSvc.Environment(ctx, wsID)
+		if err != nil {
+			return nil
+		}
+		vals := make([]string, 0, len(env))
+		for k, v := range env {
+			if secretish.MatchString(k) {
+				vals = append(vals, v)
+			}
+		}
+		return vals
+	})
+	api.RegisterCodeAgent(caSvc)
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
 	defSvc := definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud).WithAgent(agents)
@@ -249,7 +273,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		h = withPreviewHost(withUI(api.Handler(), webui.Handler()), pv, tracker)
 	}
 	return &App{Handler: h, Store: st, Driver: drv, Bus: bus, Workspaces: wsSvc, Components: compSvc, Agents: agentSvc, Secrets: sec,
-		engine: eng, metrics: metricsSvc, agent: agents, log: log, closer: closer, adoptOnStart: cfg.Store == "file" && cfg.Driver == "fake"}, nil
+		engine: eng, metrics: metricsSvc, agent: agents, log: log, closer: closer, agentRuns: caSvc, adoptOnStart: cfg.Store == "file" && cfg.Driver == "fake"}, nil
 }
 
 // withPreviewHost sends requests for preview origins straight to the preview
@@ -308,9 +332,15 @@ func (a *App) Start(ctx context.Context) {
 	go a.metrics.Run(ctx, metrics.Interval)
 }
 
+// secretish matches variable names whose values must never reach a model.
+var secretish = regexp.MustCompile(`(?i)(KEY|SECRET|TOKEN|PASS|PWD|URI|URL|DSN|CREDENTIAL|AUTH)`)
+
 func (a *App) Close() {
 	if f, ok := a.Driver.(*runtime.Fake); ok {
 		f.Shutdown()
+	}
+	if a.agentRuns != nil {
+		a.agentRuns.Close()
 	}
 	a.closer()
 }

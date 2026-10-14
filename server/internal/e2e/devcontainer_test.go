@@ -17,6 +17,10 @@ import (
 
 // startLocalApp runs the whole product with the local agent driver on a real port.
 func startLocalApp(t *testing.T) func(method, path, body string) (int, string) {
+	return startLocalAppCfg(t, nil)
+}
+
+func startLocalAppCfg(t *testing.T, mod func(*config.Config)) func(method, path, body string) (int, string) {
 	t.Helper()
 	l, _ := net.Listen("tcp", "127.0.0.1:0")
 	port := l.Addr().(*net.TCPAddr).Port
@@ -27,6 +31,9 @@ func startLocalApp(t *testing.T) func(method, path, body string) (int, string) {
 	t.Cleanup(cancel)
 	cfg := config.Config{AuthDisabled: true, Addr: addr, Store: "memory", Driver: "fake", CatalogDir: "../../../catalog",
 		MasterKey: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=", MaxCPU: 12, MaxRAMGB: 24, MaxStorageGB: 200, PublicURL: "http://" + addr}
+	if mod != nil {
+		mod(&cfg)
+	}
 	a, err := app.New(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), app.Options{})
 	if err != nil {
 		t.Fatal(err)
