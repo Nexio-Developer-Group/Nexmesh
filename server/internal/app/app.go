@@ -32,6 +32,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/architecture"
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
+	"github.com/nexio-developer-group/nexmesh/server/internal/changeset"
 	"github.com/nexio-developer-group/nexmesh/server/internal/component"
 	"github.com/nexio-developer-group/nexmesh/server/internal/config"
 	"github.com/nexio-developer-group/nexmesh/server/internal/deployexport"
@@ -213,6 +214,8 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterWiring(wireSvc)
 	api.RegisterArchitecture(architecture.New(st, cat, wireSvc), aud)
 	api.RegisterDeployExport(deployexport.New(st, cat, compSvc, wireSvc, wsfs.New(agents), aud), httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
+	csSvc := changeset.New(st, wsfs.New(agents), aud)
+	api.RegisterChangeSets(csSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
 	defSvc := definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud).WithAgent(agents)
