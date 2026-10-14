@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent"
+	"github.com/nexio-developer-group/nexmesh/server/internal/agent/gitrun"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/ports"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/runner"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/terminal"
@@ -25,9 +26,12 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/events"
+	"github.com/nexio-developer-group/nexmesh/server/internal/gitcred"
+	"github.com/nexio-developer-group/nexmesh/server/internal/gitops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/httpapi"
 	"github.com/nexio-developer-group/nexmesh/server/internal/ops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/runtime"
+	"github.com/nexio-developer-group/nexmesh/server/internal/secrets"
 	"github.com/nexio-developer-group/nexmesh/server/internal/store"
 	"github.com/nexio-developer-group/nexmesh/server/internal/workspace"
 )
@@ -50,6 +54,10 @@ func filesRig(t *testing.T, status string) (*httptest.Server, store.Store, strin
 	reg.Register(api)
 	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud})
 	api.RegisterTerminal(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud})
+	be, _ := secrets.NewStoreBackend(st, make([]byte, 32))
+	creds := gitcred.NewService(st, secrets.New(be), aud)
+	api.RegisterGitCredentials(creds)
+	api.RegisterGit(httpapi.FilesDeps{Svc: wsSvc, Agent: reg, Audit: aud}, gitops.NewService(reg, creds, aud))
 	ts := httptest.NewServer(api.Handler())
 	t.Cleanup(ts.Close)
 
@@ -63,6 +71,7 @@ func filesRig(t *testing.T, status string) (*httptest.Server, store.Store, strin
 	fsys.Install(ag)
 	(&runner.Runner{Root: root}).Install(ag)
 	ports.NewScanner().Install(ag)
+	(&gitrun.Runner{Root: root}).Install(ag)
 	tm := terminal.NewManager(root, ag.Emit, nil)
 	tm.Install(ag)
 	t.Cleanup(tm.CloseAll)

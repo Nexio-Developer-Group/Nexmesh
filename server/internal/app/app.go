@@ -11,6 +11,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/auth"
 	"github.com/nexio-developer-group/nexmesh/server/internal/envvars"
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitcred"
+	"github.com/nexio-developer-group/nexmesh/server/internal/gitops"
 	"log/slog"
 	"net/http"
 	"os"
@@ -160,6 +161,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterComponents(compSvc)
 	api.RegisterVariables(envSvc)
 	api.RegisterGitCredentials(gitSvc)
+	api.RegisterGit(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud}, gitops.NewService(agents, gitSvc, aud))
 	api.RegisterConnections(compSvc)
 	api.RegisterAgent(agentSvc)
 	api.RegisterFiles(httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})

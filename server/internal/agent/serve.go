@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/nexio-developer-group/nexmesh/server/internal/agent/gitrun"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/ports"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/runner"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agent/terminal"
@@ -50,6 +51,7 @@ func (a *Agent) Serve(ctx context.Context, root string) (stop func(), err error)
 	}
 	fsys.Install(a)
 	(&runner.Runner{Root: root, Env: a.FetchEnv}).Install(a)
+	(&gitrun.Runner{Root: root}).Install(a)
 	tm := terminal.NewManager(root, a.Emit, a.FetchEnv)
 	tm.Install(a)
 	sc := ports.NewScanner()

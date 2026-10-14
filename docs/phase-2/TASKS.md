@@ -30,7 +30,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done. Each task = one co
 
 ## M4 — Git (F10)
 - [x] **T4.1** Git provider credentials as secrets (token); revoke removes them
-- [ ] **T4.2** Clone, status, branch, commit, pull, push, diff through the agent with credentials injected per command (never written to disk or logs)
+- [x] **T4.2** Clone, status, branch, commit, pull, push, diff through the agent with credentials injected per command (never written to disk or logs)
 - [ ] **T4.3** Git panel UI and "open pull request" link
 
 ## M5 — Ports and previews (F8)
