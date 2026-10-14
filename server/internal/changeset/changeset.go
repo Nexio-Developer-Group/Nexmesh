@@ -63,6 +63,29 @@ type AppliedRule struct {
 	Hash  string `json:"hash"`
 }
 
+// GateVerdict says whether the quality gates allow a change set to be accepted.
+type GateVerdict struct {
+	// Configured is true when at least one required gate is enabled.
+	Configured bool     `json:"configured"`
+	Ran        bool     `json:"ran"` // a run exists for exactly this content
+	Passed     bool     `json:"passed"`
+	Failing    []string `json:"failing"` // required gates that failed
+	RunID      string   `json:"runId,omitempty"`
+}
+
+// Gater reports the gate state of a change set's exact content.
+type Gater interface {
+	Verdict(ctx context.Context, wsID, setID, contentHash string) GateVerdict
+}
+
+// GateOverride records that a person accepted a change set despite its gates.
+type GateOverride struct {
+	Reason  string    `json:"reason"`
+	By      string    `json:"by"`
+	At      time.Time `json:"at"`
+	Failing []string  `json:"failing"`
+}
+
 // Resolver says which rules apply to a set of files and warns about protected paths.
 type Resolver func(ctx context.Context, wsID string, files []string) ([]AppliedRule, []string)
 
@@ -91,7 +114,10 @@ type Set struct {
 	Status      string       `json:"status"`
 	Files       []FileChange `json:"files"`
 	// Rules lists the rules that applied when the set was proposed (PRD F21).
-	Rules        []AppliedRule `json:"rules"`
+	Rules []AppliedRule `json:"rules"`
+	// Hash identifies the proposed content so a gate run can be tied to it.
+	Hash         string        `json:"hash"`
+	GateOverride *GateOverride `json:"gateOverride,omitempty"`
 	Warnings     []string      `json:"warnings,omitempty"`
 	CheckpointID string        `json:"checkpointId,omitempty"`
 	CreatedAt    time.Time     `json:"createdAt"`
@@ -125,6 +151,8 @@ type Service struct {
 	now func() time.Time
 
 	resolve Resolver
+	gater   Gater
+	trials  map[string]bool // workspaces with gates running on a trial apply
 	mu      sync.Mutex
 	locks   map[string]*sync.Mutex
 }
@@ -132,8 +160,11 @@ type Service struct {
 // WithRules records the applicable rules on every proposal.
 func (s *Service) WithRules(r Resolver) *Service { s.resolve = r; return s }
 
+// WithGates makes required quality gates block agent change sets (PRD F23).
+func (s *Service) WithGates(g Gater) *Service { s.gater = g; return s }
+
 func New(st store.Store, fs FS, aud *audit.Recorder) *Service {
-	return &Service{st: st, fs: fs, aud: aud, now: func() time.Time { return time.Now().UTC() }, locks: map[string]*sync.Mutex{}}
+	return &Service{st: st, fs: fs, aud: aud, now: func() time.Time { return time.Now().UTC() }, locks: map[string]*sync.Mutex{}, trials: map[string]bool{}}
 }
 
 func verr(field, code, msg string) error {
@@ -197,6 +228,9 @@ func (s *Service) Propose(ctx context.Context, owner, wsID, actor, actorID strin
 	if _, err := s.workspace(ctx, owner, wsID); err != nil {
 		return nil, err
 	}
+	if err := s.busy(ctx, wsID); err != nil {
+		return nil, err
+	}
 	title := strings.TrimSpace(in.Title)
 	if title == "" {
 		return nil, verr("title", "title_required", "Give the change a short title.")
@@ -256,6 +290,7 @@ func (s *Service) Propose(ctx context.Context, owner, wsID, actor, actorID strin
 		return nil, verr("changes", "set_too_large", "This change set is larger than 5 MB.")
 	}
 	sort.Slice(set.Files, func(i, j int) bool { return set.Files[i].Path < set.Files[j].Path })
+	set.Hash = contentHash(set)
 	set.Rules = []AppliedRule{}
 	if s.resolve != nil {
 		paths := make([]string, 0, len(set.Files))
@@ -332,6 +367,17 @@ type FileView struct {
 type View struct {
 	*Set
 	Files []FileView `json:"files"`
+	// Gate is the gate state of this exact content, for agent change sets that gates apply to.
+	Gate *GateVerdict `json:"gate,omitempty"`
+}
+
+func (s *Service) viewOf(ctx context.Context, set *Set, hunks bool) *View {
+	v := viewOf(set, hunks)
+	if s.gater != nil && set.Actor == domain.ActorAgent && set.Status == StatusProposed {
+		g := s.gater.Verdict(ctx, set.WorkspaceID, set.ID, set.Hash)
+		v.Gate = &g
+	}
+	return v
 }
 
 func viewOf(set *Set, hunks bool) *View {
@@ -362,7 +408,7 @@ func (s *Service) Get(ctx context.Context, owner, wsID, id string) (*View, error
 	if err != nil {
 		return nil, err
 	}
-	return viewOf(set, true), nil
+	return s.viewOf(ctx, set, true), nil
 }
 
 // List returns sets newest first, without hunks.
@@ -393,6 +439,9 @@ type FileDecision struct {
 type Decision struct {
 	All   bool           `json:"all"`
 	Files []FileDecision `json:"files"`
+	// OverrideGates is the reason for accepting an agent change set whose
+	// required gates have not passed. It is recorded (PRD F23).
+	OverrideGates string `json:"overrideGates,omitempty"`
 }
 
 // Reject discards a set without touching any file.
@@ -432,6 +481,26 @@ func (s *Service) Accept(ctx context.Context, owner, wsID, id string, d Decision
 	}
 	if set.Status != StatusProposed {
 		return nil, verr("status", "already_decided", "This change set has already been decided.")
+	}
+	if err := s.busy(ctx, wsID); err != nil {
+		return nil, err
+	}
+	var override *GateOverride
+	if set.Actor == domain.ActorAgent && s.gater != nil {
+		v := s.gater.Verdict(ctx, wsID, set.ID, set.Hash)
+		if v.Configured && !(v.Ran && v.Passed) {
+			reason := strings.TrimSpace(d.OverrideGates)
+			if reason == "" {
+				if !v.Ran {
+					return nil, verr("gates", "gates_not_run", "Required quality gates have not run on this change. Run them first, or override with a reason.")
+				}
+				return nil, verr("gates", "gates_failed", "Required quality gates failed ("+strings.Join(v.Failing, ", ")+"). Fix the change, or override with a reason.")
+			}
+			if len(reason) < 3 || len(reason) > 500 {
+				return nil, verr("overrideGates", "invalid_reason", "Give a short reason for the override (3 to 500 characters).")
+			}
+			override = &GateOverride{Reason: reason, By: owner, At: s.now(), Failing: v.Failing}
+		}
 	}
 	byPath := map[string]int{}
 	for i, f := range set.Files {
@@ -544,12 +613,15 @@ func (s *Service) Accept(ctx context.Context, owner, wsID, id string, d Decision
 	if all {
 		set.Status = StatusApplied
 	}
-	set.CheckpointID, set.DecidedAt = cp.ID, &now
+	set.CheckpointID, set.DecidedAt, set.GateOverride = cp.ID, &now, override
 	if err := store.PutJSON(ctx, s.st, KindSet, wsID, set.ID, set); err != nil {
 		return nil, err
 	}
 	s.prune(ctx, wsID)
 	s.aud.Record(ctx, set.Actor, set.ActorID, wsID, "changeset.applied", set.ID, map[string]any{"title": set.Title, "files": len(plans), "checkpoint": cp.ID, "acceptedBy": owner})
+	if override != nil {
+		s.aud.User(ctx, owner, wsID, "gates.overridden", set.ID, map[string]any{"reason": override.Reason, "failing": override.Failing})
+	}
 	return viewOf(set, true), nil
 }
 
@@ -622,6 +694,9 @@ func (s *Service) Revert(ctx context.Context, owner, wsID, cpID string, force bo
 		return nil, err
 	}
 	defer s.lock(wsID)()
+	if err := s.busy(ctx, wsID); err != nil {
+		return nil, err
+	}
 	cp, err := store.GetJSON[Checkpoint](ctx, s.st, KindCheckpoint, cpID)
 	if err != nil || cp.WorkspaceID != wsID {
 		return nil, store.ErrNotFound

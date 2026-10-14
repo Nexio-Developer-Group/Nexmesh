@@ -13,6 +13,7 @@ import (
 	"github.com/nexio-developer-group/nexmesh/server/internal/definition"
 	"github.com/nexio-developer-group/nexmesh/server/internal/domain"
 	"github.com/nexio-developer-group/nexmesh/server/internal/envvars"
+	"github.com/nexio-developer-group/nexmesh/server/internal/gates"
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitcred"
 	"github.com/nexio-developer-group/nexmesh/server/internal/gitops"
 	"github.com/nexio-developer-group/nexmesh/server/internal/idle"
@@ -82,6 +83,7 @@ type App struct {
 	log          *slog.Logger
 	closer       func()
 	agentRuns    *codeagent.Service
+	gateRuns     *gates.Service
 }
 
 // New builds the control plane. Nothing runs until Run is called.
@@ -228,6 +230,9 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		}
 		return out, res.Warnings
 	})
+	gateSvc := gates.New(st, wsfs.New(agents), aud, csSvc)
+	csSvc.WithGates(gateSvc)
+	api.RegisterGates(gateSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	api.RegisterRules(rulesSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	api.RegisterChangeSets(csSvc, httpapi.FilesDeps{Svc: wsSvc, Agent: agents, Audit: aud})
 	caSvc := codeagent.New(st, wsfs.New(agents), csSvc, aud, func(ctx context.Context, owner, wsID, cfgID string) (codeagent.Model, error) {
@@ -285,7 +290,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 		h = withPreviewHost(withUI(api.Handler(), webui.Handler()), pv, tracker)
 	}
 	return &App{Handler: h, Store: st, Driver: drv, Bus: bus, Workspaces: wsSvc, Components: compSvc, Agents: agentSvc, Secrets: sec,
-		engine: eng, metrics: metricsSvc, agent: agents, log: log, closer: closer, agentRuns: caSvc, adoptOnStart: cfg.Store == "file" && cfg.Driver == "fake"}, nil
+		engine: eng, metrics: metricsSvc, agent: agents, log: log, closer: closer, agentRuns: caSvc, gateRuns: gateSvc, adoptOnStart: cfg.Store == "file" && cfg.Driver == "fake"}, nil
 }
 
 // withPreviewHost sends requests for preview origins straight to the preview
@@ -353,6 +358,9 @@ func (a *App) Close() {
 	}
 	if a.agentRuns != nil {
 		a.agentRuns.Close()
+	}
+	if a.gateRuns != nil {
+		a.gateRuns.Close()
 	}
 	a.closer()
 }

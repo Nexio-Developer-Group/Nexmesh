@@ -358,3 +358,131 @@ func TestProposalRecordsAppliedRulesAndWarnings(t *testing.T) {
 		t.Fatal("rules must serialise as an empty list, not null")
 	}
 }
+
+type fakeGater struct{ v GateVerdict }
+
+func (g *fakeGater) Verdict(context.Context, string, string, string) GateVerdict { return g.v }
+
+func TestRequiredGatesBlockAgentSetsUntilPassedOrOverridden(t *testing.T) {
+	s, fs, ctx := fx(t)
+	g := &fakeGater{v: GateVerdict{Configured: true}}
+	s.WithGates(g)
+	v := propose(t, s, ctx, Change{"a.txt", sp("A\n")})
+	if v.Gate == nil || v.Gate.Ran {
+		t.Fatalf("view gate: %+v", v.Gate)
+	}
+	if _, err := s.Accept(ctx, "u1", "ws1", v.ID, Decision{All: true}); vcode(err) != "gates_not_run" {
+		t.Fatal(err)
+	}
+	g.v = GateVerdict{Configured: true, Ran: true, Failing: []string{"Tests"}}
+	if _, err := s.Accept(ctx, "u1", "ws1", v.ID, Decision{All: true}); vcode(err) != "gates_failed" {
+		t.Fatal(err)
+	}
+	if fs.files["a.txt"] != "one\ntwo\nthree\n" {
+		t.Fatal("a blocked accept must not write")
+	}
+	if _, err := s.Accept(ctx, "u1", "ws1", v.ID, Decision{All: true, OverrideGates: "x"}); vcode(err) != "invalid_reason" {
+		t.Fatal(err)
+	}
+	out, err := s.Accept(ctx, "u1", "ws1", v.ID, Decision{All: true, OverrideGates: "known flaky test, fixing separately"})
+	if err != nil || out.GateOverride == nil || out.GateOverride.Failing[0] != "Tests" || out.GateOverride.By != "u1" {
+		t.Fatalf("%v %+v", err, out)
+	}
+	if !has(auditActions(s, ctx), "gates.overridden") {
+		t.Fatal("override not audited")
+	}
+	// A passing run needs no override; a user-authored set is never gated.
+	g.v = GateVerdict{Configured: true, Ran: true, Passed: true}
+	v2 := propose(t, s, ctx, Change{"b.txt", sp("B\n")})
+	if o, err := s.Accept(ctx, "u1", "ws1", v2.ID, Decision{All: true}); err != nil || o.GateOverride != nil {
+		t.Fatalf("%v %+v", err, o)
+	}
+	g.v = GateVerdict{Configured: true}
+	us, _ := s.Propose(ctx, "u1", "ws1", domain.ActorUser, "u1", ProposeInput{Title: "mine", Changes: []Change{{"a.txt", sp("mine\n")}}})
+	if _, err := s.Accept(ctx, "u1", "ws1", us.ID, Decision{All: true}); err != nil {
+		t.Fatalf("user sets are not gated: %v", err)
+	}
+}
+
+func auditActions(s *Service, ctx context.Context) []string {
+	evs, _ := s.st.ListAudit(ctx, "ws1", 500)
+	var out []string
+	for _, e := range evs {
+		out = append(out, e.Action)
+	}
+	return out
+}
+
+func has(l []string, a string) bool {
+	for _, x := range l {
+		if x == a {
+			return true
+		}
+	}
+	return false
+}
+
+func TestTrialAppliesTemporarilyAndAlwaysRestores(t *testing.T) {
+	s, fs, ctx := fx(t)
+	v := propose(t, s, ctx, Change{"a.txt", sp("TRIAL\n")}, Change{"new.txt", sp("n\n")}, Change{"b.txt", nil})
+	seen := map[string]string{}
+	err := s.WithTrial(ctx, "u1", "ws1", v.ID, func(_ context.Context, hash string, files []string) error {
+		fs.mu.Lock()
+		for k, val := range fs.files {
+			seen[k] = val
+		}
+		fs.mu.Unlock()
+		if hash != v.Hash || len(files) != 3 {
+			t.Errorf("hash/files: %s %v", hash, files)
+		}
+		// Nothing else may touch files while it runs.
+		if _, err := s.Propose(ctx, "u1", "ws1", "agent", "a", ProposeInput{Title: "t", Changes: []Change{{"c.txt", sp("c")}}}); vcode(err) != "gates_running" {
+			t.Errorf("propose during trial: %v", err)
+		}
+		if _, err := s.Accept(ctx, "u1", "ws1", v.ID, Decision{All: true}); vcode(err) != "gates_running" {
+			t.Errorf("accept during trial: %v", err)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if seen["a.txt"] != "TRIAL\n" || seen["new.txt"] != "n\n" || seen["b.txt"] != "" {
+		t.Fatalf("trial content: %v", seen)
+	}
+	if fs.files["a.txt"] != "one\ntwo\nthree\n" || fs.files["b.txt"] != "bee\n" {
+		t.Fatalf("not restored: %v", fs.files)
+	}
+	if _, ok := fs.files["new.txt"]; ok {
+		t.Fatal("created file left behind")
+	}
+	// Errors in fn still restore; the set stays proposed and usable.
+	boom := errors.New("boom")
+	if err := s.WithTrial(ctx, "u1", "ws1", v.ID, func(context.Context, string, []string) error { return boom }); !errors.Is(err, boom) {
+		t.Fatal(err)
+	}
+	if fs.files["a.txt"] != "one\ntwo\nthree\n" {
+		t.Fatal("not restored after error")
+	}
+	if _, err := s.Accept(ctx, "u1", "ws1", v.ID, Decision{All: true}); err != nil {
+		t.Fatalf("accept after trial: %v", err)
+	}
+}
+
+func TestTrialRefusesStaleFilesAndRecoversFromACrash(t *testing.T) {
+	s, fs, ctx := fx(t)
+	v := propose(t, s, ctx, Change{"a.txt", sp("TRIAL\n")})
+	fs.files["a.txt"] = "edited by someone\n"
+	if err := s.WithTrial(ctx, "u1", "ws1", v.ID, func(context.Context, string, []string) error { return nil }); vcode(err) != "files_changed" {
+		t.Fatal(err)
+	}
+	// Simulate a crash mid-trial: the trial record exists and files hold proposed content.
+	fs.files["a.txt"] = "TRIAL\n"
+	_ = store.PutJSON(ctx, s.st, kindTrial, "ws1", "ws1", &trial{WorkspaceID: "ws1", Files: []CheckpointFile{{Path: "a.txt", Existed: true, Content: "original\n"}}})
+	if _, err := s.Propose(ctx, "u1", "ws1", "agent", "a", ProposeInput{Title: "t", Changes: []Change{{"b.txt", sp("x\n")}}}); err != nil {
+		t.Fatal(err)
+	}
+	if fs.files["a.txt"] != "original\n" {
+		t.Fatalf("crash recovery did not restore: %q", fs.files["a.txt"])
+	}
+}
