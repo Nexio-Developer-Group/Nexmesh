@@ -85,4 +85,39 @@ test.describe('Phase 3: connection lines', () => {
     await dialog.getByRole('button', { name: 'Create connection' }).click()
     await expect(section.getByText('api', { exact: true })).toBeVisible()
   })
+
+  test('the architecture view matches the canvas and exports without secrets', async ({ page }) => {
+    await createWorkspace(page, unique('arch'))
+    await page.getByRole('button', { name: 'Templates' }).click()
+    await page.getByRole('button', { name: /React, NestJS and MongoDB/ }).click()
+    await page.getByRole('button', { name: /Add \d+ cards to canvas/ }).click()
+    await page.getByRole('button', { name: 'Review the cards' }).click()
+    await page.getByRole('group', { name: /NestJS card/ }).click()
+    const section = page.getByRole('region', { name: 'Connections' })
+    await section.getByLabel('Connect to').selectOption({ label: 'MongoDB' })
+    await section.getByRole('button', { name: 'Review…' }).click()
+    await page.getByRole('dialog', { name: 'Connect cards' }).getByRole('button', { name: 'Create connection' }).click()
+
+    await page.getByRole('tab', { name: 'Architecture' }).click()
+    await expect(page.getByRole('heading', { name: 'Architecture' })).toBeVisible()
+    const layers = page.getByRole('region', { name: 'Components by layer' })
+    await expect(layers.getByText('Frontend')).toBeVisible()
+    await expect(layers.getByText('Data')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Connections' }).getByText(/NestJS → MongoDB/)).toBeVisible()
+    // Draft cards are not "configured" yet, so nothing needs attention.
+    await expect(page.getByRole('region', { name: 'Needs attention' })).toContainText('Everything configured is reachable')
+
+    // The image really renders.
+    const img = page.getByRole('img', { name: /Architecture diagram/ })
+    await expect(img).toBeVisible()
+    await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(100)
+
+    // Exports download and carry no secret-looking content.
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Mermaid' }).click()])
+    const path = await dl.path()
+    const text = (await import('node:fs')).readFileSync(path!, 'utf8')
+    expect(text).toContain('flowchart LR')
+    expect(text).toContain('NestJS')
+    expect(text).not.toMatch(/password|secret/i)
+  })
 })

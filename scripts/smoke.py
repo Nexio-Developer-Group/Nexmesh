@@ -364,6 +364,20 @@ def _():
     assert not call("GET", W("/wires"))["wires"]
 
 
+@check("architecture view: layers, drift, exports without secrets")
+def _():
+    v = call("GET", W("/architecture"))
+    assert v["layers"] and v["nodes"], v
+    assert {n["layer"] for n in v["nodes"]} >= {"backend", "messaging"}
+    code, svg = call("GET", W("/architecture/export?format=svg"), raw=True)
+    assert code == 200 and svg.startswith(b"<svg") and b"s3cr3t-value" not in svg
+    code, mm = call("GET", W("/architecture/export?format=mermaid"), raw=True)
+    assert code == 200 and b"flowchart LR" in mm
+    code, md = call("GET", W("/architecture/export?format=markdown"), raw=True)
+    assert code == 200 and b"# Architecture" in md and b"ghp_supersecrettoken123" not in md
+    expect("GET", W("/architecture/export?format=png"), None, 422)
+
+
 @check("audit: events, filters, CSV export")
 def _():
     ev = call("GET", W("/audit"))["events"]

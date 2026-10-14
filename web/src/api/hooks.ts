@@ -95,6 +95,7 @@ export function useWorkspaceEvents(id: string | undefined, onEvent?: (type: stri
         qc.setQueryData(keys.workspace(id), data)
         qc.invalidateQueries({ queryKey: keys.workspaces })
       }
+      if (type === 'component' || type === 'component_removed' || type === 'wires_changed') qc.invalidateQueries({ queryKey: ['architecture', id] })
       if (type === 'wires_changed') { qc.invalidateQueries({ queryKey: ['wires', id] }); qc.invalidateQueries({ queryKey: ['variables', id] }) }
       onEvent?.(type, data)
     }

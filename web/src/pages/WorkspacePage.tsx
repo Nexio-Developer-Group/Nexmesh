@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { UserMenu } from '@/layouts/TopBar'
 import { Canvas } from '@/features/canvas/Canvas'
 import { useWires } from '@/features/wires/hooks'
+import { ArchitectureView } from '@/features/architecture/ArchitectureView'
 import { ConnectionsSection } from '@/features/wires/ConnectionsSection'
 import { NewWireDialog, WireDetailsDialog } from '@/features/wires/WireDialog'
 import { CatalogSidebar } from '@/features/canvas/CatalogSidebar'
@@ -41,8 +42,8 @@ export default function WorkspacePage() {
   const [newWire, setNewWire] = useState<{ fromId: string; toId: string } | null>(null)
   const [openWire, setOpenWire] = useState<Wire | null>(null)
   const [params, setParams] = useSearchParams()
-  const view = params.get('view') === 'code' ? 'code' : 'canvas'
-  const setView = (v: 'canvas' | 'code') => setParams(v === 'code' ? { view: 'code' } : {}, { replace: true })
+  const view = params.get('view') === 'code' ? 'code' : params.get('view') === 'architecture' ? 'architecture' : 'canvas'
+  const setView = (v: 'canvas' | 'architecture' | 'code') => setParams(v === 'canvas' ? {} : { view: v }, { replace: true })
 
   useWorkspaceEvents(id, (type, data) => {
     if (!id) return
@@ -90,9 +91,9 @@ export default function WorkspacePage() {
         {ws && <StatusBadge state={ws.status === 'ready' ? 'running' : 'stopped'} />}
         {ws && <span className="hidden font-mono text-[11px] text-muted md:inline">{osLabel(ws.os)} · {ws.cpu} vCPU · {ws.ramGb} GB · {ws.storageGb} GB</span>}
         <div role="tablist" aria-label="Workspace views" className="ml-4 flex rounded-[10px] border border-line-strong p-0.5 text-[13px]">
-          {(['canvas', 'code'] as const).map((v) => (
+          {(['canvas', 'architecture', 'code'] as const).map((v) => (
             <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
-              className={view === v ? 'rounded-lg bg-raised px-3 py-1 font-semibold text-fg' : 'rounded-lg px-3 py-1 text-muted hover:text-fg'}>{v === 'canvas' ? 'Canvas' : 'Code'}</button>
+              className={view === v ? 'rounded-lg bg-raised px-3 py-1 font-semibold text-fg' : 'rounded-lg px-3 py-1 text-muted hover:text-fg'}>{v === 'canvas' ? 'Canvas' : v === 'architecture' ? 'Architecture' : 'Code'}</button>
           ))}
         </div>
         <div className="ml-auto flex items-center gap-3">
@@ -105,6 +106,7 @@ export default function WorkspacePage() {
       </header>
 
       {view === 'code' && ws && <CodeView workspace={ws} />}
+      {view === 'architecture' && id && <ArchitectureView workspaceId={id} />}
       {importOpen && <ImportConnectionDialog defs={defs} onClose={() => setImportOpen(false)} onPick={(cand) => {
         // A Draft card is created and the values wait in memory for its Connect form; nothing is saved or tested yet.
         const n = comps.length
@@ -133,7 +135,7 @@ export default function WorkspacePage() {
           onClose={() => setOpenWire(null)} />
       )}
       {templatesOpen && id && <TemplatesDialog workspaceId={id} defs={defs} canvasHasCards={comps.length > 0} onClose={() => setTemplatesOpen(false)} />}
-      <div className={view === 'code' ? 'hidden' : 'flex min-h-0 flex-1'}>
+      <div className={view === 'canvas' ? 'flex min-h-0 flex-1' : 'hidden'}>
         {catalog && (
           <CatalogSidebar catalog={catalog} onCanvas={comps} onAdd={addNext} runtimes={runtimes} onInstallRuntime={() => setRuntimesOpen(true)} disabled={ws?.status !== 'ready'} />
         )}

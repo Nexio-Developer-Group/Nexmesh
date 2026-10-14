@@ -29,6 +29,7 @@ import (
 
 	"github.com/nexio-developer-group/nexmesh/server/internal/agentapi"
 	"github.com/nexio-developer-group/nexmesh/server/internal/agentcfg"
+	"github.com/nexio-developer-group/nexmesh/server/internal/architecture"
 	"github.com/nexio-developer-group/nexmesh/server/internal/audit"
 	"github.com/nexio-developer-group/nexmesh/server/internal/catalog"
 	"github.com/nexio-developer-group/nexmesh/server/internal/component"
@@ -202,6 +203,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 	api.RegisterComponents(compSvc)
 	api.RegisterVariables(envSvc)
 	api.RegisterWiring(wireSvc)
+	api.RegisterArchitecture(architecture.New(st, cat, wireSvc), aud)
 	api.RegisterAudit(aud, wsSvc)
 	api.RegisterSnapshots(wsSvc)
 	defSvc := definition.NewService(st, cat, wsSvc, compSvc, envSvc, eng, aud).WithAgent(agents)

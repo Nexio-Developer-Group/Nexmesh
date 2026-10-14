@@ -18,7 +18,7 @@ Decisions taken here for the open items in PRD Section 17:
 ## M1: Structure (F1, F2, F4, F16, F25, F5 metrics)
 - [x] **T1.1** Connections: model, catalog `connectsTo` metadata, validation, variable preview, apply and delete, line health (F1 backend)
 - [x] **T1.2** Canvas lines UI: draw, preview dialog, status colours, delete (F1 UI)
-- [ ] **T1.3** Architecture view: layers, edges, drift, Mermaid, Markdown, SVG export, highlight mode (F2)
+- [x] **T1.3** Architecture view: layers, edges, drift, Mermaid, Markdown, SVG export, highlight mode (F2)
 - [ ] **T1.4** Canvas environments: labels, per-environment values, active environment, production protection (F4)
 - [ ] **T1.5** External API card: catalog entry, probe, test-then-add (F16)
 - [ ] **T1.6** Dockerfile and docker-compose export without secrets (F25)
