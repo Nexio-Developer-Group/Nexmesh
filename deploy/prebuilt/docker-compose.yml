@@ -1,0 +1,67 @@
+# Real Nexmesh stack from prebuilt binaries: PostgreSQL + the control plane, with
+# workspaces running as real Docker containers. Used by the Windows installer
+# (Docker Desktop) and works on any machine with Docker. Run via nexmesh.ps1 or:
+#   docker compose --env-file .env up -d --build
+name: nexmesh
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nexmesh
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?missing POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: nexmesh
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexmesh -d nexmesh"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  nexmesh:
+    build:
+      context: .
+      dockerfile: Dockerfile.control
+    image: nexmesh/nexmesh:local
+    container_name: nexmesh-control
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      workspace-image:
+        condition: service_completed_successfully
+    ports:
+      # Loopback only: open it to the network deliberately, not by default.
+      - "127.0.0.1:${NEXMESH_PORT:-8080}:8080"
+    environment:
+      NEXMESH_STORE: postgres
+      NEXMESH_DATABASE_URL: postgres://nexmesh:${POSTGRES_PASSWORD}@postgres:5432/nexmesh?sslmode=disable
+      NEXMESH_DRIVER: docker
+      # Workspace agents reach the control plane by this container's name on their private network.
+      NEXMESH_CONTROL_CONTAINER: nexmesh-control
+      NEXMESH_MASTER_KEY: ${NEXMESH_MASTER_KEY:?missing NEXMESH_MASTER_KEY in .env}
+      NEXMESH_PUBLIC_URL: http://host.docker.internal:${NEXMESH_PORT:-8080}
+      NEXMESH_WORKSPACE_IMAGE: nexmesh/workspace:local
+      NEXMESH_MAX_CPU: ${NEXMESH_MAX_CPU:-8}
+      NEXMESH_MAX_RAM_GB: ${NEXMESH_MAX_RAM_GB:-16}
+      NEXMESH_MAX_STORAGE_GB: ${NEXMESH_MAX_STORAGE_GB:-100}
+    volumes:
+      # The control plane manages workspace containers through Docker Engine.
+      # This is root-equivalent access to the Docker host (see docs/SELF_HOSTING.md).
+      - /var/run/docker.sock:/var/run/docker.sock
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Builds the workspace image once and exits.
+  workspace-image:
+    build:
+      context: .
+      dockerfile: Dockerfile.workspace
+    image: nexmesh/workspace:local
+    entrypoint: ["true"]
+    restart: "no"
+
+volumes:
+  pgdata:

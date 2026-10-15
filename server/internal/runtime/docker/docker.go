@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"regexp"
@@ -51,8 +52,13 @@ type Config struct {
 	// HostGateway adds host.docker.internal to workspace containers so the
 	// workspace agent can reach the control plane published on the host.
 	HostGateway bool
-	MemInfoPath string // default /proc/meminfo
-	Runner      Runner // default: the docker CLI
+	// ControlContainer is the name of the container the control plane itself runs
+	// in. When set, it is attached to every workspace's private network under the
+	// alias "nexmesh-control", and agents dial that name: it works on every
+	// platform (Linux, Docker Desktop) and keeps workspaces isolated from each other.
+	ControlContainer string
+	MemInfoPath      string // default /proc/meminfo
+	Runner           Runner // default: the docker CLI
 }
 
 type Driver struct {
@@ -157,8 +163,7 @@ func (d *Driver) CreateWorkspace(ctx context.Context, spec runtime.WorkspaceSpec
 	if _, err := d.out(ctx, append([]string{"volume", "create"}, append(lbl, volName(spec.ID))...)...); err != nil {
 		return err
 	}
-	progress("preparing", "pulling "+spec.Image)
-	if _, err := d.out(ctx, "pull", "--quiet", spec.Image); err != nil {
+	if err := d.ensureImage(ctx, spec.Image, func(m string) { progress("preparing", m) }); err != nil {
 		return err
 	}
 	if err := d.createContainer(ctx, spec); err != nil {
@@ -175,7 +180,72 @@ func isStockImage(image string) bool {
 	return strings.HasPrefix(image, "ubuntu:") || image == "ubuntu"
 }
 
+// ControlAlias is the name agents use for the control plane inside a workspace network.
+const ControlAlias = "nexmesh-control"
+
+// attachControl puts the control plane on a workspace's network (idempotent).
+func (d *Driver) attachControl(ctx context.Context, id string) error {
+	if d.cfg.ControlContainer == "" {
+		return nil
+	}
+	_, err := d.out(ctx, "network", "connect", "--alias", ControlAlias, netName(id), d.cfg.ControlContainer)
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
+		return fmt.Errorf("attach the control plane to the workspace network: %w", err)
+	}
+	return nil
+}
+
+// ReattachAll reconnects the control plane to every workspace network. A
+// recreated control container (an upgrade) loses its network attachments.
+func (d *Driver) ReattachAll(ctx context.Context) (int, error) {
+	if d.cfg.ControlContainer == "" {
+		return 0, nil
+	}
+	out, err := d.out(ctx, "network", "ls", "--filter", "label=nexmesh.managed=true", "--format", "{{.Name}}")
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, name := range strings.Fields(out) {
+		if id, ok := strings.CutPrefix(name, "nexmesh-"); ok {
+			if err := d.attachControl(ctx, id); err != nil {
+				return n, err
+			}
+			n++
+		}
+	}
+	return n, nil
+}
+
+// controlURL rewrites the control plane address agents dial.
+func (d *Driver) controlURL(raw string) string {
+	if d.cfg.ControlContainer == "" {
+		return raw
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return raw
+	}
+	host := ControlAlias
+	if p := u.Port(); p != "" {
+		host += ":" + p
+	}
+	u.Host = host
+	return u.String()
+}
+
 func (d *Driver) createContainer(ctx context.Context, spec runtime.WorkspaceSpec) error {
+	if err := d.attachControl(ctx, spec.ID); err != nil {
+		return err
+	}
+	if v, ok := spec.Env["NEXMESH_CONTROL_URL"]; ok {
+		env := make(map[string]string, len(spec.Env))
+		for k, x := range spec.Env {
+			env[k] = x
+		}
+		env["NEXMESH_CONTROL_URL"] = d.controlURL(v)
+		spec.Env = env
+	}
 	lbl := []string{"--label", "nexmesh.workspace=" + spec.ID, "--label", "nexmesh.managed=true"}
 	args := []string{"create", "--name", ctrName(spec.ID), "--hostname", spec.Name, "--network", netName(spec.ID),
 		"--network-alias", "workspace", "-v", volName(spec.ID) + ":/workspace", "-w", "/workspace"}
@@ -221,6 +291,7 @@ func (d *Driver) RecreateWorkspace(ctx context.Context, spec runtime.WorkspaceSp
 }
 
 func (d *Driver) StartWorkspace(ctx context.Context, id string) error {
+	_ = d.attachControl(ctx, id)
 	_, err := d.out(ctx, "start", ctrName(id))
 	return err
 }
@@ -239,6 +310,9 @@ func (d *Driver) RemoveWorkspace(ctx context.Context, id string) error {
 	vols, _ := d.out(ctx, "volume", "ls", "-q", "--filter", "label=nexmesh.workspace="+id)
 	for _, v := range strings.Fields(vols) {
 		_, _ = d.out(ctx, "volume", "rm", "-f", v)
+	}
+	if d.cfg.ControlContainer != "" {
+		_, _ = d.out(ctx, "network", "disconnect", "-f", netName(id), d.cfg.ControlContainer)
 	}
 	_, _ = d.out(ctx, "network", "rm", netName(id))
 	return nil
@@ -281,10 +355,20 @@ func (d *Driver) Exec(ctx context.Context, id string, cmd []string, out io.Write
 	return d.r.Run(ctx, out, append([]string{"exec", ctrName(id)}, cmd...)...)
 }
 
+// ensureImage pulls an image only when it is not already on this machine, so
+// locally built images (the workspace image) work and repeat starts are fast.
+func (d *Driver) ensureImage(ctx context.Context, image string, progress func(string)) error {
+	if _, err := d.out(ctx, "image", "inspect", "--format", "{{.Id}}", image); err == nil {
+		return nil
+	}
+	progress("pulling " + image)
+	_, err := d.out(ctx, "pull", "--quiet", image)
+	return err
+}
+
 func (d *Driver) InstallService(ctx context.Context, spec runtime.ServiceSpec, progress func(string)) error {
 	name := svcCtrName(spec.WorkspaceID, spec.Name)
-	progress("pulling " + spec.Image)
-	if _, err := d.out(ctx, "pull", "--quiet", spec.Image); err != nil {
+	if err := d.ensureImage(ctx, spec.Image, progress); err != nil {
 		return err
 	}
 	args := []string{"create", "--name", name, "--network", netName(spec.WorkspaceID), "--network-alias", spec.Name,

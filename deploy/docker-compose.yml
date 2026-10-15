@@ -29,6 +29,7 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile
     image: nexmesh/nexmesh:local
+    container_name: nexmesh-control
     restart: unless-stopped
     depends_on:
       postgres:
@@ -39,6 +40,8 @@ services:
       NEXMESH_STORE: postgres
       NEXMESH_DATABASE_URL: postgres://nexmesh:${POSTGRES_PASSWORD:-nexmesh}@postgres:5432/nexmesh?sslmode=disable
       NEXMESH_DRIVER: docker
+      # Workspace agents reach the control plane by this container's name on their private network.
+      NEXMESH_CONTROL_CONTAINER: nexmesh-control
       # Required: encrypts stored credentials. Back it up; secrets cannot be decrypted without it.
       NEXMESH_MASTER_KEY: ${NEXMESH_MASTER_KEY:?Set NEXMESH_MASTER_KEY in deploy/.env (generate one with deploy/gen-key.sh)}
       # How workspace containers reach this service (published on the host).

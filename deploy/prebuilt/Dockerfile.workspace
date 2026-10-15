@@ -1,0 +1,11 @@
+# Workspace image from a prebuilt agent: Ubuntu 24.04 plus the Nexmesh agent.
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl git build-essential pkg-config unzip xz-utils locales \
+ && rm -rf /var/lib/apt/lists/* \
+ && locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+COPY bin/nexmesh-agent /usr/local/bin/nexmesh-agent
+WORKDIR /workspace
+ENTRYPOINT ["/usr/local/bin/nexmesh-agent"]

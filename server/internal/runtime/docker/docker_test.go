@@ -275,3 +275,46 @@ func TestStatsParsing(t *testing.T) {
 		t.Fatal("parseSize")
 	}
 }
+
+func TestControlPlaneIsAttachedToWorkspaceNetworksAndAgentsDialItsName(t *testing.T) {
+	r := &rec{reply: map[string]string{"info": `{"runc":{}}`}}
+	mem := filepath.Join(t.TempDir(), "meminfo")
+	_ = os.WriteFile(mem, []byte("MemTotal: 33554432 kB\nMemAvailable: 16777216 kB\n"), 0o644)
+	d := New(Config{MaxCPU: 12, MaxRAMGB: 24, MaxStorageGB: 200, MemInfoPath: mem, Runner: r, ControlContainer: "nexmesh-control"})
+	spec := runtime.WorkspaceSpec{ID: "ws_1", Name: "w", Image: "nexmesh/workspace:local", Resources: runtime.Resources{CPU: 1, RAMGB: 1, StorageGB: 5},
+		Env: map[string]string{"NEXMESH_CONTROL_URL": "http://host.docker.internal:8080", "NEXMESH_WORKSPACE_ID": "ws_1"}}
+	if err := d.CreateWorkspace(context.Background(), spec, func(string, string) {}); err != nil {
+		t.Fatal(err)
+	}
+	if c := r.find("network", "connect", "--alias", "nexmesh-control", "nexmesh-ws_1", "nexmesh-control"); c == nil {
+		t.Fatalf("control plane not attached: %v", r.calls)
+	}
+	create := r.find("create")
+	if create == nil || !strings.Contains(strings.Join(create, " "), "NEXMESH_CONTROL_URL=http://nexmesh-control:8080") {
+		t.Fatalf("agent must dial the control alias: %v", create)
+	}
+	if strings.Contains(strings.Join(create, " "), "host.docker.internal:8080") {
+		t.Fatal("old URL left in the environment")
+	}
+	// Reattach after the control container was recreated.
+	r.calls = nil
+	r.reply["network"] = "nexmesh-ws_1\nnexmesh-ws_2\nbridge\n"
+	if n, err := d.ReattachAll(context.Background()); err != nil || n != 2 {
+		t.Fatalf("%d %v", n, err)
+	}
+	if r.find("network", "connect", "--alias", "nexmesh-control", "nexmesh-ws_1", "nexmesh-control") == nil ||
+		r.find("network", "connect", "--alias", "nexmesh-control", "nexmesh-ws_2", "nexmesh-control") == nil {
+		t.Fatalf("not reattached: %v", r.calls)
+	}
+	// Removing a workspace detaches the control plane first so the network can go.
+	r.calls = nil
+	_ = d.RemoveWorkspace(context.Background(), "ws_1")
+	if r.find("network", "disconnect", "-f", "nexmesh-ws_1", "nexmesh-control") == nil {
+		t.Fatalf("no disconnect: %v", r.calls)
+	}
+	// Without the control container nothing changes.
+	d2 := newDriver(t, &rec{reply: map[string]string{"info": `{"runc":{}}`}})
+	if got := d2.controlURL("http://host.docker.internal:8080"); got != "http://host.docker.internal:8080" {
+		t.Fatalf("%s", got)
+	}
+}

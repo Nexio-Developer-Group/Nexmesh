@@ -140,7 +140,7 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, opt Options) 
 			log.Warn("using fake runtime driver: no real containers are created")
 		default:
 			drv = docker.New(docker.Config{MaxCPU: cfg.MaxCPU, MaxRAMGB: cfg.MaxRAMGB, MaxStorageGB: cfg.MaxStorageGB,
-				HostGateway: cfg.HostGateway})
+				HostGateway: cfg.HostGateway, ControlContainer: os.Getenv("NEXMESH_CONTROL_CONTAINER")})
 		}
 	}
 
@@ -331,21 +331,16 @@ func withUI(api, ui http.Handler) http.Handler {
 	})
 }
 
-// Run starts background work (operations, reconciler, health checks, agent
-// liveness) and blocks until ctx ends.
+// Run starts background work and blocks until ctx ends.
 func (a *App) Run(ctx context.Context) {
-	a.engine.Start(ctx) // after every handler is registered
-	go a.Workspaces.RunReconciler(ctx, 15*time.Second)
-	go a.Workspaces.RunIdleStopper(ctx, time.Minute)
-	go a.agent.Run(ctx)
-	go a.Components.RunHealth(ctx, 30*time.Second)
-	go a.Components.RunReconciler(ctx, 15*time.Second)
+	a.Start(ctx)
 	<-ctx.Done()
 }
 
-// Start is Run without blocking.
+// Start launches background work (operations, reconcilers, health checks,
+// agent liveness, idle auto-stop, metrics) without blocking.
 func (a *App) Start(ctx context.Context) {
-	a.engine.Start(ctx)
+	a.engine.Start(ctx) // after every handler is registered
 	if a.adoptOnStart {
 		// A persistent store outlives the simulated runtime: bring workspaces
 		// and their services back before reconcilers look for them.
@@ -354,7 +349,19 @@ func (a *App) Start(ctx context.Context) {
 		}
 		a.Components.Adopt(ctx)
 	}
+	if d, ok := a.Driver.(interface {
+		ReattachAll(context.Context) (int, error)
+	}); ok {
+		go func() {
+			if n, err := d.ReattachAll(ctx); err != nil {
+				a.log.Warn("could not reattach the control plane to workspace networks", "err", err)
+			} else if n > 0 {
+				a.log.Info("reattached the control plane to workspace networks", "count", n)
+			}
+		}()
+	}
 	go a.Workspaces.RunReconciler(ctx, 15*time.Second)
+	go a.Workspaces.RunIdleStopper(ctx, time.Minute)
 	go a.agent.Run(ctx)
 	go a.Components.RunHealth(ctx, 30*time.Second)
 	go a.Components.RunReconciler(ctx, 15*time.Second)

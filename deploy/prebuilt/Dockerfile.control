@@ -1,0 +1,11 @@
+# Control plane image from prebuilt binaries (used by the Windows installer and
+# release bundles: no Go or Node.js is needed to build it).
+# The official Docker CLI image: the Docker driver drives the `docker` CLI against
+# the host's Docker Engine, and the image already has CA certificates.
+FROM docker:cli
+COPY bin/nexmesh /usr/local/bin/nexmesh
+COPY catalog /opt/nexmesh/catalog
+ENV NEXMESH_CATALOG_DIR=/opt/nexmesh/catalog \
+    NEXMESH_ADDR=:8080
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/nexmesh"]
