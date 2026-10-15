@@ -1,17 +1,21 @@
 # Download, install and set up Nexmesh
 
-## Quickest start (one command)
+## Quickest start: the real system
 
-Install **Go 1.26+** and **Node.js 22** first, then from the repository folder:
+**Windows: download and double-click.** Get `Nexmesh-Setup-<version>.exe` (from the repository's **Actions → windows-installer → Run workflow**, or a release), run it, and press **Start Nexmesh**. That is all: it installs Docker Desktop with winget if you do not have it, then runs **PostgreSQL and the Nexmesh control plane in Docker, with every workspace a real Ubuntu container** (real terminals, real installed services, real snapshots). Data is persistent. No Go, Node.js or npm is needed.
 
-| System | Command |
-| :-- | :-- |
-| Windows | double-click `start.cmd`, or run `.\start.cmd` in PowerShell |
-| macOS / Linux | `./start.sh` |
+- First start builds two small images from the bundled binaries (a few minutes); later starts take seconds.
+- Needs Windows 10/11 with virtualization enabled and Docker Desktop (WSL 2 backend). Docker Desktop must be running; the launcher starts it for you if it is installed.
+- Start menu: **Nexmesh** (start and open), **Stop Nexmesh**, **Nexmesh logs**. Uninstall asks whether to delete your data.
+- Open http://localhost:8080 and create the owner account on the first visit.
 
-It installs pnpm if needed, builds the web app once, and starts everything on **http://localhost:8080** (one process, one URL; the browser opens by itself on Windows). Later runs start in seconds. Use `start.cmd -Rebuild` / `./start.sh --rebuild` after pulling new code.
+**Ubuntu / Debian: one command.**
 
-This mode uses the fake runtime and keeps data in memory, so workspaces are lost when you stop it. On Windows the editor, files, Git and the canvas work; **terminals need WSL or Docker** (see path B). For real, persistent workspaces use Docker (path B).
+```sh
+curl -fsSL https://raw.githubusercontent.com/nexio-developer-group/nexmesh/main/scripts/install-ubuntu.sh | sudo bash
+```
+
+**Development only (not the real system).** `start.cmd` / `./start.sh` builds from source and runs with the *simulated* runtime and in-memory data, for working on the UI. Do not use it for real work.
 
 The rest of this guide is the detailed version.
 

@@ -1,8 +1,9 @@
-; Nexmesh Windows installer. Built with NSIS (makensis) by scripts/build-release.sh.
-; The installer is self-contained: nexmesh.exe already embeds the web app and the
-; technology catalog, so no Go, Node.js or npm is needed to run it. The optional
-; sections install developer tools through winget when you want to build or
-; extend Nexmesh itself.
+; Nexmesh Windows installer (NSIS, built by scripts/build-release.sh).
+;
+; This installs the REAL system: PostgreSQL and the Nexmesh control plane run in
+; Docker Desktop, and every workspace is a real Linux container. The installer
+; bundles the prebuilt Linux binaries and the compose files; Docker Desktop is
+; installed with winget when it is missing. No Go, Node.js or npm is needed.
 Unicode true
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
@@ -28,9 +29,8 @@ BrandingText "Nexmesh ${VERSION}"
 !define MUI_ICON "nexmesh.ico"
 !define MUI_UNICON "nexmesh.ico"
 !define MUI_ABORTWARNING
-!define MUI_FINISHPAGE_RUN "$INSTDIR\nexmesh.exe"
-!define MUI_FINISHPAGE_RUN_PARAMETERS "--local"
-!define MUI_FINISHPAGE_RUN_TEXT "Start Nexmesh now"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\Start Nexmesh.cmd"
+!define MUI_FINISHPAGE_RUN_TEXT "Start Nexmesh now (first start builds the images and takes a few minutes)"
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\INSTALL.md"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Open the setup guide"
 
@@ -47,17 +47,24 @@ BrandingText "Nexmesh ${VERSION}"
 Section "Nexmesh (required)" SecApp
   SectionIn RO
   SetOutPath "$INSTDIR"
-  ; Stop a running copy so its files can be replaced.
-  nsExec::Exec 'taskkill /F /IM nexmesh.exe'
-  File "${SRCDIR}\nexmesh.exe"
+  ; Stop a running copy so its files can be replaced. Workspace data is kept in Docker volumes.
+  nsExec::Exec 'powershell -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\nexmesh.ps1" stop'
+  File "${SRCDIR}\nexmesh.ps1"
+  File "${SRCDIR}\Start Nexmesh.cmd"
+  File "${SRCDIR}\Stop Nexmesh.cmd"
+  File "${SRCDIR}\Nexmesh logs.cmd"
   File "${SRCDIR}\LICENSE"
   File "${SRCDIR}\README.md"
   File "nexmesh.ico"
+  SetOutPath "$INSTDIR\stack"
+  File /r "${SRCDIR}\stack\*.*"
   SetOutPath "$INSTDIR\docs"
   File /r "${SRCDIR}\docs\*.*"
 
   CreateDirectory "$SMPROGRAMS\Nexmesh"
-  CreateShortcut "$SMPROGRAMS\Nexmesh\Nexmesh.lnk" "$INSTDIR\nexmesh.exe" "--local" "$INSTDIR\nexmesh.ico"
+  CreateShortcut "$SMPROGRAMS\Nexmesh\Nexmesh.lnk" "$INSTDIR\Start Nexmesh.cmd" "" "$INSTDIR\nexmesh.ico"
+  CreateShortcut "$SMPROGRAMS\Nexmesh\Stop Nexmesh.lnk" "$INSTDIR\Stop Nexmesh.cmd" "" "$INSTDIR\nexmesh.ico"
+  CreateShortcut "$SMPROGRAMS\Nexmesh\Nexmesh logs.lnk" "$INSTDIR\Nexmesh logs.cmd" "" "$INSTDIR\nexmesh.ico"
   CreateShortcut "$SMPROGRAMS\Nexmesh\Setup guide.lnk" "$INSTDIR\docs\INSTALL.md"
   CreateShortcut "$SMPROGRAMS\Nexmesh\Uninstall Nexmesh.lnk" "$INSTDIR\uninstall.exe"
   WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -76,65 +83,55 @@ Section "Nexmesh (required)" SecApp
   WriteRegDWORD HKCU "${UNINST_KEY}" "EstimatedSize" "$0"
 SectionEnd
 
-Section "Desktop shortcut" SecDesktop
-  CreateShortcut "$DESKTOP\Nexmesh.lnk" "$INSTDIR\nexmesh.exe" "--local" "$INSTDIR\nexmesh.ico"
+Section "Docker Desktop (required for workspaces; skipped if already installed)" SecDocker
+  nsExec::ExecToStack 'docker --version'
+  Pop $0
+  ${If} $0 == 0
+    DetailPrint "Docker is already installed."
+  ${Else}
+    nsExec::ExecToStack 'winget --version'
+    Pop $0
+    ${If} $0 != 0
+      MessageBox MB_OK|MB_ICONEXCLAMATION "Docker Desktop is required and could not be installed automatically (winget was not found).$\r$\n$\r$\nInstall it from https://www.docker.com/products/docker-desktop, restart Windows if it asks, then start Nexmesh from the Start menu."
+    ${Else}
+      DetailPrint "Installing Docker Desktop with winget (large download; it may ask for permission)..."
+      nsExec::ExecToLog 'winget install -e --id Docker.DockerDesktop --silent --accept-package-agreements --accept-source-agreements'
+      Pop $0
+      DetailPrint "Docker Desktop installer finished with code $0"
+      MessageBox MB_OK|MB_ICONINFORMATION "Docker Desktop was installed. Windows may ask you to restart, and Docker Desktop must be started once and its terms accepted before Nexmesh can run workspaces.$\r$\n$\r$\nAfter that, start Nexmesh from the Start menu."
+    ${EndIf}
+  ${EndIf}
 SectionEnd
 
-SectionGroup /e "Developer tools (optional, through winget)" SecDev
-  Section /o "Git" SecGit
-    Call RequireWinget
-    nsExec::ExecToLog 'winget install -e --id Git.Git --silent --accept-package-agreements --accept-source-agreements'
-    Pop $0
-    DetailPrint "Git installer finished with code $0"
-  SectionEnd
-  Section /o "Go" SecGo
-    Call RequireWinget
-    nsExec::ExecToLog 'winget install -e --id GoLang.Go --silent --accept-package-agreements --accept-source-agreements'
-    Pop $0
-    DetailPrint "Go installer finished with code $0"
-  SectionEnd
-  Section /o "Node.js LTS and pnpm" SecNode
-    Call RequireWinget
-    nsExec::ExecToLog 'winget install -e --id OpenJS.NodeJS.LTS --silent --accept-package-agreements --accept-source-agreements'
-    Pop $0
-    DetailPrint "Node.js installer finished with code $0"
-    nsExec::ExecToLog 'cmd /C corepack enable'
-    Pop $0
-  SectionEnd
-  Section /o "Docker Desktop (real containers instead of the simulated runtime)" SecDocker
-    Call RequireWinget
-    nsExec::ExecToLog 'winget install -e --id Docker.DockerDesktop --silent --accept-package-agreements --accept-source-agreements'
-    Pop $0
-    DetailPrint "Docker Desktop installer finished with code $0 (a restart may be needed)"
-  SectionEnd
-SectionGroupEnd
+Section "Desktop shortcut" SecDesktop
+  CreateShortcut "$DESKTOP\Nexmesh.lnk" "$INSTDIR\Start Nexmesh.cmd" "" "$INSTDIR\nexmesh.ico"
+SectionEnd
 
-Function RequireWinget
-  nsExec::ExecToStack 'winget --version'
-  Pop $0
-  ${If} $0 != 0
-    MessageBox MB_OK|MB_ICONEXCLAMATION "winget (App Installer) was not found, so this tool could not be installed automatically. Install it from the Microsoft Store, or install the tool by hand; Nexmesh itself does not need it."
-    Abort
-  ${EndIf}
-FunctionEnd
-
-LangString DESC_App ${LANG_ENGLISH} "Nexmesh, its web app and technology catalog, and the documentation."
+LangString DESC_App ${LANG_ENGLISH} "Nexmesh launcher, the prebuilt control plane and workspace agent, the technology catalog and the documentation."
+LangString DESC_Docker ${LANG_ENGLISH} "Workspaces and services run in real containers. Installed with winget if missing. Large download; needs virtualization and may require a restart."
 LangString DESC_Desktop ${LANG_ENGLISH} "A Nexmesh icon on your desktop."
-LangString DESC_Dev ${LANG_ENGLISH} "Only needed to build or modify Nexmesh from source. Installed with winget and may ask for permission."
-LangString DESC_Docker ${LANG_ENGLISH} "Lets workspaces run in real containers. Large download; needs virtualization and may require a restart."
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecApp} $(DESC_App)
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} $(DESC_Desktop)
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecDev} $(DESC_Dev)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDocker} $(DESC_Docker)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} $(DESC_Desktop)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Section "Uninstall"
-  nsExec::Exec 'taskkill /F /IM nexmesh.exe'
+  ; Optionally delete every workspace and all data first (it needs the launcher still in place).
+  MessageBox MB_YESNO|MB_ICONQUESTION "Also delete ALL your Nexmesh data (every workspace, its files, the database and the keys)?$\r$\n$\r$\nChoose No to keep it for a later reinstall." /SD IDNO IDNO keep
+    nsExec::ExecToLog 'powershell -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\nexmesh.ps1" reset -Yes'
+    Goto removed
+  keep:
+    nsExec::ExecToLog 'powershell -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\nexmesh.ps1" stop'
+  removed:
   Delete "$DESKTOP\Nexmesh.lnk"
   RMDir /r "$SMPROGRAMS\Nexmesh"
   RMDir /r "$INSTDIR\docs"
-  Delete "$INSTDIR\nexmesh.exe"
+  RMDir /r "$INSTDIR\stack"
+  Delete "$INSTDIR\nexmesh.ps1"
+  Delete "$INSTDIR\Start Nexmesh.cmd"
+  Delete "$INSTDIR\Stop Nexmesh.cmd"
+  Delete "$INSTDIR\Nexmesh logs.cmd"
   Delete "$INSTDIR\LICENSE"
   Delete "$INSTDIR\README.md"
   Delete "$INSTDIR\nexmesh.ico"
@@ -142,8 +139,4 @@ Section "Uninstall"
   RMDir "$INSTDIR"
   DeleteRegKey HKCU "${UNINST_KEY}"
   DeleteRegKey HKCU "Software\Nexmesh"
-  ; Your workspaces and settings live in %LOCALAPPDATA%\Nexmesh and are kept.
-  MessageBox MB_YESNO|MB_ICONQUESTION "Also delete your Nexmesh data (workspaces, files, saved settings and the master key)?$\r$\n$\r$\nChoose No to keep it for a later reinstall." /SD IDNO IDNO keep
-    RMDir /r "$LOCALAPPDATA\Nexmesh"
-  keep:
 SectionEnd

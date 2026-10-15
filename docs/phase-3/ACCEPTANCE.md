@@ -51,7 +51,7 @@ python3 scripts/smoke.py http://127.0.0.1:8080                       # drives ev
 ## Known gaps
 
 1. **Inspectors are read-only.** There is no opt-in write mode, and installed (container) services cannot be inspected yet.
-2. **Docker is still unverified live.** The Docker driver, its stats, the generated compose bundle, the workspace image and the Windows installer have not run against a real daemon or a real Windows machine. The installer builds with `makensis` on Linux and is smoke-checked only structurally.
+2. **Docker verified live on Linux, not on Windows.** The Docker driver, the prebuilt compose bundle that the Windows installer ships, real workspace containers, a real Redis service with a connection line, stats, snapshots and restore, stop and start, deletion cleanup, and the browser terminal were run against a real Docker daemon (fixing four defects that only a real run showed). The Windows installer and `nexmesh.ps1` build and are reviewed, but have not been run on a real Windows machine or against Docker Desktop. The generated `docker compose` files from F25 were validated, not run.
 3. **No hosted model API was called.** Chat with tools is tested with protocol fakes for Anthropic, OpenAI-compatible, Gemini and Ollama request and response shapes. Differences in a real provider's tool-calling behaviour will only show against the real service.
 4. **Snapshot restore still covers files only** (Phase 2 gap 1). A restored workspace keeps its current canvas configuration.
 5. **Agent runs live in server memory.** A restart interrupts a running conversation (it is marked interrupted and can be continued by sending another message). A pending approval does not survive a restart.

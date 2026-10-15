@@ -34,6 +34,8 @@ make dev-server   # control plane, in-memory store and fake runtime driver (no D
 make dev-web      # web app on http://localhost:5173
 ```
 
+**Windows:** download `Nexmesh-Setup-<version>.exe` (built by the `windows-installer` GitHub Action) and double-click: it sets up Docker Desktop and runs the real system (PostgreSQL, the control plane, and every workspace as a real Linux container). **Ubuntu:** one command, see the guide.
+
 Download and setup guide: [`docs/INSTALL.md`](docs/INSTALL.md). Self-hosting reference: [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
 
 ## Layout
