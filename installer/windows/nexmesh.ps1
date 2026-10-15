@@ -36,14 +36,16 @@ function Test-Docker {
   return $ok
 }
 
-# Runs docker compose for the Nexmesh stack and returns its exit code. The output
-# goes to the console (Out-Host), so only the exit code is returned.
+# Runs docker compose for the Nexmesh stack and returns its exit code. It runs
+# as a child process that shares this console (no piping), because docker compose
+# fails with "failed to get console" when its output is redirected. Plain progress
+# output is used so it also works in a double-clicked window.
+function Quote-Arg([string]$a) { if ($a -match '[\s"]') { return '"' + ($a -replace '"', '\"') + '"' } else { return $a } }
 function Invoke-Compose([string[]]$ComposeArgs) {
-  $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-  & docker compose --project-directory $Stack -f $Compose --env-file $EnvFile @ComposeArgs | Out-Host
-  $code = $LASTEXITCODE
-  $ErrorActionPreference = $old
-  return $code
+  $all = @('compose', '--ansi', 'never', '--progress', 'plain', '--project-directory', $Stack, '-f', $Compose, '--env-file', $EnvFile) + $ComposeArgs
+  $line = ($all | ForEach-Object { Quote-Arg $_ }) -join ' '
+  $p = Start-Process -FilePath 'docker' -ArgumentList $line -NoNewWindow -Wait -PassThru
+  return $p.ExitCode
 }
 
 function Ensure-Docker {
