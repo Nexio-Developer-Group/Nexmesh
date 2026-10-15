@@ -9,8 +9,6 @@
 # Workspaces run in real containers. Re-running upgrades in place.
 #
 # Options:
-#   --simple        no Docker: build Nexmesh from source (installs Go and Node.js if missing),
-#                   run it as a systemd service on 127.0.0.1 with the simulated runtime
 #   --dir PATH      install location                       (default /opt/nexmesh)
 #   --port N        port to publish                        (default 8080)
 #   --ref NAME      git branch or tag to install           (default main)
@@ -20,7 +18,7 @@
 set -euo pipefail
 
 REPO="https://github.com/nexio-developer-group/nexmesh.git"
-REF="main"; DIR="/opt/nexmesh"; PORT="8080"; MODE="docker"; UNINSTALL=0; PURGE=0
+REF="main"; DIR="/opt/nexmesh"; PORT="8080"; UNINSTALL=0; PURGE=0
 
 say()  { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!\033[0m  %s\n' "$*" >&2; }
@@ -28,7 +26,6 @@ die()  { printf '\033[1;31mxx\033[0m  %s\n' "$*" >&2; exit 1; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --simple) MODE="simple" ;;
     --dir) DIR="${2:?--dir needs a path}"; shift ;;
     --port) PORT="${2:?--port needs a number}"; shift ;;
     --ref) REF="${2:?--ref needs a name}"; shift ;;
@@ -107,7 +104,7 @@ set_env() { # file key value
 }
 
 # =============================================================================
-if [ "$MODE" = "docker" ]; then
+if true; then
   if ! have docker; then
     say "Installing Docker Engine (get.docker.com)"
     curl -fsSL https://get.docker.com | sh
@@ -162,58 +159,4 @@ if [ "$MODE" = "docker" ]; then
 
 EOF
   exit 0
-fi
-
-# =============================================================================
-# simple mode: build from source, systemd service, simulated runtime
-need_go="$(awk '/^go /{print $2; exit}' "$DIR/server/go.mod")"
-go_ok() { have go && [ "$(printf '%s\n%s\n' "$need_go" "$(go env GOVERSION | sed 's/^go//')" | sort -V | head -1)" = "$need_go" ]; }
-if ! go_ok; then
-  arch="$(dpkg --print-architecture 2>/dev/null || uname -m)"; case "$arch" in amd64|x86_64) arch=amd64 ;; arm64|aarch64) arch=arm64 ;; *) die "unsupported CPU: $arch" ;; esac
-  say "Installing Go $need_go"
-  curl -fsSL "https://go.dev/dl/go${need_go}.linux-${arch}.tar.gz" | tar -C /usr/local -xz
-  ln -sf /usr/local/go/bin/go /usr/local/bin/go; ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt
-fi
-if ! have node || [ "$(node -p 'process.versions.node.split(".")[0]')" -lt 22 ]; then
-  say "Installing Node.js 22"
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null
-  apt-get install -y -qq nodejs >/dev/null
-fi
-have pnpm || { corepack enable >/dev/null 2>&1 || npm install -g pnpm >/dev/null; }
-
-say "Building Nexmesh (first time takes a few minutes)"
-(cd "$DIR" && make build >/dev/null)
-
-mkdir -p /var/lib/nexmesh
-if have systemctl && [ -d /run/systemd/system ]; then
-  cat > /etc/systemd/system/nexmesh.service <<EOF
-[Unit]
-Description=Nexmesh
-After=network.target
-
-[Service]
-ExecStart=$DIR/bin/nexmesh
-Environment=NEXMESH_STORE=file NEXMESH_DATA_DIR=/var/lib/nexmesh NEXMESH_DRIVER=fake NEXMESH_AUTH=disabled
-Environment=NEXMESH_ADDR=127.0.0.1:$PORT NEXMESH_PUBLIC_URL=http://127.0.0.1:$PORT
-Environment=NEXMESH_FAKE_WORKSPACE_DIR=/var/lib/nexmesh/workspaces NEXMESH_MASTER_KEY_FILE=/var/lib/nexmesh/master.key
-Environment=NEXMESH_CATALOG_DIR=$DIR/catalog
-Restart=on-failure
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
-  systemctl daemon-reload; systemctl enable --now nexmesh
-  wait_healthy "http://127.0.0.1:$PORT" || { journalctl -u nexmesh -n 40 --no-pager || true; die "Nexmesh did not become healthy"; }
-  cat <<EOF
-
-  Nexmesh is running as a systemd service on http://127.0.0.1:$PORT (this machine only).
-  This mode uses the simulated runtime: installed services are not real containers.
-  To use it from your laptop:   ssh -L $PORT:127.0.0.1:$PORT <this-server>   then open http://localhost:$PORT
-  Logs: journalctl -u nexmesh -f      Upgrade: sudo $DIR/scripts/install-ubuntu.sh --simple
-  For real containers, run this script without --simple.
-
-EOF
-else
-  warn "systemd is not available here; start it yourself:  NEXMESH_DATA_DIR=/var/lib/nexmesh $DIR/bin/nexmesh --local"
 fi
