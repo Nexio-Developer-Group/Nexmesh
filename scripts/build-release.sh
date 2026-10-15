@@ -4,6 +4,7 @@
 #   nexmesh-<version>-windows-amd64.zip, Nexmesh-Setup-<version>.exe (needs makensis),
 #   SHA256SUMS
 # Usage: scripts/build-release.sh [version]      (default: git describe)
+#        ONLY_WINDOWS=1 scripts/build-release.sh   (just the Windows zip and installer)
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 version="${1:-$(git describe --tags --always --dirty 2>/dev/null || echo dev)}"
@@ -33,7 +34,11 @@ build() { # os arch
     tar -C "$out/stage" -czf "$out/$name.tar.gz" "$name"
   fi
 }
-build linux amd64; build linux arm64; build darwin arm64; build darwin amd64; build windows amd64
+if [ "${ONLY_WINDOWS:-}" = 1 ]; then
+  build windows amd64
+else
+  build linux amd64; build linux arm64; build darwin arm64; build darwin amd64; build windows amd64
+fi
 
 if command -v makensis >/dev/null; then
   echo "== Windows installer =="
