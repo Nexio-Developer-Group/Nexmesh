@@ -14,7 +14,7 @@ EXTRA = {("F073", "F097"): 4875, ("F096", "F162"): 4875, ("F052", "F230"): 2600,
 DROP = {("F102", "F244")}              # duplicate of the flat-3 hall 7070 reading
 
 
-def build(root, seed=11, n_blue=6):
+def build(root, seed=11, n_blue=5):
     O = os.path.join(root, "output"); g = json.load(open(f"{O}/floorplan_geometry.json")); rooms = [(Polygon(q["polygon"]), q["label"]) for q in g["rooms"]]
     real = {(p["a"], p["b"]): p for p in pairs([dict(id=f["id"], p0=f["p0"], p1=f["p1"], normal=f["normal"], sigma_m=f["sigma_m"]) for f in g["faces"]])}
     cad = {}
@@ -33,8 +33,8 @@ def build(root, seed=11, n_blue=6):
     for i, t in enumerate(T):
         k = (t["a"], t["b"]); t["lidar"] = real[k]["dist"] * 1000; t["pa"] = real[k]["pa"].tolist(); t["pb"] = real[k]["pb"].tolist()
         if k in RED: t["klass"] = "red"; t["delta"] = float(RED[k])
-        elif i in blue: t["klass"] = "blue"; t["delta"] = float(rng.choice([-1, 1]) * rng.uniform(8, 13))
-        else: t["klass"] = "green"; t["delta"] = float(rng.choice([-1, 1]) * rng.uniform(1, 6))
+        elif i in blue: t["klass"] = "blue"; t["delta"] = float(rng.choice([-1, 1]) * rng.uniform(9, 12))
+        else: t["klass"] = "green"; t["delta"] = float(rng.choice([-1, 1]) * rng.uniform(1, 4))
     return T
 
 
