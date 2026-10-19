@@ -6,19 +6,30 @@ import numpy as np
 from shapely.geometry import Polygon, Point
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from wall_distances import pairs
+import cad_distances as CD
 
-ROOMS_OK = {"BEDROOM - 1", "BEDROOM - 2", "KITCHEN", "LIVING / DINNING", "STUDY ROOM", "TOILET"}
-RED = {("F016", "F055"): 66, ("F018", "F052"): 68, ("F024", "F102"): 130, ("F086", "F259"): 110}       # kept / same-type deviations (mm)
+ROOMS_OK = {"BEDROOM - 1", "BEDROOM - 2", "KITCHEN", "LIVING / DINNING", "STUDY ROOM", "TOILET", "BALCONY"}
+RED = {("F016", "F055"): 66, ("F018", "F052"): 68, ("F024", "F102"): 130, ("F026", "F099"): 109}       # kept / same-type deviations (mm)
 EXTRA = {("F073", "F097"): 4875, ("F096", "F162"): 4875, ("F052", "F230"): 2600, ("F089", "F241"): 2250, ("F063", "F247"): 2300, ("F087", "F242"): 2300, ("F213", "F260"): 1500,
-         ("F086", "F259"): 7070}      # CAD dimension strings; flat-4 hall 7070 is by symmetry with the flat-3 hall (no string found near it)
-DROP = {("F102", "F244")}              # duplicate of the flat-3 hall 7070 reading
+         ("F055", "F229"): 2600, ("F152", "F268"): 3350,
+         ("F026", "F099"): 7070}      # CAD dimension strings; the flat-4 hall 7070 string sits at (6.4, 7.7)
+DROP = {("F102", "F244"), ("F070", "F137")}      # duplicate of the flat-3 hall reading; reading removed on request
 
 
 def build(root, seed=11, n_blue=5):
     O = os.path.join(root, "output"); g = json.load(open(f"{O}/floorplan_geometry.json")); rooms = [(Polygon(q["polygon"]), q["label"]) for q in g["rooms"]]
-    real = {(p["a"], p["b"]): p for p in pairs([dict(id=f["id"], p0=f["p0"], p1=f["p1"], normal=f["normal"], sigma_m=f["sigma_m"]) for f in g["faces"]])}
-    cad = {}
-    for x in csv.DictReader(open(f"{O}/real_cad_distance_btw_walls.csv")): cad[(x["face_a"], x["face_b"])] = float(x["cad_distance_mm"])
+    real = {(p["a"], p["b"]): p for p in pairs([dict(id=f["id"], p0=f["p0"], p1=f["p1"], normal=f["normal"], sigma_m=f["sigma_m"]) for f in g["faces"]], min_overlap=0.3)}
+    # pairs forced in although a non-wall diagonal object blocks the sight line (the CAD dimension string confirms the dimension)
+    Fm = {f["id"]: f for f in g["faces"]}
+    for (a_, b_) in (("F026", "F099"),):
+        if (a_, b_) in real: continue
+        fa, fb = Fm[a_], Fm[b_]; na = np.array(fa["normal"]); da = np.array([na[1], -na[0]]); ta = sorted([np.array(fa["p0"]) @ da, np.array(fa["p1"]) @ da]); tb = sorted([np.array(fb["p0"]) @ da, np.array(fb["p1"]) @ da])
+        lo, hi = max(ta[0], tb[0]), min(ta[1], tb[1]); tm = (lo + hi) / 2; A_ = np.array(fa["p0"]) + da * (tm - np.array(fa["p0"]) @ da); off = na @ ((np.array(fb["p0"]) + np.array(fb["p1"])) / 2 - np.array(fa["p0"]))
+        real[(a_, b_)] = dict(a=a_, b=b_, pa=A_, pb=A_ + na * off, dist=off, overlap=hi - lo)
+    cad = {(q["a"], q["b"]): float(q["cad"]) for q in CD.run(root, [], min_overlap=0.3, write=False, tol=0.15)}          # CAD distances (text or wall-face geometry)
+    prev = {}
+    pj = os.path.join(root, "..", "poc_demo_files_output", "simulated_survey_grade", "SIMULATED_target_readings.json")
+    if os.path.exists(pj): prev = {(t["a"], t["b"]): t for t in json.load(open(pj))}
     T = []
     for k, v in cad.items():
         if k in DROP or k not in real: continue
@@ -32,7 +43,8 @@ def build(root, seed=11, n_blue=5):
     rng = np.random.default_rng(seed); free = [i for i, t in enumerate(T) if (t["a"], t["b"]) not in RED]; blue = set(rng.choice(free, n_blue, replace=False).tolist())
     for i, t in enumerate(T):
         k = (t["a"], t["b"]); t["lidar"] = real[k]["dist"] * 1000; t["pa"] = real[k]["pa"].tolist(); t["pb"] = real[k]["pb"].tolist()
-        if k in RED: t["klass"] = "red"; t["delta"] = float(RED[k])
+        if k in prev and k not in RED and prev[k]["klass"] in ("green", "blue"): t["klass"] = prev[k]["klass"]; t["delta"] = prev[k]["delta"]
+        elif k in RED: t["klass"] = "red"; t["delta"] = float(RED[k])
         elif i in blue: t["klass"] = "blue"; t["delta"] = float(rng.choice([-1, 1]) * rng.uniform(9, 12))
         else: t["klass"] = "green"; t["delta"] = float(rng.choice([-1, 1]) * rng.uniform(1, 4))
     return T
