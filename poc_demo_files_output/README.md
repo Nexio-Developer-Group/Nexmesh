@@ -42,3 +42,6 @@ Source: the architect's CAD plan (PDF exported from ZWCAD, "B Wing Typ. Floor").
 
 ## Simulated distances DXF (`SIMULATED_3d_lidar_distance_btw_walls.dxf`, also in `simulated_survey_grade/` with a CSV)
 All clear wall-to-wall distances computable from the simulated 3D cloud's plan cut (z 1.0–1.6 m): fitted wall faces + mm dimensions. SIMULATED – NOT MEASURED. Script: `lidar_reconstruction/poc_simulated_dxf.py`.
+
+## Real CAD vs real LiDAR vs simulated (`COMPARISON_cad_vs_real_vs_simulated.png`, `COMPARISON_cad_vs_simulated_summary.json`, `simulated_survey_grade/SIMULATED_vs_REAL_CAD_distance_comparison.csv`)
+35 real CAD wall-to-wall distances; 34 have a matching simulated pair. The simulation was tuned against the Blender model, not the CAD, so its difference to the CAD is larger than its difference to the model. Script: `lidar_reconstruction/compare_cad_vs_simulated.py`.

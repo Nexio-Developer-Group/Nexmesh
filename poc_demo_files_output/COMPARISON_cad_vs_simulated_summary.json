@@ -1,0 +1,35 @@
+{
+ "cad_pairs": 35,
+ "matched_in_simulated": 34,
+ "no_simulated_counterpart": 1,
+ "simulated_vs_cad": {
+  "n": 34,
+  "bins": {
+   "le7": 5,
+   "b7_15": 8,
+   "gt15": 21,
+   "b15_30": 7,
+   "b30_60": 8,
+   "gt60": 6
+  },
+  "median_abs_mm": 20.68909073822647,
+  "mean_mm": 29.400448119059345,
+  "p90_abs_mm": 64.63704548790793,
+  "max_abs_mm": 129.60363870108358
+ },
+ "real_lidar_vs_cad": {
+  "n": 35,
+  "bins": {
+   "le7": 4,
+   "b7_15": 6,
+   "gt15": 25,
+   "b15_30": 5,
+   "b30_60": 4,
+   "gt60": 16
+  },
+  "median_abs_mm": 49.28557279461711,
+  "mean_mm": -24.751988659249964,
+  "p90_abs_mm": 133.11937971588048
+ },
+ "note": "simulated values follow an assumed scanner spec; not measured"
+}
