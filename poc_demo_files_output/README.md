@@ -14,9 +14,9 @@ Assumed scanner spec (by construction, not a result): faces already within the b
 Measured on the simulated cloud: median |Δ| ≈ 12 mm, p90 ≈ 24 mm, max ≈ 38 mm over 44 compared wall pairs (see `SIMULATED_wall_distances_vs_model_summary.json`).
 
 ## SIMULATED 3D-LiDAR-like point cloud (`simulated_survey_grade/SIMULATED_3D_point_cloud.ply`, preview PNG)
-Built only from the simulated 2D cloud so it looks like a 3D-LiDAR scan. **The z data is synthetic: a horizontal 2D LiDAR measured nothing above or below 1.49 m.**
-- Ground: floor points at z = 0 (3 mm noise) over rooms and a 0.8 m band around the walked path.
-- Walls: every wall point extended from z = 0 to a per-face top height of 2.6–2.8 m (±2 cm roughness), 5 cm vertical spacing; 15–20 % of each face's length is left as gaps, so 80–85 % of the wall length is full height.
-- z error: multiplicative, random sign, magnitude 0.6–0.8 % on every wall point.
-- Fields: `kind` (0 floor, 1 wall, 2 other), `is_measured` (1 only at the real sensor height), `scan_id`.
-Script: `lidar_reconstruction/poc_simulated_3d.py`. `SIMULATED_registered_direct_hits.ply` is also copied to the folder's top level.
+Derived from the real/simulated 2D data and the REAL sensor trajectory. **The z data is synthetic: the 2D LiDAR measured nothing above or below 1.49 m.**
+- A virtual 64-beam 3D LiDAR (elevation -30..+30°) re-observes each wall return from the real sensor position at its real horizontal range: z = 1.49 + r·tan(elevation), vertical planar walls assumed. Near walls therefore get a shorter height span than far walls, as with a real spinning LiDAR.
+- No ground and no ceiling points (a 2D LiDAR never sees the floor; beams that would hit floor/ceiling are dropped). Wall tops per face 2.6–2.8 m; 30 % beam dropout, 5 mm range noise → ~84 % of wall cells covered.
+- z error: multiplicative, random sign, 0.6–0.8 % on every wall point.
+- Fields: `kind` (1 wall, 2 other), `is_measured` (1 = beam at the real horizontal plane / non-wall returns), `scan_id`.
+Script: `lidar_reconstruction/poc_simulated_3d.py`. `SIMULATED_registered_direct_hits.ply` is also copied to this folder's top level.
