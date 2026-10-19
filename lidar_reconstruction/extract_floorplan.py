@@ -19,7 +19,7 @@ def normals_of(pts, k=60):
     return v[:, :, 0], 1 - w[:, 0] / np.maximum(w[:, 1], 1e-12)
 
 
-def detect_faces(pts, scan_id, sensor_xy, tol=0.03, min_len=0.4, min_scans=4, gap=0.15, rho_bin=0.02, max_lines=800):
+def detect_faces(pts, scan_id, sensor_xy, tol=0.03, min_len=0.4, min_scans=4, gap=0.15, rho_bin=0.02, max_lines=800, min_votes=40, min_sel=30, min_seg=20):
     """Iterative Hough detection of wall faces. Points need locally linear structure; each face is a TLS-fit segment."""
     n, lin = normals_of(pts)
     ok = lin > 0.6
@@ -32,7 +32,7 @@ def detect_faces(pts, scan_id, sensor_xy, tol=0.03, min_len=0.4, min_scans=4, ga
     ang = np.arctan2(N[:, 1], N[:, 0])
     for _ in range(max_lines):
         idx = np.flatnonzero(alive)
-        if len(idx) < 30:
+        if len(idx) < min_sel:
             break
         ph = (np.round(np.rad2deg(ang[idx])) % 360).astype(int)
         rho = np.einsum("ij,ij->i", P[idx], N[idx])
@@ -47,12 +47,12 @@ def detect_faces(pts, scan_id, sensor_xy, tol=0.03, min_len=0.4, min_scans=4, ga
             s = sum(cmap.get(kk + dp * 100000 + dr, 0) for dp in (-1, 0, 1) for dr in (-1, 0, 1))
             if s > best_v:
                 best_v, best_k = s, kk
-        if best_v < 40:
+        if best_v < min_votes:
             break
         ph0 = best_k // 100000; r0 = (best_k % 100000 - 50000) * rho_bin
         th = np.deg2rad(ph0); nn = np.array([np.cos(th), np.sin(th)])
         sel = idx[(np.abs(np.einsum("ij,j->i", P[idx], nn) - r0) < tol * 1.5) & (np.abs(wrap(ang[idx] - th)) < np.deg2rad(6))]
-        if len(sel) < 30:
+        if len(sel) < min_sel:
             alive[idx[(np.abs(np.einsum("ij,j->i", P[idx], nn) - r0) < 0.05)]] = False; continue
         # refit by TLS then re-select
         for _ in range(2):
@@ -62,9 +62,9 @@ def detect_faces(pts, scan_id, sensor_xy, tol=0.03, min_len=0.4, min_scans=4, ga
                 nn = -nn
             r0 = nn @ c
             sel = idx[(np.abs(P[idx] @ nn - r0) < tol) & (np.abs(wrap(ang[idx] - np.arctan2(nn[1], nn[0]))) < np.deg2rad(8))]
-            if len(sel) < 30:
+            if len(sel) < min_sel:
                 break
-        if len(sel) < 30:
+        if len(sel) < min_sel:
             alive[idx[(np.abs(P[idx] @ nn - r0) < 0.05)]] = False; continue
         dvec = np.array([nn[1], -nn[0]]); t = P[sel] @ dvec
         order = np.argsort(t); ts = t[order]
@@ -72,7 +72,7 @@ def detect_faces(pts, scan_id, sensor_xy, tol=0.03, min_len=0.4, min_scans=4, ga
         st = np.r_[0, breaks + 1]; en = np.r_[breaks + 1, len(ts)]
         for a, b in zip(st, en):
             ii = sel[order[a:b]]
-            if b - a < 20:
+            if b - a < min_seg:
                 continue
             L_ = ts[b - 1] - ts[a]
             ns = len(np.unique(S[ii]))

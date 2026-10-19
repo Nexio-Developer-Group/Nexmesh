@@ -1,19 +1,11 @@
 {
- "points": 307462,
- "wall_points": 255135,
- "other_points": 52327,
- "range_ok_0.15_12m_frac": 0.999815783800733,
+ "points": 590966,
+ "wall_points": 425580,
+ "other_points": 165386,
+ "range_ok_0p15_12m_frac": 0.9999483058414399,
  "elev_within_fov_30deg_frac": 1.0,
- "z_between_floor_0_and_2.86_frac": 1.0,
+ "z_between_0_and_2p87_frac": 1.0,
  "ground_points": 0,
- "ceiling_points(z>2.9)": 0,
- "other_points_at_real_capture_height_frac": 1.0,
- "sensor_height_range_m": [
-  0.5928449999999998,
-  2.81
- ],
- "wall_elevation_deg_range": [
-  -31.08416001962106,
-  31.336364067061215
- ]
+ "ceiling_points_z_gt_2p9": 0,
+ "other_at_real_capture_height_frac": 1.0
 }

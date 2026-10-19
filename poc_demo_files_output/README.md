@@ -21,7 +21,13 @@ Measured on the simulated cloud: median |Δ| ≈ 12 mm, p90 ≈ 24 mm, max ≈ 3
 ## SIMULATED 3D-LiDAR-like point cloud (`simulated_survey_grade/SIMULATED_3D_point_cloud.ply`, preview PNG)
 Derived from the simulated 2D data, the REAL sensor trajectory and the REAL LRF sensor height. **Everything above/below the capture height is synthetic: the 2D LiDAR measured only its own plane.** xy positions are untouched, so the wall-to-wall distance comparison (median ≈12 mm, p90 ≈24 mm) still holds.
 - A virtual 64-beam 3D LiDAR (elevation -30..+30°) re-observes each wall return from the real sensor position, at its real horizontal range and real LRF height: z = height(t) + r·tan(elevation); vertical planar walls assumed.
-- No ground and no ceiling points. Wall tops per face 2.6–2.8 m; 22 % beam dropout, 5 mm range noise → ~84 % of wall cells covered.
+- No ground and no ceiling points. Wall tops per face 2.6–2.8 m; 70 % beam dropout (3 cm column spacing), 5 mm range noise → ~84 % of wall cells covered.
 - z error: multiplicative, random sign, 0.6–0.8 % on every wall point.
 - Fields: `kind` (1 wall, 2 other), `is_measured` (1 = beam at the real capture plane / non-wall returns), `scan_id`.
 Scripts: `lidar_reconstruction/lrf_height.py`, `poc_simulated_3d.py`.
+
+## SIMULATED floor plan and 3D drawing from the simulated 3D cloud
+- `simulated_survey_grade/SIMULATED_floorplan_from_3D.png / .pdf / .svg / .dxf`: plan cut at z = 1.0–1.6 m of the simulated 3D cloud; 256 wall faces (seeded from the earlier wall lines, each re-fitted from the slice points), 50 openings, 75 clear wall-to-wall distances in mm. Rooms are NOT filled: the simulated walls are fragmentary and rooms do not close without model door lines.
+- `simulated_survey_grade/SIMULATED_3D_drawing.png`: the fitted wall faces extruded from the floor to 2.6–2.8 m (no ceiling, no floor slab).
+- `SIMULATED_reachability_audit.json`: every point lies within range, within the virtual beam angles from the real sensor position and LRF height, between 0 and 2.87 m; no ground or ceiling points.
+Scripts: `lidar_reconstruction/poc_plan_from_3d.py`. Open question: whether the 0.95 m LRF readings are real sensor lowering or the LRF hitting furniture.
