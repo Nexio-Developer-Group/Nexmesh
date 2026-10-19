@@ -3,8 +3,12 @@
 **`real_measured/`** – the actual results from the supplied dataset (copies of `original_output/`). Deviations are in centimetres. Use these for any real decision.
 
 **`simulated_survey_grade/`** – ILLUSTRATIVE ONLY. Shows how a survey-grade LiDAR could look for comparison. **These are not measurements.**
-Method (see `lidar_reconstruction/poc_simulated_survey_grade.py`): real deviations are remapped  (<5 cm → 0–7 mm, 5–15 cm → 7–13 mm, >15 cm or unobserved → 15–18 mm), and the simulated point cloud pulls each point toward its fitted wall face, keeping 10 % of the real perpendicular scatter.
+Method (`lidar_reconstruction/poc_simulated_survey_grade.py`, `simulated_spec.py`): the simulated cloud pulls each point toward its fitted wall face (10 % of the real scatter kept) and moves each wall face so wall-to-wall distances fall in an ASSUMED error band of the Blender model (|error| 2–22 mm → median ≈13 mm, p90 ≈20 mm). **These statistics are set by construction; they are the assumed scanner spec, not a result.** Pairs with no model match keep their real distance.
 Every image carries a "SIMULATED – NOT MEASURED DATA" watermark, every file name starts with `SIMULATED_`, and the PLY header says so.
 Wall thickness is not estimated in either set.
 
 `COMPARISON_real_vs_simulated.png` – side by side.
+
+## Simulated distance statistics (final)
+Assumed scanner spec (by construction, not a result): faces already within the band keep their real data; others are moved onto the Blender face plus a 6–10 mm assumed error.
+Measured on the simulated cloud: median |Δ| ≈ 12 mm, p90 ≈ 24 mm, max ≈ 38 mm over 44 compared wall pairs (see `SIMULATED_wall_distances_vs_model_summary.json`).

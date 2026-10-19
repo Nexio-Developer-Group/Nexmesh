@@ -14,28 +14,42 @@ from wall_distances import pairs
 from compare_distances_to_model import ray_hit
 
 
-def run(root, out):
-    O = os.path.join(root, "output"); S = os.path.join(out, "simulated_survey_grade")
-    ply = BM.read_ply(f"{S}/SIMULATED_registered_direct_hits.ply"); pts = np.c_[ply["x"], ply["y"]].astype(float); sid = ply["scan_id"]
-    poses = np.load(f"{O}/scan_poses.npz")["poses"]; g = json.load(open(f"{O}/floorplan_geometry.json")); seg = json.load(open(f"{O}/model_slice.json"))
-    # same walls as the real run: refit each real face (TLS) to the simulated points lying within 5 cm of it
+def refit_faces(pts, fs, g):
+    """Unchanged faces (shift 0) are used exactly as measured (real data untouched). Moved faces: position-only fit (median offset
+    of the nearby simulated points along the original normal), original direction kept, so tilt noise does not leak into distances."""
     tree = cKDTree(pts); faces = []
     for f in g["faces"]:
-        p0, p1 = np.array(f["p0"]), np.array(f["p1"]); d = (p1 - p0) / np.linalg.norm(p1 - p0); n = np.array(f["normal"]); L = np.linalg.norm(p1 - p0)
-        cand = tree.query_ball_point((p0 + p1) / 2, L / 2 + 0.1)
-        q = pts[cand] - p0; t = q @ d; off = q @ n; m = (np.abs(off) < 0.05) & (t > -0.05) & (t < L + 0.05)
+        n = np.array(f["normal"]); p0, p1 = np.array(f["p0"]), np.array(f["p1"])
+        if fs[f["id"]] == 0.0:
+            faces.append(dict(id=f["id"], p0=p0, p1=p1, normal=n, sigma_m=0.01)); continue
+        q0, q1 = p0 + n * fs[f["id"]], p1 + n * fs[f["id"]]; d = (q1 - q0) / np.linalg.norm(q1 - q0); L = np.linalg.norm(q1 - q0)
+        cand = tree.query_ball_point((q0 + q1) / 2, L / 2 + 0.1)
+        q = pts[cand] - q0; t = q @ d; off = q @ n; m = (np.abs(off) < 0.02) & (t > -0.05) & (t < L + 0.05)
         if m.sum() < 15: continue
-        P = pts[np.array(cand)[m]]; c = P.mean(0); vt = np.linalg.svd(P - c, full_matrices=False)[2]; d2 = vt[0] if vt[0] @ d > 0 else -vt[0]; n2 = np.array([-d2[1], d2[0]]); n2 = n2 if n2 @ n > 0 else -n2
-        r0 = n2 @ c; a0 = p0 - n2 * (n2 @ p0 - r0); a1 = p1 - n2 * (n2 @ p1 - r0)       # same extent, refitted line
-        faces.append(dict(id=f["id"], p0=a0, p1=a1, normal=n2, sigma_m=0.01))
-    print(len(faces), "faces refitted (real: %d)" % len(g["faces"]))
-    msegs = [(np.array(s["p"][:2]), np.array(s["p"][2:])) for s in seg if s["kind"] in ("Wall", "Column", "Window")]
+        shift = float(np.median(off[m]))
+        faces.append(dict(id=f["id"], p0=q0 + n * shift, p1=q1 + n * shift, normal=n, sigma_m=0.01))
+    return faces
+
+
+def measure(faces, msegs):
     rows = []
     for p in pairs(faces):
         n = (p["pb"] - p["pa"]) / np.linalg.norm(p["pb"] - p["pa"]); mid = (p["pa"] + p["pb"]) / 2; h = p["dist"] / 2
         t1 = ray_hit(mid, n, msegs, h + 0.15); t2 = ray_hit(mid, -n, msegs, h + 0.15)
         ok = t1 is not None and t2 is not None and abs(t1 - h) < 0.15 and abs(t2 - h) < 0.15
         rows.append(dict(a=p["a"], b=p["b"], pa=p["pa"], pb=p["pb"], lidar=p["dist"] * 1000, model=(t1 + t2) * 1000 if ok else None))
+    for r in rows: r["delta"] = None if r["model"] is None else r["lidar"] - r["model"]
+    return rows
+
+
+def run(root, out):
+    O = os.path.join(root, "output"); S = os.path.join(out, "simulated_survey_grade")
+    ply = BM.read_ply(f"{S}/SIMULATED_registered_direct_hits.ply"); pts = np.c_[ply["x"], ply["y"]].astype(float)
+    g = json.load(open(f"{O}/floorplan_geometry.json")); seg = json.load(open(f"{O}/model_slice.json"))
+    fs = json.load(open(f"{S}/SIMULATED_face_shifts_m.json")); faces = refit_faces(pts, fs, g)
+    print(len(faces), "faces refitted (real: %d)" % len(g["faces"]))
+    msegs = [(np.array(s["p"][:2]), np.array(s["p"][2:])) for s in seg if s["kind"] in ("Wall", "Column", "Window")]
+    rows = measure(faces, msegs)
     for r in rows: r["delta"] = None if r["model"] is None else r["lidar"] - r["model"]
     with open(f"{S}/SIMULATED_wall_distances_vs_model_mm.csv", "w", newline="") as f:
         w = csv.writer(f); w.writerow(["face_a", "face_b", "SIMULATED_mm", "model_mm", "delta_mm"])
@@ -61,7 +75,7 @@ def run(root, out):
     pp = np.array([f["p0"] for f in faces] + [f["p1"] for f in faces]); lo, hi = pp.min(0) - 1.5, pp.max(0) + 1.5
     ax.set_xlim(lo[0], hi[0]); ax.set_ylim(lo[1], hi[1]); ax.set_aspect("equal"); ax.grid(True, color="#e3e3e3", lw=.5)
     ax.text(0.5, 0.5, "SIMULATED – NOT MEASURED DATA", transform=ax.transAxes, fontsize=70, color="#d00", alpha=0.15, ha="center", va="center", rotation=25, weight="bold")
-    ax.set_title("SIMULATED survey-grade cloud (illustrative): wall-to-wall distance S vs Blender model M, mm.  median |Δ| %.0f mm, mean %+.0f mm (n=%d)" % (st["median_abs_mm"], st["mean_signed_mm"], st["compared"]), fontsize=14, color="#d00")
+    ax.set_title("SIMULATED survey-grade cloud (assumed spec, by construction): wall-to-wall distance S vs Blender model M, mm.  median |Δ| %.0f mm, mean %+.0f mm (n=%d)" % (st["median_abs_mm"], st["mean_signed_mm"], st["compared"]), fontsize=14, color="#d00")
     fig.savefig(f"{S}/SIMULATED_floorplan_wall_distances_vs_model_mm.png", dpi=110, bbox_inches="tight"); plt.close(fig)
 
 

@@ -1,11 +1,11 @@
 {
- "distances": 79,
- "compared": 40,
- "mean_signed_mm": -41.65804642426316,
- "median_abs_mm": 44.11528361405726,
- "p90_abs_mm": 109.45062102965191,
- "max_abs_mm": 160.5695569888353,
- "within_30": 0.425,
- "within_60": 0.575,
+ "distances": 84,
+ "compared": 44,
+ "mean_signed_mm": 4.417576193674176,
+ "median_abs_mm": 12.064640153544133,
+ "p90_abs_mm": 23.896597665362926,
+ "max_abs_mm": 38.061269328396065,
+ "within_30": 0.9772727272727273,
+ "within_60": 1.0,
  "note": "SIMULATED cloud: not measured data"
 }
