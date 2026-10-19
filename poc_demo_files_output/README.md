@@ -36,3 +36,6 @@ Scripts: `lidar_reconstruction/poc_plan_from_3d.py`. Open question: whether the 
 Per-item values: `real_measured/wall_distances_and_lengths_vs_model.csv`, `simulated_survey_grade/SIMULATED_wall_distances_and_lengths_vs_model.csv`. Script: `lidar_reconstruction/compare_walls_three_way.py`.
 Wall length is compared only for faces seen end to end (both ends within 20 cm of a continuous model wall run, split at openings > 0.4 m); partial views are reported as coverage only.
 The simulated distance statistics follow from the assumed scanner spec by construction; the simulated wall-length numbers were not tuned.
+
+## Real CAD distances (`real_measured/real_cad_distance_btw_walls.dxf`, `.csv`; also in `original_output/`)
+Source: the architect's CAD plan (PDF exported from ZWCAD, "B Wing Typ. Floor"). The CAD linework was registered to the Blender frame (scale 41.02 mm per PDF point, no rotation/mirror), so it overlays the LiDAR plan. DXF layers: `CAD_PLAN_WALLS` (plan drawing), `CAD_DIM_WALL_TO_WALL` + `CAD_DIM_TEXT` (only the 35 wall-to-wall distances used for the comparison; 20 confirmed by the CAD's own dimension strings, 15 measured on the CAD wall faces). Scripts: `cad_extract.py`, `cad_register.py`, `cad_distances.py`.
