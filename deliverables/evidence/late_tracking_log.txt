@@ -1,0 +1,403 @@
+/usr/local/lib/python3.13/dist-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+piece break before f_01545.jpg speed 82.6 m/s, 479 deg/s
+piece break before f_01642.jpg speed 13.3 m/s, 104 deg/s
+piece break before f_01832.jpg speed 3.9 m/s, 85 deg/s
+pieces: {0: 4, 1: 97, 2: 157, 3: 139}
+f_01541.jpg piece 0 anchor inl 357 guess-diff - scale nan [6s]
+f_01542.jpg piece 0 anchor inl 136 guess-diff - scale nan [8s]
+f_01543.jpg piece 0 anchor inl 99 guess-diff 0.03 m scale nan [10s]
+f_01544.jpg piece 0 anchor inl 51 guess-diff 0.15 m scale nan [11s]
+f_01545.jpg piece 1 anchor inl 60 guess-diff - scale nan [13s]
+f_01546.jpg piece 1 anchor inl 153 guess-diff - scale nan [15s]
+f_01547.jpg piece 1 anchor inl 236 guess-diff 0.08 m scale nan [16s]
+f_01548.jpg piece 1 anchor inl 297 guess-diff 0.12 m scale nan [18s]
+f_01549.jpg piece 1 anchor inl 289 guess-diff 0.13 m scale nan [19s]
+f_01550.jpg piece 1 anchor inl 284 guess-diff 0.12 m scale nan [21s]
+f_01551.jpg piece 1 anchor inl 323 guess-diff 0.12 m scale nan [23s]
+f_01552.jpg piece 1 anchor inl 306 guess-diff 0.12 m scale 0.884 [24s]
+f_01553.jpg piece 1 anchor inl 299 guess-diff 0.07 m scale 0.884 [26s]
+f_01554.jpg piece 1 anchor inl 285 guess-diff 0.08 m scale 0.884 [27s]
+f_01555.jpg piece 1 anchor inl 241 guess-diff 0.07 m scale 0.884 [29s]
+f_01556.jpg piece 1 anchor inl 175 guess-diff 0.13 m scale 0.916 [30s]
+f_01557.jpg piece 1 anchor inl 179 guess-diff 0.08 m scale 0.916 [32s]
+f_01558.jpg piece 1 anchor inl 157 guess-diff 0.09 m scale 0.916 [33s]
+f_01559.jpg piece 1 anchor inl 160 guess-diff 0.12 m scale 0.916 [35s]
+f_01560.jpg piece 1 anchor inl 148 guess-diff 0.08 m scale 0.916 [37s]
+f_01561.jpg piece 1 anchor inl 162 guess-diff 0.08 m scale 0.916 [38s]
+f_01562.jpg piece 1 anchor inl 187 guess-diff 0.09 m scale 0.916 [40s]
+f_01563.jpg piece 1 anchor inl 175 guess-diff 0.05 m scale 0.916 [41s]
+f_01564.jpg piece 1 anchor inl 170 guess-diff 0.04 m scale 0.916 [43s]
+f_01565.jpg piece 1 anchor inl 171 guess-diff 0.02 m scale 0.916 [44s]
+f_01566.jpg piece 1 anchor inl 177 guess-diff 0.03 m scale 0.916 [46s]
+f_01567.jpg piece 1 anchor inl 183 guess-diff 0.01 m scale 0.916 [47s]
+f_01568.jpg piece 1 anchor inl 180 guess-diff 0.01 m scale 0.941 [49s]
+f_01569.jpg piece 1 anchor inl 209 guess-diff 0.05 m scale 0.941 [51s]
+f_01570.jpg piece 1 anchor inl 222 guess-diff 0.05 m scale 0.941 [52s]
+f_01571.jpg piece 1 anchor inl 198 guess-diff 0.07 m scale 0.941 [54s]
+f_01572.jpg piece 1 anchor inl 190 guess-diff 0.07 m scale 0.941 [56s]
+f_01573.jpg piece 1 anchor inl 154 guess-diff 0.07 m scale 0.941 [58s]
+f_01574.jpg piece 1 anchor inl 79 guess-diff 0.08 m scale 0.941 [60s]
+f_01575.jpg piece 1 no anchor: pnp inliers 33
+f_01576.jpg piece 1 no anchor: pnp inliers 22
+f_01577.jpg piece 1 no anchor: pnp inliers 16
+f_01578.jpg piece 1 anchor inl 83 guess-diff 0.03 m scale 0.941 [69s]
+f_01579.jpg piece 1 anchor inl 53 guess-diff 0.10 m scale 0.941 [71s]
+f_01580.jpg piece 1 anchor inl 100 guess-diff 0.11 m scale 0.941 [73s]
+f_01581.jpg piece 1 anchor inl 59 guess-diff 0.03 m scale 0.941 [75s]
+f_01582.jpg piece 1 no anchor: pnp inliers 24
+f_01583.jpg piece 1 no anchor: pnp inliers 17
+f_01584.jpg piece 1 no anchor: pnp inliers 8
+f_01585.jpg piece 1 no anchor: pnp inliers 10
+f_01586.jpg piece 1 no anchor: pnp inliers 6
+f_01587.jpg piece 1 no anchor: pnp inliers 6
+f_01588.jpg piece 1 no anchor: pnp inliers 22
+f_01589.jpg piece 1 no anchor: pnp inliers 11
+f_01590.jpg piece 1 no anchor: pnp inliers 18
+f_01591.jpg piece 1 no anchor: pnp inliers 18
+f_01592.jpg piece 1 no anchor: pnp inliers 13
+f_01593.jpg piece 1 no anchor: pnp inliers 23
+f_01594.jpg piece 1 no anchor: pnp inliers 0
+f_01595.jpg piece 1 no anchor: pnp inliers 0
+f_01596.jpg piece 1 anchor inl 65 guess-diff 0.02 m scale 0.941 [100s]
+f_01597.jpg piece 1 anchor inl 102 guess-diff 0.02 m scale 0.936 [102s]
+f_01598.jpg piece 1 anchor inl 558 guess-diff 0.02 m scale 0.936 [105s]
+f_01599.jpg piece 1 anchor inl 1125 guess-diff 0.02 m scale 0.936 [107s]
+f_01600.jpg piece 1 anchor inl 1454 guess-diff 0.04 m scale 0.936 [109s]
+f_01601.jpg piece 1 anchor inl 1227 guess-diff 0.04 m scale 0.936 [111s]
+f_01602.jpg piece 1 anchor inl 982 guess-diff 0.03 m scale 0.936 [113s]
+f_01603.jpg piece 1 no anchor: pnp inliers 25
+f_01604.jpg piece 1 anchor inl 61 guess-diff 0.06 m scale 0.936 [117s]
+f_01605.jpg piece 1 anchor inl 60 guess-diff 0.03 m scale 0.936 [119s]
+f_01606.jpg piece 1 anchor inl 70 guess-diff 0.09 m scale 0.936 [122s]
+f_01607.jpg piece 1 anchor inl 315 guess-diff 0.10 m scale 0.936 [125s]
+f_01608.jpg piece 1 anchor inl 476 guess-diff 0.09 m scale 0.936 [128s]
+f_01609.jpg piece 1 anchor inl 492 guess-diff 0.09 m scale 0.936 [131s]
+f_01610.jpg piece 1 anchor inl 167 guess-diff 0.10 m scale 0.934 [134s]
+f_01611.jpg piece 1 anchor inl 113 guess-diff 0.07 m scale 0.934 [137s]
+f_01612.jpg piece 1 anchor inl 181 guess-diff 0.07 m scale 0.934 [140s]
+f_01613.jpg piece 1 anchor inl 274 guess-diff 0.07 m scale 0.934 [143s]
+f_01614.jpg piece 1 anchor inl 311 guess-diff 0.07 m scale 0.934 [146s]
+f_01615.jpg piece 1 anchor inl 277 guess-diff 0.06 m scale 0.934 [149s]
+f_01616.jpg piece 1 anchor inl 228 guess-diff 0.06 m scale 0.934 [152s]
+f_01617.jpg piece 1 anchor inl 149 guess-diff 0.07 m scale 0.934 [155s]
+f_01618.jpg piece 1 anchor inl 104 guess-diff 0.07 m scale 0.934 [158s]
+f_01619.jpg piece 1 anchor inl 58 guess-diff 0.09 m scale 0.934 [162s]
+f_01620.jpg piece 1 no anchor: pnp inliers 12
+f_01621.jpg piece 1 no anchor: few matches
+f_01622.jpg piece 1 no anchor: reject vs guess 1.81 m 38.3 deg
+f_01623.jpg piece 1 anchor inl 257 guess-diff 0.06 m scale 0.934 [172s]
+f_01624.jpg piece 1 anchor inl 211 guess-diff 0.08 m scale 0.934 [174s]
+f_01625.jpg piece 1 anchor inl 189 guess-diff 0.04 m scale 0.929 [175s]
+f_01626.jpg piece 1 anchor inl 356 guess-diff 0.03 m scale 0.929 [177s]
+f_01627.jpg piece 1 anchor inl 178 guess-diff 0.02 m scale 0.929 [179s]
+f_01628.jpg piece 1 anchor inl 227 guess-diff 0.03 m scale 0.929 [181s]
+f_01629.jpg piece 1 anchor inl 189 guess-diff 0.02 m scale 0.929 [183s]
+f_01630.jpg piece 1 anchor inl 177 guess-diff 0.02 m scale 0.929 [185s]
+f_01631.jpg piece 1 anchor inl 142 guess-diff 0.02 m scale 0.929 [187s]
+f_01632.jpg piece 1 anchor inl 107 guess-diff 0.01 m scale 0.929 [190s]
+f_01633.jpg piece 1 anchor inl 56 guess-diff 0.21 m scale 0.929 [192s]
+f_01634.jpg piece 1 no anchor: pnp inliers 22
+f_01635.jpg piece 1 no anchor: pnp inliers 25
+f_01636.jpg piece 1 anchor inl 111 guess-diff 0.02 m scale 0.929 [199s]
+f_01637.jpg piece 1 anchor inl 133 guess-diff 0.03 m scale 0.929 [201s]
+f_01638.jpg piece 1 anchor inl 435 guess-diff 0.01 m scale 0.929 [203s]
+f_01639.jpg piece 1 anchor inl 852 guess-diff 0.01 m scale 0.929 [205s]
+f_01640.jpg piece 1 anchor inl 234 guess-diff 0.04 m scale 0.929 [207s]
+f_01641.jpg piece 1 anchor inl 57 guess-diff 0.13 m scale 0.929 [209s]
+f_01642.jpg piece 2 anchor inl 100 guess-diff - scale nan [211s]
+f_01643.jpg piece 2 anchor inl 71 guess-diff 0.55 m scale nan [212s]
+f_01644.jpg piece 2 anchor inl 160 guess-diff 0.30 m scale nan [215s]
+f_01645.jpg piece 2 anchor inl 299 guess-diff 0.09 m scale nan [217s]
+f_01646.jpg piece 2 anchor inl 344 guess-diff 0.03 m scale nan [219s]
+f_01647.jpg piece 2 anchor inl 228 guess-diff 0.01 m scale nan [222s]
+f_01648.jpg piece 2 anchor inl 342 guess-diff 0.06 m scale 0.848 [225s]
+f_01649.jpg piece 2 anchor inl 246 guess-diff 0.08 m scale 0.848 [227s]
+f_01650.jpg piece 2 anchor inl 160 guess-diff 0.13 m scale 0.848 [230s]
+f_01651.jpg piece 2 anchor inl 141 guess-diff 0.19 m scale 0.848 [232s]
+f_01652.jpg piece 2 anchor inl 169 guess-diff 0.24 m scale 0.832 [235s]
+f_01653.jpg piece 2 anchor inl 195 guess-diff 0.26 m scale 0.832 [238s]
+f_01654.jpg piece 2 anchor inl 179 guess-diff 0.31 m scale 0.832 [241s]
+f_01655.jpg piece 2 anchor inl 119 guess-diff 0.36 m scale 0.832 [244s]
+f_01656.jpg piece 2 anchor inl 66 guess-diff 0.43 m scale 0.832 [247s]
+f_01657.jpg piece 2 no anchor: pnp inliers 10
+f_01658.jpg piece 2 no anchor: pnp inliers 20
+f_01821.jpg piece 2 no anchor: reject vs guess 0.14 m 13.8 deg
+f_01820.jpg piece 2 anchor inl 65 guess-diff 0.04 m scale 0.832 [256s]
+f_01819.jpg piece 2 anchor inl 103 guess-diff 0.05 m scale 0.832 [258s]
+f_01818.jpg piece 2 anchor inl 85 guess-diff 0.06 m scale 0.832 [259s]
+f_01817.jpg piece 2 anchor inl 67 guess-diff 0.13 m scale 0.832 [261s]
+f_01816.jpg piece 2 anchor inl 100 guess-diff 0.13 m scale 0.832 [263s]
+f_01815.jpg piece 2 anchor inl 258 guess-diff 0.09 m scale 0.832 [265s]
+f_01814.jpg piece 2 anchor inl 178 guess-diff 0.09 m scale 0.832 [267s]
+f_01813.jpg piece 2 anchor inl 76 guess-diff 0.09 m scale 0.843 [269s]
+f_01812.jpg piece 2 anchor inl 63 guess-diff 0.13 m scale 0.843 [271s]
+f_01811.jpg piece 2 anchor inl 97 guess-diff 0.23 m scale 0.843 [273s]
+f_01810.jpg piece 2 anchor inl 97 guess-diff 0.23 m scale 0.843 [274s]
+f_01809.jpg piece 2 anchor inl 191 guess-diff 0.25 m scale 0.843 [276s]
+f_01808.jpg piece 2 anchor inl 653 guess-diff 0.28 m scale 0.843 [278s]
+f_01807.jpg piece 2 anchor inl 1071 guess-diff 0.29 m scale 0.843 [280s]
+f_01806.jpg piece 2 anchor inl 1189 guess-diff 0.31 m scale 0.843 [282s]
+f_01805.jpg piece 2 anchor inl 949 guess-diff 0.38 m scale 0.843 [284s]
+f_01804.jpg piece 2 anchor inl 772 guess-diff 0.42 m scale 0.843 [286s]
+f_01803.jpg piece 2 anchor inl 407 guess-diff 0.43 m scale 0.843 [288s]
+f_01802.jpg piece 2 anchor inl 410 guess-diff 0.46 m scale 0.843 [290s]
+f_01801.jpg piece 2 anchor inl 379 guess-diff 0.47 m scale 0.842 [293s]
+f_01800.jpg piece 2 anchor inl 71 guess-diff 0.59 m scale 0.842 [295s]
+f_01799.jpg piece 2 anchor inl 120 guess-diff 0.44 m scale 0.842 [298s]
+f_01798.jpg piece 2 anchor inl 57 guess-diff 0.59 m scale 0.842 [300s]
+f_01797.jpg piece 2 no anchor: reject vs guess 1.01 m 17.1 deg
+f_01796.jpg piece 2 no anchor: pnp inliers 24
+f_01795.jpg piece 2 no anchor: pnp inliers 32
+f_01794.jpg piece 2 no anchor: pnp inliers 20
+f_01793.jpg piece 2 no anchor: reject vs guess 0.22 m 14.7 deg
+f_01792.jpg piece 2 anchor inl 127 guess-diff 0.18 m scale 0.842 [313s]
+f_01791.jpg piece 2 no anchor: reject vs guess 0.32 m 17.5 deg
+f_01790.jpg piece 2 no anchor: reject vs guess 0.50 m 23.5 deg
+f_01789.jpg piece 2 anchor inl 111 guess-diff 0.42 m scale 0.842 [319s]
+f_01788.jpg piece 2 anchor inl 108 guess-diff 0.79 m scale 0.842 [321s]
+f_01787.jpg piece 2 anchor inl 71 guess-diff 0.68 m scale 0.842 [323s]
+f_01786.jpg piece 2 anchor inl 109 guess-diff 0.63 m scale 0.842 [325s]
+f_01785.jpg piece 2 no anchor: reject vs guess 0.76 m 19.0 deg
+f_01784.jpg piece 2 no anchor: pnp inliers 26
+f_01783.jpg piece 2 anchor inl 51 guess-diff 0.19 m scale 0.842 [330s]
+f_01782.jpg piece 2 anchor inl 56 guess-diff 0.52 m scale 0.842 [331s]
+f_01781.jpg piece 2 no anchor: reject vs guess 0.99 m 6.4 deg
+f_01780.jpg piece 2 anchor inl 47 guess-diff 0.37 m scale 0.842 [335s]
+f_01779.jpg piece 2 anchor inl 64 guess-diff 0.17 m scale 0.803 [337s]
+f_01778.jpg piece 2 no anchor: pnp inliers 36
+f_01777.jpg piece 2 no anchor: pnp inliers 38
+f_01776.jpg piece 2 no anchor: reject vs guess 0.64 m 20.8 deg
+f_01775.jpg piece 2 anchor inl 201 guess-diff 0.03 m scale 0.803 [344s]
+f_01823.jpg piece 2 anchor inl 90 guess-diff 0.30 m scale 0.803 [346s]
+f_01824.jpg piece 2 anchor inl 103 guess-diff 0.36 m scale 0.803 [348s]
+f_01825.jpg piece 2 anchor inl 154 guess-diff 0.39 m scale 0.803 [349s]
+f_01826.jpg piece 2 anchor inl 197 guess-diff 0.45 m scale 0.803 [351s]
+f_01827.jpg piece 2 anchor inl 45 guess-diff 0.45 m scale 0.803 [353s]
+f_01832.jpg piece 3 no anchor: pnp inliers 0
+f_01833.jpg piece 3 anchor inl 439 guess-diff - scale nan [356s]
+f_01834.jpg piece 3 anchor inl 156 guess-diff - scale nan [358s]
+f_01835.jpg piece 3 no anchor: pnp inliers 28
+f_01836.jpg piece 3 no anchor: pnp inliers 28
+f_01837.jpg piece 3 anchor inl 175 guess-diff 0.08 m scale nan [364s]
+f_01838.jpg piece 3 anchor inl 209 guess-diff 0.08 m scale nan [366s]
+f_01839.jpg piece 3 anchor inl 287 guess-diff 0.14 m scale nan [368s]
+f_01840.jpg piece 3 anchor inl 127 guess-diff 0.42 m scale nan [370s]
+f_01841.jpg piece 3 no anchor: reject vs guess 0.91 m 5.5 deg
+f_01842.jpg piece 3 no anchor: pnp inliers 28
+f_01843.jpg piece 3 no anchor: pnp inliers 8
+f_01666.jpg piece 2 no anchor: pnp inliers 0
+f_01669.jpg piece 2 no anchor: few matches
+f_01670.jpg piece 2 no anchor: pnp inliers 25
+f_01671.jpg piece 2 anchor inl 225 guess-diff 0.02 m scale 0.803 [383s]
+f_01672.jpg piece 2 anchor inl 318 guess-diff 0.03 m scale 0.803 [385s]
+f_01673.jpg piece 2 anchor inl 358 guess-diff 0.09 m scale 0.803 [387s]
+f_01674.jpg piece 2 anchor inl 271 guess-diff 0.14 m scale 0.803 [389s]
+f_01675.jpg piece 2 anchor inl 313 guess-diff 0.19 m scale 0.803 [391s]
+f_01676.jpg piece 2 anchor inl 334 guess-diff 0.21 m scale 0.779 [393s]
+f_01677.jpg piece 2 anchor inl 415 guess-diff 0.23 m scale 0.779 [395s]
+f_01678.jpg piece 2 anchor inl 478 guess-diff 0.25 m scale 0.779 [398s]
+f_01679.jpg piece 2 anchor inl 494 guess-diff 0.24 m scale 0.779 [400s]
+f_01680.jpg piece 2 anchor inl 261 guess-diff 0.25 m scale 0.779 [402s]
+f_01681.jpg piece 2 no anchor: pnp inliers 37
+f_01682.jpg piece 2 no anchor: pnp inliers 12
+f_01683.jpg piece 2 anchor inl 128 guess-diff 0.17 m scale 0.779 [409s]
+f_01684.jpg piece 2 anchor inl 55 guess-diff 0.22 m scale 0.779 [411s]
+f_01685.jpg piece 2 anchor inl 98 guess-diff 0.49 m scale 0.779 [414s]
+f_01686.jpg piece 2 anchor inl 71 guess-diff 0.55 m scale 0.779 [418s]
+f_01687.jpg piece 2 anchor inl 87 guess-diff 0.61 m scale 0.779 [421s]
+f_01688.jpg piece 2 no anchor: reject vs guess 0.81 m 1.2 deg
+f_01689.jpg piece 2 no anchor: pnp inliers 38
+f_01690.jpg piece 2 anchor inl 53 guess-diff 0.23 m scale 0.779 [432s]
+f_01691.jpg piece 2 anchor inl 148 guess-diff 0.43 m scale 0.779 [436s]
+f_01692.jpg piece 2 anchor inl 174 guess-diff 0.63 m scale 0.752 [440s]
+f_01693.jpg piece 2 anchor inl 147 guess-diff 0.65 m scale 0.752 [443s]
+f_01694.jpg piece 2 anchor inl 126 guess-diff 0.72 m scale 0.752 [447s]
+f_01695.jpg piece 2 no anchor: reject vs guess 0.82 m 8.3 deg
+f_01696.jpg piece 2 no anchor: reject vs guess 1.02 m 9.6 deg
+f_01697.jpg piece 2 anchor inl 107 guess-diff 0.42 m scale 0.752 [456s]
+f_01698.jpg piece 2 no anchor: reject vs guess 0.68 m 15.8 deg
+f_01699.jpg piece 2 anchor inl 129 guess-diff 0.13 m scale 0.752 [460s]
+f_01700.jpg piece 2 anchor inl 163 guess-diff 0.19 m scale 0.752 [462s]
+f_01701.jpg piece 2 anchor inl 51 guess-diff 0.29 m scale 0.752 [464s]
+f_01702.jpg piece 2 anchor inl 83 guess-diff 0.22 m scale 0.752 [467s]
+f_01703.jpg piece 2 anchor inl 258 guess-diff 0.23 m scale 0.752 [469s]
+f_01704.jpg piece 2 anchor inl 299 guess-diff 0.18 m scale 0.752 [471s]
+f_01705.jpg piece 2 anchor inl 144 guess-diff 0.06 m scale 0.752 [473s]
+f_01706.jpg piece 2 anchor inl 157 guess-diff 0.06 m scale 0.752 [475s]
+f_01707.jpg piece 2 anchor inl 74 guess-diff 0.10 m scale 0.704 [477s]
+f_01708.jpg piece 2 anchor inl 44 guess-diff 0.62 m scale 0.704 [479s]
+f_01709.jpg piece 2 no anchor: pnp inliers 15
+f_01710.jpg piece 2 anchor inl 164 guess-diff 0.03 m scale 0.704 [483s]
+f_01711.jpg piece 2 anchor inl 218 guess-diff 0.05 m scale 0.704 [486s]
+f_01712.jpg piece 2 no anchor: reject vs guess 0.63 m 12.2 deg
+f_01713.jpg piece 2 no anchor: pnp inliers 29
+f_01714.jpg piece 2 anchor inl 190 guess-diff 0.04 m scale 0.704 [492s]
+f_01715.jpg piece 2 anchor inl 568 guess-diff 0.02 m scale 0.704 [494s]
+f_01716.jpg piece 2 anchor inl 812 guess-diff 0.03 m scale 0.704 [495s]
+f_01717.jpg piece 2 anchor inl 977 guess-diff 0.03 m scale 0.704 [497s]
+f_01718.jpg piece 2 anchor inl 1087 guess-diff 0.05 m scale 0.704 [499s]
+f_01719.jpg piece 2 anchor inl 301 guess-diff 0.07 m scale 0.704 [501s]
+f_01720.jpg piece 2 anchor inl 385 guess-diff 0.08 m scale 0.704 [503s]
+f_01721.jpg piece 2 anchor inl 202 guess-diff 0.09 m scale 0.704 [505s]
+f_01722.jpg piece 2 anchor inl 335 guess-diff 0.04 m scale 0.696 [507s]
+f_01723.jpg piece 2 anchor inl 106 guess-diff 0.03 m scale 0.696 [508s]
+f_01724.jpg piece 2 anchor inl 116 guess-diff 0.03 m scale 0.696 [510s]
+f_01725.jpg piece 2 anchor inl 499 guess-diff 0.05 m scale 0.696 [512s]
+f_01726.jpg piece 2 anchor inl 192 guess-diff 0.02 m scale 0.696 [515s]
+f_01727.jpg piece 2 anchor inl 94 guess-diff 0.34 m scale 0.696 [517s]
+f_01728.jpg piece 2 no anchor: pnp inliers 32
+f_01729.jpg piece 2 anchor inl 57 guess-diff 0.12 m scale 0.696 [521s]
+f_01730.jpg piece 2 anchor inl 213 guess-diff 0.12 m scale 0.696 [523s]
+f_01731.jpg piece 2 anchor inl 323 guess-diff 0.16 m scale 0.696 [526s]
+f_01732.jpg piece 2 anchor inl 402 guess-diff 0.26 m scale 0.696 [528s]
+f_01733.jpg piece 2 anchor inl 252 guess-diff 0.47 m scale 0.696 [532s]
+f_01734.jpg piece 2 no anchor: reject vs guess 0.80 m 14.3 deg
+f_01735.jpg piece 2 no anchor: pnp inliers 34
+f_01736.jpg piece 2 anchor inl 42 guess-diff 0.31 m scale 0.696 [542s]
+f_01737.jpg piece 2 anchor inl 112 guess-diff 0.21 m scale 0.693 [544s]
+f_01738.jpg piece 2 anchor inl 244 guess-diff 0.13 m scale 0.693 [546s]
+f_01739.jpg piece 2 anchor inl 231 guess-diff 0.10 m scale 0.693 [548s]
+f_01740.jpg piece 2 anchor inl 201 guess-diff 0.08 m scale 0.693 [550s]
+f_01741.jpg piece 2 anchor inl 181 guess-diff 0.07 m scale 0.693 [552s]
+f_01742.jpg piece 2 anchor inl 207 guess-diff 0.09 m scale 0.693 [554s]
+f_01743.jpg piece 2 anchor inl 242 guess-diff 0.12 m scale 0.693 [556s]
+f_01744.jpg piece 2 anchor inl 236 guess-diff 0.16 m scale 0.693 [558s]
+f_01745.jpg piece 2 anchor inl 186 guess-diff 0.24 m scale 0.693 [561s]
+f_01746.jpg piece 2 anchor inl 189 guess-diff 0.31 m scale 0.693 [563s]
+f_01747.jpg piece 2 anchor inl 150 guess-diff 0.33 m scale 0.693 [565s]
+f_01748.jpg piece 2 anchor inl 56 guess-diff 0.33 m scale 0.693 [567s]
+f_01749.jpg piece 2 anchor inl 61 guess-diff 0.32 m scale 0.695 [569s]
+f_01750.jpg piece 2 anchor inl 103 guess-diff 0.17 m scale 0.695 [571s]
+f_01751.jpg piece 2 anchor inl 233 guess-diff 0.17 m scale 0.695 [573s]
+f_01752.jpg piece 2 anchor inl 299 guess-diff 0.36 m scale 0.695 [575s]
+f_01753.jpg piece 2 anchor inl 432 guess-diff 0.54 m scale 0.695 [577s]
+f_01754.jpg piece 2 anchor inl 484 guess-diff 0.73 m scale 0.695 [579s]
+f_01862.jpg piece 3 no anchor: pnp inliers 0
+f_01863.jpg piece 3 anchor inl 256 guess-diff 0.07 m scale nan [582s]
+f_01864.jpg piece 3 anchor inl 132 guess-diff 0.12 m scale 0.957 [584s]
+f_01865.jpg piece 3 anchor inl 122 guess-diff 0.20 m scale 0.957 [586s]
+f_01866.jpg piece 3 no anchor: pnp inliers 19
+f_01867.jpg piece 3 no anchor: pnp inliers 11
+f_01868.jpg piece 3 anchor inl 42 guess-diff 0.07 m scale 0.957 [593s]
+f_01869.jpg piece 3 anchor inl 260 guess-diff 0.07 m scale 0.957 [596s]
+f_01870.jpg piece 3 anchor inl 319 guess-diff 0.31 m scale 0.942 [598s]
+f_01871.jpg piece 3 anchor inl 232 guess-diff 0.63 m scale 0.942 [601s]
+f_01872.jpg piece 3 no anchor: reject vs guess 0.91 m 1.9 deg
+f_01873.jpg piece 3 anchor inl 179 guess-diff 0.42 m scale 0.942 [606s]
+f_01874.jpg piece 3 anchor inl 302 guess-diff 0.68 m scale 0.942 [609s]
+f_01875.jpg piece 3 no anchor: reject vs guess 0.89 m 4.5 deg
+f_01876.jpg piece 3 no anchor: reject vs guess 1.15 m 5.8 deg
+f_01877.jpg piece 3 anchor inl 151 guess-diff 0.70 m scale 0.942 [617s]
+f_01878.jpg piece 3 no anchor: reject vs guess 1.05 m 2.9 deg
+f_01879.jpg piece 3 anchor inl 129 guess-diff 0.18 m scale 0.942 [623s]
+f_01880.jpg piece 3 anchor inl 183 guess-diff 0.06 m scale 0.942 [625s]
+f_01881.jpg piece 3 anchor inl 207 guess-diff 0.06 m scale 0.942 [628s]
+f_01882.jpg piece 3 anchor inl 243 guess-diff 0.11 m scale 0.942 [631s]
+f_01883.jpg piece 3 anchor inl 315 guess-diff 0.11 m scale 0.942 [634s]
+f_01884.jpg piece 3 anchor inl 261 guess-diff 0.14 m scale 0.942 [637s]
+f_01885.jpg piece 3 anchor inl 287 guess-diff 0.05 m scale 0.942 [639s]
+f_01886.jpg piece 3 anchor inl 192 guess-diff 0.10 m scale 0.905 [642s]
+f_01887.jpg piece 3 anchor inl 161 guess-diff 0.18 m scale 0.905 [644s]
+f_01888.jpg piece 3 anchor inl 140 guess-diff 0.34 m scale 0.905 [645s]
+f_01889.jpg piece 3 no anchor: pnp inliers 24
+f_01890.jpg piece 3 no anchor: pnp inliers 5
+f_01891.jpg piece 3 anchor inl 55 guess-diff 0.19 m scale 0.905 [652s]
+f_01892.jpg piece 3 anchor inl 97 guess-diff 0.23 m scale 0.905 [654s]
+f_01893.jpg piece 3 anchor inl 66 guess-diff 0.20 m scale 0.905 [656s]
+f_01894.jpg piece 3 anchor inl 47 guess-diff 0.36 m scale 0.905 [658s]
+f_01895.jpg piece 3 anchor inl 44 guess-diff 0.51 m scale 0.905 [659s]
+f_01896.jpg piece 3 no anchor: reject vs guess 0.83 m 6.9 deg
+f_01897.jpg piece 3 anchor inl 52 guess-diff 0.44 m scale 0.905 [663s]
+f_01898.jpg piece 3 anchor inl 100 guess-diff 0.65 m scale 0.905 [664s]
+f_01899.jpg piece 3 anchor inl 77 guess-diff 0.52 m scale 0.905 [666s]
+f_01900.jpg piece 3 anchor inl 91 guess-diff 0.43 m scale 0.905 [669s]
+f_01901.jpg piece 3 anchor inl 159 guess-diff 0.18 m scale 0.927 [671s]
+f_01902.jpg piece 3 anchor inl 170 guess-diff 0.25 m scale 0.927 [673s]
+f_01903.jpg piece 3 anchor inl 151 guess-diff 0.28 m scale 0.927 [675s]
+f_01904.jpg piece 3 anchor inl 98 guess-diff 0.31 m scale 0.927 [677s]
+f_01905.jpg piece 3 no anchor: pnp inliers 35
+f_01906.jpg piece 3 no anchor: pnp inliers 37
+f_01907.jpg piece 3 no anchor: pnp inliers 10
+f_01908.jpg piece 3 no anchor: pnp inliers 5
+f_01909.jpg piece 3 no anchor: pnp inliers 27
+f_01910.jpg piece 3 anchor inl 54 guess-diff 0.36 m scale 0.927 [690s]
+f_01911.jpg piece 3 anchor inl 107 guess-diff 0.40 m scale 0.927 [693s]
+f_01912.jpg piece 3 anchor inl 211 guess-diff 0.45 m scale 0.927 [695s]
+f_01913.jpg piece 3 anchor inl 256 guess-diff 0.48 m scale 0.927 [697s]
+f_01914.jpg piece 3 anchor inl 89 guess-diff 0.61 m scale 0.927 [698s]
+f_01915.jpg piece 3 anchor inl 67 guess-diff 0.62 m scale 0.927 [700s]
+f_01921.jpg piece 3 no anchor: pnp inliers 0
+f_01922.jpg piece 3 anchor inl 98 guess-diff 0.02 m scale 0.927 [703s]
+f_01923.jpg piece 3 anchor inl 205 guess-diff 0.12 m scale 0.927 [705s]
+f_01924.jpg piece 3 anchor inl 191 guess-diff 0.30 m scale 0.931 [707s]
+f_01925.jpg piece 3 anchor inl 139 guess-diff 0.44 m scale 0.931 [708s]
+f_01926.jpg piece 3 anchor inl 253 guess-diff 0.44 m scale 0.931 [711s]
+f_01927.jpg piece 3 anchor inl 493 guess-diff 0.49 m scale 0.931 [713s]
+f_01928.jpg piece 3 anchor inl 311 guess-diff 0.63 m scale 0.931 [715s]
+f_01929.jpg piece 3 no anchor: reject vs guess 0.84 m 5.0 deg
+f_01930.jpg piece 3 no anchor: reject vs guess 1.05 m 6.6 deg
+f_01931.jpg piece 3 anchor inl 43 guess-diff 0.36 m scale 0.931 [722s]
+f_01932.jpg piece 3 anchor inl 153 guess-diff 0.56 m scale 0.931 [725s]
+f_01933.jpg piece 3 anchor inl 136 guess-diff 0.56 m scale 0.931 [727s]
+f_01934.jpg piece 3 anchor inl 411 guess-diff 0.51 m scale 0.931 [729s]
+f_01935.jpg piece 3 anchor inl 321 guess-diff 0.51 m scale 0.931 [731s]
+f_01936.jpg piece 3 anchor inl 144 guess-diff 0.65 m scale 0.931 [734s]
+f_01937.jpg piece 3 no anchor: reject vs guess 0.86 m 3.0 deg
+f_01938.jpg piece 3 no anchor: reject vs guess 3.85 m 27.9 deg
+f_01939.jpg piece 3 anchor inl 149 guess-diff 0.16 m scale 0.931 [742s]
+f_01940.jpg piece 3 anchor inl 206 guess-diff 0.34 m scale 0.923 [745s]
+f_01941.jpg piece 3 anchor inl 416 guess-diff 0.25 m scale 0.923 [747s]
+f_01942.jpg piece 3 anchor inl 615 guess-diff 0.22 m scale 0.923 [749s]
+f_01943.jpg piece 3 anchor inl 419 guess-diff 0.30 m scale 0.923 [751s]
+f_01944.jpg piece 3 anchor inl 256 guess-diff 0.31 m scale 0.923 [753s]
+f_01945.jpg piece 3 anchor inl 178 guess-diff 0.31 m scale 0.923 [755s]
+f_01946.jpg piece 3 anchor inl 208 guess-diff 0.30 m scale 0.923 [757s]
+f_01947.jpg piece 3 anchor inl 157 guess-diff 0.24 m scale 0.923 [759s]
+f_01948.jpg piece 3 anchor inl 136 guess-diff 0.16 m scale 0.923 [761s]
+f_01949.jpg piece 3 no anchor: pnp inliers 13
+f_01950.jpg piece 3 no anchor: pnp inliers 7
+f_01951.jpg piece 3 anchor inl 49 guess-diff 0.02 m scale 0.923 [767s]
+f_01952.jpg piece 3 no anchor: pnp inliers 6
+f_01953.jpg piece 3 no anchor: pnp inliers 5
+f_01954.jpg piece 3 anchor inl 65 guess-diff 0.22 m scale 0.923 [773s]
+f_01955.jpg piece 3 anchor inl 72 guess-diff 0.19 m scale 0.923 [775s]
+f_01956.jpg piece 3 anchor inl 129 guess-diff 0.27 m scale 0.914 [777s]
+f_01957.jpg piece 3 anchor inl 181 guess-diff 0.21 m scale 0.914 [779s]
+f_01958.jpg piece 3 anchor inl 209 guess-diff 0.22 m scale 0.914 [781s]
+f_01959.jpg piece 3 anchor inl 241 guess-diff 0.19 m scale 0.914 [783s]
+f_01960.jpg piece 3 anchor inl 149 guess-diff 0.20 m scale 0.914 [785s]
+f_01961.jpg piece 3 anchor inl 111 guess-diff 0.24 m scale 0.914 [787s]
+f_01962.jpg piece 3 anchor inl 134 guess-diff 0.35 m scale 0.914 [789s]
+f_01963.jpg piece 3 anchor inl 145 guess-diff 0.41 m scale 0.914 [791s]
+f_01964.jpg piece 3 anchor inl 114 guess-diff 0.51 m scale 0.914 [793s]
+f_01965.jpg piece 3 anchor inl 243 guess-diff 0.56 m scale 0.914 [795s]
+f_01966.jpg piece 3 anchor inl 338 guess-diff 0.57 m scale 0.914 [797s]
+f_01967.jpg piece 3 anchor inl 437 guess-diff 0.59 m scale 0.914 [799s]
+f_01968.jpg piece 3 anchor inl 377 guess-diff 0.66 m scale 0.896 [801s]
+f_01969.jpg piece 3 anchor inl 233 guess-diff 0.73 m scale 0.896 [804s]
+f_01970.jpg piece 3 anchor inl 176 guess-diff 0.79 m scale 0.896 [806s]
+f_01971.jpg piece 3 no anchor: reject vs guess 0.81 m 7.6 deg
+f_01972.jpg piece 3 anchor inl 71 guess-diff 0.20 m scale 0.896 [811s]
+f_01973.jpg piece 3 no anchor: pnp inliers 30
+f_01974.jpg piece 3 no anchor: pnp inliers 16
+f_01975.jpg piece 3 anchor inl 64 guess-diff 0.05 m scale 0.896 [818s]
+f_01976.jpg piece 3 anchor inl 116 guess-diff 0.05 m scale 0.896 [820s]
+f_01977.jpg piece 3 anchor inl 71 guess-diff 0.05 m scale 0.896 [823s]
+f_01978.jpg piece 3 anchor inl 318 guess-diff 0.08 m scale 0.896 [824s]
+f_01979.jpg piece 3 anchor inl 357 guess-diff 0.10 m scale 0.896 [826s]
+f_01980.jpg piece 3 anchor inl 514 guess-diff 0.10 m scale 0.896 [828s]
+f_01981.jpg piece 3 anchor inl 934 guess-diff 0.10 m scale 0.896 [830s]
+f_01982.jpg piece 3 anchor inl 1074 guess-diff 0.08 m scale 0.896 [832s]
+f_01983.jpg piece 3 anchor inl 1358 guess-diff 0.05 m scale 0.871 [833s]
+f_01984.jpg piece 3 anchor inl 1428 guess-diff 0.03 m scale 0.871 [835s]
+f_01985.jpg piece 3 anchor inl 1669 guess-diff 0.01 m scale 0.871 [836s]
+f_01986.jpg piece 3 anchor inl 1741 guess-diff 0.00 m scale 0.871 [837s]
+f_01987.jpg piece 3 anchor inl 1630 guess-diff 0.00 m scale 0.871 [839s]
+f_01988.jpg piece 3 anchor inl 1685 guess-diff 0.00 m scale 0.871 [840s]
+f_01989.jpg piece 3 anchor inl 1675 guess-diff 0.00 m scale 0.871 [841s]
+f_01990.jpg piece 3 anchor inl 1568 guess-diff 0.00 m scale 0.871 [843s]
+f_01991.jpg piece 3 anchor inl 1738 guess-diff 0.00 m scale 0.871 [844s]
+f_01992.jpg piece 3 anchor inl 1750 guess-diff 0.00 m scale 0.871 [845s]
+f_01993.jpg piece 3 anchor inl 1769 guess-diff 0.00 m scale 0.871 [847s]
+anchors {'ok': 308, 'fail': 88, 'seed': 1} frames out 2069 piece scales {1: 0.9293677750269829, 2: 0.6951762659244103, 3: 0.8711942558041891}
