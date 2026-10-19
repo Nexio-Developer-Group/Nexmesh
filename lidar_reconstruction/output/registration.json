@@ -1,0 +1,197 @@
+{
+ "sphere_world_xyz_m": [
+  -7.200319766998291,
+  9.99441909790039,
+  1.4905154705047607
+ ],
+ "start_candidates_ranked": [
+  {
+   "score": 0.903751790523529,
+   "yaw_deg": 87.0,
+   "xy": [
+    -7.2725,
+    9.83147
+   ],
+   "dist_to_sphere_m": 0.1782200733439762
+  },
+  {
+   "score": 0.8584031462669373,
+   "yaw_deg": 271.0,
+   "xy": [
+    14.3275,
+    -9.768530000000002
+   ],
+   "dist_to_sphere_m": 29.22364078903524
+  },
+  {
+   "score": 0.8470020294189453,
+   "yaw_deg": 268.0,
+   "xy": [
+    3.727500000000001,
+    1.83147
+   ],
+   "dist_to_sphere_m": 13.640050690335114
+  },
+  {
+   "score": 0.8236323595046997,
+   "yaw_deg": 89.0,
+   "xy": [
+    -12.8725,
+    7.23147
+   ],
+   "dist_to_sphere_m": 6.309319797984876
+  },
+  {
+   "score": 0.8166705965995789,
+   "yaw_deg": 93.0,
+   "xy": [
+    -3.7725,
+    9.731470000000002
+   ],
+   "dist_to_sphere_m": 3.4378904262804606
+  },
+  {
+   "score": 0.8160366415977478,
+   "yaw_deg": 269.0,
+   "xy": [
+    -12.672500000000001,
+    -10.468530000000001
+   ],
+   "dist_to_sphere_m": 21.181998071138548
+  },
+  {
+   "score": 0.7944315671920776,
+   "yaw_deg": 86.0,
+   "xy": [
+    10.8275,
+    9.731470000000002
+   ],
+   "dist_to_sphere_m": 18.029737318648348
+  },
+  {
+   "score": 0.7889659404754639,
+   "yaw_deg": 89.0,
+   "xy": [
+    14.3275,
+    9.83147
+   ],
+   "dist_to_sphere_m": 21.528436458063297
+  },
+  {
+   "score": 0.7347906231880188,
+   "yaw_deg": 279.0,
+   "xy": [
+    -12.5725,
+    -10.268530000000002
+   ],
+   "dist_to_sphere_m": 20.963001373848083
+  },
+  {
+   "score": 0.7266168594360352,
+   "yaw_deg": 86.0,
+   "xy": [
+    -12.8725,
+    5.53147
+   ],
+   "dist_to_sphere_m": 7.217447141898944
+  }
+ ],
+ "chosen_start": {
+  "score": 0.903751790523529,
+  "yaw_deg": 87.0,
+  "xy": [
+   -7.2725,
+   9.83147
+  ]
+ },
+ "T0_slam_to_model": {
+  "x": -7.2725,
+  "y": 9.83147,
+  "yaw_deg": 87.0,
+  "matrix": [
+   [
+    0.052335956242943966,
+    -0.9986295347545738,
+    -7.2725
+   ],
+   [
+    0.9986295347545738,
+    0.052335956242943966,
+    9.83147
+   ],
+   [
+    0.0,
+    0.0,
+    1.0
+   ]
+  ]
+ },
+ "first_pose_after_anchoring": {
+  "xy": [
+   -7.29628287921317,
+   9.828395354216243
+  ],
+  "yaw_deg": 88.99409583080525,
+  "offset_from_sphere_m": 0.19176235911373543
+ },
+ "start_constraint": {
+  "type": "soft prior on x,y",
+  "sigma_m": 0.25
+ },
+ "scale": "fixed 1.0 (metric LiDAR vs metric model; not estimated)",
+ "mirror": "none (angle_sign=-1)",
+ "lidar_only_map_rigid_fit": {
+  "pose": [
+   -7.3489107046336395,
+   9.830830236310845,
+   1.5131907399128353
+  ],
+  "frac_within_5cm": 0.11792882442233092,
+  "frac_within_10cm": 0.2180468881767583,
+  "frac_within_20cm": 0.3476808905380334,
+  "frac_within_30cm": 0.43987181649519314,
+  "note": "best rigid fit of the unanchored SLAM-only map; shortfall vs anchored = residual drift"
+ },
+ "model_anchored_fit": {
+  "frac_within_5cm": 0.8482233199178171,
+  "frac_within_10cm": 0.9286278049454003,
+  "frac_within_20cm": 0.9519761611840275,
+  "frac_within_30cm": 0.9612804708413445
+ },
+ "anchoring_rounds": [
+  {
+   "round": 0,
+   "solver_status": 0,
+   "cost": 468.4964468790056,
+   "nfev": 300,
+   "anchors": 1242,
+   "inlier_median": 0.9305808214288167,
+   "rms_median_m": 0.03561146574967586
+  },
+  {
+   "round": 1,
+   "solver_status": 0,
+   "cost": 370.2245222974698,
+   "nfev": 300,
+   "anchors": 1237,
+   "inlier_median": 0.9308005427408412,
+   "rms_median_m": 0.03498676305393508
+  },
+  {
+   "round": 2,
+   "solver_status": 0,
+   "cost": 343.84604508422524,
+   "nfev": 300,
+   "anchors": 1242,
+   "inlier_median": 0.9303629158410679,
+   "rms_median_m": 0.03497022392930862
+  }
+ ],
+ "anchors": 1242,
+ "model_section_height_m": 1.4905154705047607,
+ "limitations": [
+  "Anchoring uses the model, so LiDAR-vs-model residuals are not independent evidence of absolute accuracy.",
+  "Sphere XY is a soft constraint (sigma ~ sphere radius); heading comes from the data, not the sphere.",
+  "Model-vs-reality differences (furniture, open doors, as-built deviations) lower the inlier fraction."
+ ]
+}

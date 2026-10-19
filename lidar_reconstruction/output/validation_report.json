@@ -1,0 +1,743 @@
+{
+ "summary": {
+  "pass": 29,
+  "fail": 3,
+  "unverified": 4
+ },
+ "scale_estimate": 1.0001281804991593,
+ "room_vs_nominal": [
+  {
+   "room": "R000",
+   "d_short_m": -0.06893398282201035,
+   "d_long_m": 0.04999999999999982,
+   "observed_perimeter_frac": 0.8692307692307693
+  },
+  {
+   "room": "R001",
+   "d_short_m": -0.07499999999999885,
+   "d_long_m": 0.031066017177980854,
+   "observed_perimeter_frac": 0.8846153846153846
+  },
+  {
+   "room": "R002",
+   "d_short_m": -0.06893398282202501,
+   "d_long_m": -0.06893398282202856,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R003",
+   "d_short_m": -0.01893398282201364,
+   "d_long_m": -0.02500000000000213,
+   "observed_perimeter_frac": 0.9459459459459459
+  },
+  {
+   "room": "R004",
+   "d_short_m": -0.09999999999999831,
+   "d_long_m": -1.3322676295501878e-15,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R005",
+   "d_short_m": -0.018933982822017636,
+   "d_long_m": -0.418933982822018,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R006",
+   "d_short_m": 0.2529307524064155,
+   "d_long_m": -0.03234361374800532,
+   "observed_perimeter_frac": 0.9805194805194806
+  },
+  {
+   "room": "R007",
+   "d_short_m": 0.08179990863143705,
+   "d_long_m": 0.03845541590934598,
+   "observed_perimeter_frac": 0.7530864197530864
+  },
+  {
+   "room": "R008",
+   "d_short_m": -0.04999999999999982,
+   "d_long_m": -0.16893398282201488,
+   "observed_perimeter_frac": 0.9925925925925926
+  },
+  {
+   "room": "R009",
+   "d_short_m": 0.4060660171779884,
+   "d_long_m": -0.16893398282201932,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R010",
+   "d_short_m": 0.5060660171779796,
+   "d_long_m": -0.6689339828220193,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R011",
+   "d_short_m": 0.058796648378926175,
+   "d_long_m": -0.16886702023850297,
+   "observed_perimeter_frac": 0.9886363636363636
+  },
+  {
+   "room": "R012",
+   "d_short_m": 0.031066017177986183,
+   "d_long_m": -0.06893398282202146,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R014",
+   "d_short_m": -0.01893398282201275,
+   "d_long_m": -0.12499999999999867,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R015",
+   "d_short_m": 0.031066017177984406,
+   "d_long_m": -1.3322676295501878e-15,
+   "observed_perimeter_frac": 0.8888888888888888
+  },
+  {
+   "room": "R018",
+   "d_short_m": 0.0060660171779864935,
+   "d_long_m": -0.049999999999998046,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R019",
+   "d_short_m": 0.05606601717797943,
+   "d_long_m": -0.01893398282202119,
+   "observed_perimeter_frac": 0.9577464788732394
+  },
+  {
+   "room": "R020",
+   "d_short_m": -0.04393398282201222,
+   "d_long_m": -0.0999999999999992,
+   "observed_perimeter_frac": 0.9436619718309859
+  },
+  {
+   "room": "R021",
+   "d_short_m": 0.006066017177987604,
+   "d_long_m": -0.09999999999999876,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R022",
+   "d_short_m": -0.018933982822014972,
+   "d_long_m": -0.05000000000000204,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R023",
+   "d_short_m": -0.10000000000000231,
+   "d_long_m": 0.26213203435596544,
+   "observed_perimeter_frac": 0.9166666666666666
+  },
+  {
+   "room": "R025",
+   "d_short_m": 2.3610660171779774,
+   "d_long_m": 2.3980660171779786,
+   "observed_perimeter_frac": 0.622568093385214
+  },
+  {
+   "room": "R026",
+   "d_short_m": 0.030000000000001137,
+   "d_long_m": -0.0019339828220146238,
+   "observed_perimeter_frac": 0.9058823529411765
+  },
+  {
+   "room": "R027",
+   "d_short_m": 0.030000000000001137,
+   "d_long_m": 0.017000000000000792,
+   "observed_perimeter_frac": 0.9550561797752809
+  },
+  {
+   "room": "R028",
+   "d_short_m": -0.17499999999999893,
+   "d_long_m": -0.14393398282201986,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R031",
+   "d_short_m": -0.03786796564403705,
+   "d_long_m": -0.049999999999998046,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R033",
+   "d_short_m": 0.008507824848322576,
+   "d_long_m": -0.6714569892212112,
+   "observed_perimeter_frac": 0.9538461538461539
+  },
+  {
+   "room": "R034",
+   "d_short_m": 0.012132034355963883,
+   "d_long_m": -0.0500000000000016,
+   "observed_perimeter_frac": 0.7126436781609196
+  },
+  {
+   "room": "R035",
+   "d_short_m": -0.12500000000000222,
+   "d_long_m": -0.07499999999999929,
+   "observed_perimeter_frac": 0.9837837837837838
+  },
+  {
+   "room": "R036",
+   "d_short_m": 0.0060660171779816086,
+   "d_long_m": -0.7500000000000009,
+   "observed_perimeter_frac": 0.9848484848484849
+  },
+  {
+   "room": "R039",
+   "d_short_m": -0.15000000000000124,
+   "d_long_m": 0.13106601717798316,
+   "observed_perimeter_frac": 0.9541284403669725
+  },
+  {
+   "room": "R042",
+   "d_short_m": -0.09999999999999853,
+   "d_long_m": -1.3322676295501878e-15,
+   "observed_perimeter_frac": 0.9390243902439024
+  },
+  {
+   "room": "R043",
+   "d_short_m": -0.14999999999999947,
+   "d_long_m": 0.13713203435597654,
+   "observed_perimeter_frac": 0.9465648854961832
+  },
+  {
+   "room": "R044",
+   "d_short_m": -0.03433633027198835,
+   "d_long_m": -0.025152355118592595,
+   "observed_perimeter_frac": 0.8987341772151899
+  },
+  {
+   "room": "R045",
+   "d_short_m": -0.09999999999999876,
+   "d_long_m": 0.062132034355976806,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R047",
+   "d_short_m": -0.29393398282202066,
+   "d_long_m": -0.5500000000000007,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R048",
+   "d_short_m": -0.15000000000000036,
+   "d_long_m": 1.7763568394002505e-15,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R049",
+   "d_short_m": 0.06213203435599279,
+   "d_long_m": -0.012867965644057122,
+   "observed_perimeter_frac": 0.9463087248322147
+  },
+  {
+   "room": "R050",
+   "d_short_m": 0.4810660171779819,
+   "d_long_m": 0.006066017177984939,
+   "observed_perimeter_frac": 0.9423076923076923
+  },
+  {
+   "room": "R051",
+   "d_short_m": -0.3439339828220165,
+   "d_long_m": -0.06893398282202234,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R052",
+   "d_short_m": -0.024999999999999467,
+   "d_long_m": -0.018933982822019857,
+   "observed_perimeter_frac": 0.9420289855072463
+  },
+  {
+   "room": "R053",
+   "d_short_m": -0.06675985869396861,
+   "d_long_m": 0.0476889278701953,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R054",
+   "d_short_m": -0.07500000000000107,
+   "d_long_m": -0.049999999999998046,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R055",
+   "d_short_m": -0.12499999999999667,
+   "d_long_m": 2.6645352591003757e-15,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R056",
+   "d_short_m": -0.025000000000001688,
+   "d_long_m": -2.6645352591003757e-15,
+   "observed_perimeter_frac": 0.868421052631579
+  },
+  {
+   "room": "R057",
+   "d_short_m": -0.10000000000000142,
+   "d_long_m": -0.39999999999999947,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R059",
+   "d_short_m": 0.24999999999999378,
+   "d_long_m": -0.1999999999999993,
+   "observed_perimeter_frac": 0.9863013698630136
+  },
+  {
+   "room": "R060",
+   "d_short_m": -0.018933982822022966,
+   "d_long_m": -0.06893398282201213,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R061",
+   "d_short_m": -0.0689339828220028,
+   "d_long_m": -0.1500000000000008,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R062",
+   "d_short_m": -0.018933982822011863,
+   "d_long_m": -0.30000000000000293,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R063",
+   "d_short_m": -0.05000000000000293,
+   "d_long_m": -0.1689339828220242,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R064",
+   "d_short_m": -2.886579864025407e-15,
+   "d_long_m": -0.2689339828220221,
+   "observed_perimeter_frac": 1.0
+  },
+  {
+   "room": "R065",
+   "d_short_m": 6.661338147750939e-16,
+   "d_long_m": 0.031066017177986627,
+   "observed_perimeter_frac": 0.9493670886075949
+  }
+ ],
+ "wall_thickness_diff_m": [
+  0.20052325082285768,
+  0.15946558155028115,
+  0.22178039636371202,
+  0.08155580194370102,
+  0.24964487146956724,
+  0.02185181341145223,
+  0.030828099223078692,
+  -0.021496234299597045,
+  -0.04301756861246145,
+  0.02153329678718971,
+  0.030322080717383376,
+  -0.013025831905012747,
+  0.185141468421563,
+  0.1524060839220315,
+  0.016808539309923598,
+  -0.06957760671966545,
+  0.13106059407136791,
+  -0.11675087988701155,
+  -0.0590735977385754,
+  -0.3979468474397708,
+  0.003095084586086483,
+  -0.030151811624371028,
+  0.1705775970819449,
+  0.04436721815648498,
+  -0.036165570975892375,
+  0.12432317369402632,
+  -0.06725985323783806,
+  -0.032164349050105956,
+  0.03834576903042017,
+  0.017431152064697447,
+  0.28109677358014584,
+  0.17006197522205077,
+  0.20588264653056285,
+  0.16971701199709824,
+  -0.07047145887623832,
+  -0.12175153418409895,
+  0.08707792554816365,
+  0.09057652698130561,
+  0.13097541593340126,
+  0.059164862804181345,
+  0.13094904863367454,
+  0.1744854128757863,
+  0.176912423520204,
+  0.21991072536108305,
+  0.24321386575577356,
+  0.03527153503090988,
+  0.0711400702386685,
+  -1.1946622952201937,
+  0.06209434424636981,
+  0.06893782432988224
+ ],
+ "checks": [
+  {
+   "id": "I1",
+   "group": "input",
+   "description": "timestamps non-decreasing",
+   "value": true,
+   "threshold": true,
+   "op": ">=",
+   "rationale": "required for sequential SLAM",
+   "result": "pass"
+  },
+  {
+   "id": "I2",
+   "group": "input",
+   "description": "malformed records skipped",
+   "value": 0,
+   "threshold": 0,
+   "op": "<=",
+   "rationale": "any skipped record is data loss",
+   "result": "pass"
+  },
+  {
+   "id": "I3",
+   "group": "input",
+   "description": "fraction of scans with <60 points",
+   "value": 0.00022592487997740753,
+   "threshold": 0.001,
+   "op": "<=",
+   "rationale": "short fragments (log start) are skipped by the matcher; must be rare",
+   "result": "pass"
+  },
+  {
+   "id": "I4",
+   "group": "input",
+   "description": "longest timestamp gap (s)",
+   "value": 0.15999999999985448,
+   "threshold": 1.0,
+   "op": "<=",
+   "rationale": "gaps >1 s would break constant-velocity prediction; none expected at 13 Hz",
+   "result": "pass"
+  },
+  {
+   "id": "I5",
+   "group": "input",
+   "description": "sensor extrinsics / angle zero from a calibration file",
+   "value": null,
+   "threshold": null,
+   "op": ">=",
+   "rationale": "no calibration file supplied; angle sign validated against model (mirrored map fails), zero direction absorbed in registration yaw",
+   "result": "unverified"
+  },
+  {
+   "id": "I6",
+   "group": "input",
+   "description": "IMU / odometry available for fusion",
+   "value": null,
+   "threshold": null,
+   "op": ">=",
+   "rationale": "none in the log (keys t0,t1,a,r); trajectory is LiDAR + model only",
+   "result": "unverified"
+  },
+  {
+   "id": "S1",
+   "group": "slam",
+   "description": "median scan-to-submap inlier fraction (<=15 cm)",
+   "value": 0.9865771812080537,
+   "threshold": 0.9,
+   "op": ">=",
+   "rationale": "healthy indoor matching; low values indicate poor overlap",
+   "result": "pass"
+  },
+  {
+   "id": "S2",
+   "group": "slam",
+   "description": "fraction of scans needing correlative recovery",
+   "value": 0.00036712792996328723,
+   "threshold": 0.01,
+   "op": "<=",
+   "rationale": "recovery = tracking nearly lost",
+   "result": "pass"
+  },
+  {
+   "id": "S3",
+   "group": "slam",
+   "description": "median scan-matching rms (m)",
+   "value": 0.02550788295849948,
+   "threshold": 0.04,
+   "op": "<=",
+   "rationale": "about 2x the expected range noise of a low-cost 2D LiDAR (unknown model; provisional)",
+   "result": "pass"
+  },
+  {
+   "id": "S4",
+   "group": "slam",
+   "description": "max keyframe-to-keyframe jump after optimisation / odometry (m)",
+   "value": 1.1407580522528187,
+   "threshold": 1.5166774073399136,
+   "op": "<=",
+   "rationale": "keyframes are <=0.3 m apart; a larger jump = trajectory discontinuity",
+   "result": "pass"
+  },
+  {
+   "id": "S5",
+   "group": "slam",
+   "description": "p95 change of relative keyframe motion odometry -> optimised (m)",
+   "value": 0.01778987498519759,
+   "threshold": 0.05,
+   "op": "<=",
+   "rationale": "optimisation should correct drift without distorting local geometry",
+   "result": "pass"
+  },
+  {
+   "id": "S6",
+   "group": "slam",
+   "description": "p95 change of relative keyframe yaw odometry -> optimised (deg)",
+   "value": 0.17578762673359424,
+   "threshold": 1.5,
+   "op": "<=",
+   "rationale": "same, for rotation",
+   "result": "pass"
+  },
+  {
+   "id": "S7",
+   "group": "slam",
+   "description": "verified LiDAR-only loop closures kept",
+   "value": 43,
+   "threshold": 1,
+   "op": ">=",
+   "rationale": "at least some independent LiDAR-only revisits confirm consistency",
+   "result": "pass"
+  },
+  {
+   "id": "S8",
+   "group": "slam",
+   "description": "anchoring rounds converged: last-round median inlier fraction",
+   "value": 0.9303629158410679,
+   "threshold": 0.85,
+   "op": ">=",
+   "rationale": "chunks fit the model section at the end of optimisation",
+   "result": "pass"
+  },
+  {
+   "id": "S9",
+   "group": "slam",
+   "description": "pose-graph solver status 'converged' (scipy status>0)",
+   "value": 0,
+   "threshold": 1,
+   "op": ">=",
+   "rationale": "status 0 = max evaluations reached; cost is stable across rounds but not formally converged",
+   "result": "fail"
+  },
+  {
+   "id": "R1",
+   "group": "registration",
+   "description": "first estimated pose offset from sphere (m)",
+   "value": 0.19176235911373543,
+   "threshold": 0.29,
+   "op": "<=",
+   "rationale": "sphere radius is 0.29 m; sphere centre is only an approximate start marker",
+   "result": "pass"
+  },
+  {
+   "id": "R2",
+   "group": "registration",
+   "description": "sphere-consistent start is the top-ranked unconstrained global fit",
+   "value": 1,
+   "threshold": 1,
+   "op": ">=",
+   "rationale": "global localisation of the first 12 keyframes without any positional prior",
+   "result": "pass"
+  },
+  {
+   "id": "R3",
+   "group": "registration",
+   "description": "margin of top candidate over runner-up (score)",
+   "value": 0.0453486442565918,
+   "threshold": 0.01,
+   "op": ">=",
+   "rationale": "repeated rooms make start localisation ambiguous; small margin means the sphere is what disambiguates",
+   "result": "pass"
+  },
+  {
+   "id": "R4",
+   "group": "registration",
+   "description": "fraction of map points within 10 cm of model section",
+   "value": 0.9367620389578196,
+   "threshold": 0.8,
+   "op": ">=",
+   "rationale": "remaining share is furniture/open doors/as-built differences; model-dependent (anchored)",
+   "result": "pass"
+  },
+  {
+   "id": "R5",
+   "group": "registration",
+   "description": "median distance map point -> model (m)",
+   "value": 0.01767264121970355,
+   "threshold": 0.03,
+   "op": "<=",
+   "rationale": "sub-3 cm needs both a good trajectory and an accurate model",
+   "result": "pass"
+  },
+  {
+   "id": "R6",
+   "group": "registration",
+   "description": "LiDAR-only map: fraction within 10 cm after best rigid fit",
+   "value": 0.2180468881767583,
+   "threshold": null,
+   "op": ">=",
+   "rationale": "diagnostic of residual SLAM drift without anchoring (not a pass/fail quantity)",
+   "result": "unverified"
+  },
+  {
+   "id": "R7",
+   "group": "registration",
+   "description": "|estimated scale - 1| (similarity fit of map to model)",
+   "value": 0.00012818049915930274,
+   "threshold": 0.005,
+   "op": "<=",
+   "rationale": "model is metric, LiDAR is metric; scale must be consistent. estimated scale=1.00013",
+   "result": "pass"
+  },
+  {
+   "id": "M1",
+   "group": "measurement",
+   "description": "median perpendicular offset LiDAR face -> nearest parallel model wall face (m)",
+   "value": 0.025200905540112596,
+   "threshold": 0.03,
+   "op": "<=",
+   "rationale": "design vs as-built + registration; model-dependent",
+   "result": "pass"
+  },
+  {
+   "id": "M2",
+   "group": "measurement",
+   "description": "p90 perpendicular offset LiDAR face -> model (m)",
+   "value": 0.12681799047948916,
+   "threshold": 0.06,
+   "op": "<=",
+   "rationale": "tail dominated by as-built differences and angled walls",
+   "result": "fail"
+  },
+  {
+   "id": "M3",
+   "group": "measurement",
+   "description": "median |LiDAR wall thickness - nominal model thickness| (m)",
+   "value": 0.08431686374593234,
+   "threshold": 0.02,
+   "op": "<=",
+   "rationale": "independent of the anchoring (relative measure between two faces); n=50 wall pairs; nominal from model object names",
+   "result": "fail"
+  },
+  {
+   "id": "M4",
+   "group": "measurement",
+   "description": "median |measured room dimension - nominal label size| (m), observed rooms",
+   "value": 0.0644459465249807,
+   "threshold": 0.08,
+   "op": "<=",
+   "rationale": "label sizes are design intent; rooms bounded partly by model-derived edges, door lines and furniture bias the min-rectangle; n=53 rooms",
+   "result": "pass"
+  },
+  {
+   "id": "M5",
+   "group": "measurement",
+   "description": "room boundary consistency: mean rectangularity (area / min-rect area), observed rooms",
+   "value": 0.8814234278139857,
+   "threshold": 0.8,
+   "op": ">=",
+   "rationale": "most rooms are near-rectangular; very low values flag boundary leaks",
+   "result": "pass"
+  },
+  {
+   "id": "M6",
+   "group": "measurement",
+   "description": "median face uncertainty sigma (m)",
+   "value": 0.013732506225395754,
+   "threshold": 0.04,
+   "op": "<=",
+   "rationale": "sigma = sqrt((rms/sqrt(n_scans))^2 + sigma_registration^2)",
+   "result": "pass"
+  },
+  {
+   "id": "M7",
+   "group": "measurement",
+   "description": "fraction of model wall length supported by LiDAR (8 cm)",
+   "value": 0.8505295014715853,
+   "threshold": 0.6,
+   "op": ">=",
+   "rationale": "floor coverage; unsupported wall is labelled model-derived in the plan",
+   "result": "pass"
+  },
+  {
+   "id": "M8",
+   "group": "measurement",
+   "description": "overlapping duplicate wall faces after merge",
+   "value": 0,
+   "threshold": 0,
+   "op": "<=",
+   "rationale": "repeated estimates of the same wall must be merged",
+   "result": "pass"
+  },
+  {
+   "id": "M9",
+   "group": "measurement",
+   "description": "comparison with surveyed (as-built) reference dimensions",
+   "value": null,
+   "threshold": null,
+   "op": ">=",
+   "rationale": "no total-station / tape reference dimensions were supplied; only model design dimensions are available",
+   "result": "unverified"
+  },
+  {
+   "id": "O1",
+   "group": "outputs",
+   "description": "all original objects present with unchanged world matrices in output .blend",
+   "value": 1,
+   "threshold": 1,
+   "op": ">=",
+   "rationale": "reopened output and compared against the original file",
+   "result": "pass"
+  },
+  {
+   "id": "O2",
+   "group": "outputs",
+   "description": "required collections exist in reopened output .blend",
+   "value": 1,
+   "threshold": 1,
+   "op": ">=",
+   "rationale": "collections found: ['01_Slab', '02_Walls_columns', '02_Walls_w100', '02_Walls_w150', '02_Walls_w175', '02_Walls_w230', '02_Walls_w300', '02_Walls_wo', '03_Doors', '04_Windows', '05_Railings', '06_Stairs']...",
+   "result": "pass"
+  },
+  {
+   "id": "O3",
+   "group": "outputs",
+   "description": "registered PLY reloads with finite coordinates",
+   "value": 1,
+   "threshold": 1,
+   "op": ">=",
+   "rationale": "295877 points reloaded",
+   "result": "pass"
+  },
+  {
+   "id": "O4",
+   "group": "outputs",
+   "description": "DXF reopens and holds geometry",
+   "value": 1,
+   "threshold": 1,
+   "op": ">=",
+   "rationale": "773 entities",
+   "result": "pass"
+  },
+  {
+   "id": "O5",
+   "group": "outputs",
+   "description": "SVG parses as XML",
+   "value": 1,
+   "threshold": 1,
+   "op": ">=",
+   "rationale": "ok",
+   "result": "pass"
+  }
+ ],
+ "note": "thresholds are provisional engineering judgements (sensor model unknown), each justified in 'rationale'; model-dependent checks are not independent of anchoring"
+}

@@ -1,0 +1,5 @@
+data/
+output/*.npz
+output/*.pkl
+__pycache__/
+*.pyc

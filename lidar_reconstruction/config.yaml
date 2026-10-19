@@ -1,0 +1,41 @@
+# Pipeline configuration. Relative paths are resolved against this file's directory.
+paths:
+  blend: data/Floor18_TypicalFloor_WingB.blend      # original model, never modified
+  lidar_jsonl: data/lidar_h.jsonl                   # raw scan log, never modified
+  work_dir: output
+sensor:
+  angle_unit_deg: 0.01        # raw 'a' = centi-degrees
+  range_unit_m: 0.001         # raw 'r' = millimetres
+  min_range_m: 0.15
+  max_range_m: 12.0
+  angle_sign: -1              # -1 = clockwise-positive device angle (RPLIDAR-style). Validated: the mirrored (+1) map does not fit the model
+  angle_offset_deg: 0.0       # device zero direction vs sensor x axis; absorbed by the registration yaw
+scene:
+  sphere_name: Sphere
+  lidar_height_m: null        # null -> use the sphere's world z (handheld height); no vertical motion is observable
+  slice_z_m: null             # null -> same as lidar height
+slam:
+  min_scan_points: 60
+  voxel_m: 0.05
+  keyframe_dist_m: 0.3
+  keyframe_yaw_deg: 10
+  submap_keyframes: 35
+  local_map_half: 10          # keyframes either side for loop-closure local maps
+  loop_radius_m: 6.0
+  loop_min_separation_kf: 100
+anchor:
+  chunk_half: 6
+  sequential_step: 3
+  start_sigma_m: 0.25         # sphere treated as a soft constraint, ~ sphere radius
+  rounds_window_m: [0.5, 0.3, 0.2]
+  prior_sigma_m: 0.10
+cloud:
+  raw_voxel_m: 0.0            # 0 = keep every valid return in raw_derived.npz
+  processed_voxel_m: 0.02
+  persistence_cell_m: 0.05
+  persistence_min_scans: 4
+floorplan:
+  persistence_min_scans: 4
+  line_inlier_tol_m: 0.04
+  min_wall_len_m: 0.4
+  door_gap_min_m: 0.6
