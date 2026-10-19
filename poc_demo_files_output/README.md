@@ -31,3 +31,8 @@ Scripts: `lidar_reconstruction/lrf_height.py`, `poc_simulated_3d.py`.
 - `simulated_survey_grade/SIMULATED_3D_drawing.png`: the fitted wall faces extruded from the floor to 2.6–2.8 m (no ceiling, no floor slab).
 - `SIMULATED_reachability_audit.json`: every point lies within range, within the virtual beam angles from the real sensor position and LRF height, between 0 and 2.87 m; no ground or ceiling points.
 Scripts: `lidar_reconstruction/poc_plan_from_3d.py`. Open question: whether the 0.95 m LRF readings are real sensor lowering or the LRF hitting furniture.
+
+## Wall comparison: Blender model vs real plan vs simulated plan (`COMPARISON_walls_real_vs_simulated_vs_model.png`, `COMPARISON_walls_summary.json`)
+Per-item values: `real_measured/wall_distances_and_lengths_vs_model.csv`, `simulated_survey_grade/SIMULATED_wall_distances_and_lengths_vs_model.csv`. Script: `lidar_reconstruction/compare_walls_three_way.py`.
+Wall length is compared only for faces seen end to end (both ends within 20 cm of a continuous model wall run, split at openings > 0.4 m); partial views are reported as coverage only.
+The simulated distance statistics follow from the assumed scanner spec by construction; the simulated wall-length numbers were not tuned.

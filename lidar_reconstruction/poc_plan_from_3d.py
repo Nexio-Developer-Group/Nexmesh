@@ -74,6 +74,7 @@ def run(root, out):
     plt.close(fig)
     g = dict(faces=[dict(id=f["id"], p0=f["p0"].tolist(), p1=f["p1"].tolist(), normal=f["normal"].tolist()) for f in faces], model_derived_unobserved=[],
              openings=[dict(id=o["id"], p0=o["p0"].tolist(), p1=o["p1"].tolist()) for o in openings], rooms=[dict(r, polygon=r["polygon"], status="observed") for r in rooms])
+    json.dump([dict(id=f["id"], p0=f["p0"].tolist(), p1=f["p1"].tolist(), normal=f["normal"].tolist(), sigma_m=0.02) for f in faces], open(f"{out}/simulated_survey_grade/SIMULATED_plan_faces.json", "w"))
     XF.export_dxf(f"{out}/simulated_survey_grade/SIMULATED_floorplan_from_3D.dxf", g)
     # ---- 3D drawing: faces extruded 0 -> top
     rng = np.random.default_rng(5); top = rng.uniform(2.6, 2.8, len(faces)); fig = plt.figure(figsize=(18, 12)); ax = fig.add_subplot(111, projection="3d")
