@@ -1,0 +1,77 @@
+{
+ "params": {
+  "seed": 20261020,
+  "max_edge_walls": 0.14,
+  "max_edge_floor": 0.35,
+  "low_amp": 0.022,
+  "low_wavelength": [
+   3.0,
+   9.0
+  ],
+  "mid_amp": 0.006,
+  "mid_wavelength": [
+   0.4,
+   1.6
+  ],
+  "noise_mm": 3.0,
+  "twist_deg": 0.4,
+  "scale_err": 0.0025,
+  "bowl_cm": 1.5,
+  "wall_tilt_deg": 0.25,
+  "wall_offset_cm": 0.8,
+  "hole_prob": 0.35,
+  "hole_radius": [
+   0.08,
+   0.35
+  ],
+  "speckle": 0.004,
+  "tex_gain_sigma": 0.07,
+  "tex_tint_sigma": 0.025,
+  "grain": 3.5,
+  "blur_patches": 150,
+  "ghost_prob": 0.3,
+  "uv_jitter_px": 2.0,
+  "jpeg_quality": 72
+ },
+ "displacement": {
+  "objects": 730,
+  "disp_rms_m": 0.07480796258051194,
+  "disp_max_m": 0.20289036259595902,
+  "disp_p95_m": 0.13123578986286927
+ },
+ "textures": {
+  "Floor18_baked": {
+   "islands_modified": 367
+  },
+  "Flat_GLB_atlas": {
+   "islands_modified": 248
+  }
+ },
+ "run": {
+  "faces_original": 24374,
+  "faces_after_subdivision": 556107,
+  "faces_in_glb": 542611,
+  "vertices_in_glb": 1626467,
+  "meshes_in_glb": 730,
+  "textured_meshes_in_glb": 728,
+  "hole_patches": 525,
+  "faces_removed_by_holes": 13496,
+  "systematic_distortion_at_z1.5m_cm": {
+   "global_drift_rms": 7.7,
+   "global_drift_max": 17.6,
+   "low_frequency_rms": 2.9,
+   "mid_frequency_rms": 0.8,
+   "total_rms": 8.3,
+   "total_max": 20.2
+  },
+  "vertex_displacement_all_cm": {
+   "rms": 7.5,
+   "p95": 13.1,
+   "max": 20.3
+  },
+  "texture_islands_modified": {
+   "Floor18_baked": 367,
+   "Flat_GLB_atlas": 248
+  }
+ }
+}
