@@ -1,9 +1,9 @@
 """SIMULATED 3D-LiDAR scan derived from the real/simulated 2D data. Illustrative, NOT measured.
 Each wall return is re-observed by a virtual multi-beam 3D LiDAR at the REAL sensor position of that scan (same trajectory, same horizontal range):
-  64 beams, elevation -30..+30 deg (+-0.15 deg jitter), z_hit = z_sensor + r * tan(elev)  (vertical planar wall assumed)
+  64 beams, elevation -30..+30 deg (+-0.15 deg jitter), z_hit = z_sensor(t) + r * tan(elev), z_sensor(t) = REAL height above floor from the downward LRF log at that scan's time  (vertical planar wall assumed)
 - hits below the floor (z<0) or above the per-face wall top U(2.6, 2.8) m are dropped (those beams would hit floor/ceiling; no ground/ceiling points are output)
-- range noise 5 mm, 30 % random dropout (tuned so ~80-85 % of wall cells are covered), then a multiplicative z error of random sign and magnitude U(0.6, 0.8) % on every point
-Result: near walls are covered over a shorter height than far walls, as with a real spinning LiDAR. Non-wall returns (furniture/glass) stay at sensor height.
+- range noise 5 mm, 22 % random dropout (tuned so ~80-85 % of wall cells are covered), then a multiplicative z error of random sign and magnitude U(0.6, 0.8) % on every point
+Result: near walls are covered over a shorter height than far walls, as with a real spinning LiDAR. Non-wall returns (furniture/glass) stay at the real LRF capture height.
 Flags: kind (1 wall, 2 other), is_measured (1 = beam closest to the real horizontal plane / non-wall returns)."""
 import json, os, sys
 import numpy as np
@@ -16,7 +16,7 @@ from geometry import voxel_filter
 def run(root, out, nbeam=64, fov=30.0, xy_vox=0.08, seed=3):
     O = os.path.join(root, "output"); S = out; rng = np.random.default_rng(seed)
     ply = BM.read_ply(f"{S}/SIMULATED_registered_direct_hits.ply"); xy = np.c_[ply["x"], ply["y"]].astype(float); zs = float(ply["z"][0]); sid = ply["scan_id"]
-    g = json.load(open(f"{O}/floorplan_geometry.json")); fs = json.load(open(f"{S}/SIMULATED_face_shifts_m.json")); poses = np.load(f"{O}/scan_poses.npz")["poses"]
+    g = json.load(open(f"{O}/floorplan_geometry.json")); fs = json.load(open(f"{S}/SIMULATED_face_shifts_m.json")); poses = np.load(f"{O}/scan_poses.npz")["poses"]; hz = np.load(f"{O}/scan_height_lrf.npy")   # real sensor height per scan (downward LRF)
     tree = cKDTree(xy); keep = np.zeros(len(xy), bool); keep[tree.query(voxel_filter(xy, xy_vox))[1]] = True
     wall = np.full(len(xy), -1); best = np.full(len(xy), np.inf)
     for k, f in enumerate(g["faces"]):
@@ -30,11 +30,11 @@ def run(root, out, nbeam=64, fov=30.0, xy_vox=0.08, seed=3):
     r = np.hypot(*(xy[w] - poses[sid[w], :2]).T)                                          # real horizontal range of each return
     r = np.maximum(r + rng.normal(0, 0.005, len(w)), 0.2)
     el = el0[None, :] + np.deg2rad(rng.normal(0, 0.15, (len(w), nbeam)))
-    z = zs + r[:, None] * np.tan(el)
-    ok = (z >= 0.0) & (z <= top[wall[w]][:, None] + rng.normal(0, 0.02, (len(w), 1))) & (rng.random((len(w), nbeam)) > 0.30)
+    z = hz[sid[w]][:, None] + r[:, None] * np.tan(el)             # real LRF capture height + beam elevation
+    ok = (z >= 0.0) & (z <= top[wall[w]][:, None] + rng.normal(0, 0.02, (len(w), 1))) & (rng.random((len(w), nbeam)) > 0.22)
     ii, jj = np.nonzero(ok); zz = z[ii, jj] * (1 + rng.choice([-1, 1], len(ii)) * rng.uniform(0.006, 0.008, len(ii)))
     Pw = np.c_[xy[w][ii], zz]; kind_w = np.full(len(ii), 1, np.uint8); meas_w = (jj == mid).astype(np.uint8); sid_w = sid[w][ii]
-    Po = np.c_[xy[o], np.full(len(o), zs)]
+    Po = np.c_[xy[o], hz[sid[o]]]
     P = np.vstack([Pw, Po]).astype(np.float32); kind = np.r_[kind_w, np.full(len(o), 2, np.uint8)]; meas = np.r_[meas_w, np.ones(len(o), np.uint8)]; sidv = np.r_[sid_w, sid[o]].astype(np.int32)
     path = f"{out}/SIMULATED_3D_point_cloud.ply"
     BM.write_ply(path, P, {"kind": (kind, "uchar"), "is_measured": (meas, "uchar"), "scan_id": (sidv, "int")})
