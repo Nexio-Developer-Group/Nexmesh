@@ -10,9 +10,9 @@ Wall thickness is not estimated in either set.
 `COMPARISON_real_vs_simulated.png` – side by side.
 
 
-## UPDATE: CAD-referenced simulated readings (current state of the simulated files)
-The simulated point clouds (`SIMULATED_registered_direct_hits*.ply`, `SIMULATED_3D_point_cloud.ply`) and `SIMULATED_3d_lidar_distance_btw_walls.dxf/.csv` were rebuilt so the in-room wall-to-wall readings follow a chosen pattern against the real CAD distances.
-- 29 in-room readings: 19 green (<=7 mm), 6 blue (7-15 mm), 4 red (>15 mm). Hallway readings (lobby / passage / lift shaft / corridor) were removed; 8 in-room readings were added (each with a CAD dimension string, except the flat-4 hall 7070 which is assumed by symmetry with flat 3).
-- Red readings kept: flat-1 and flat-2 kitchens (CAD 2400, +66 / +68 mm), flat-3 hall (CAD 7070, +129 mm) and one same-type flat-4 hall reading (CAD 7070, +109 mm).
-- Wall positions were moved so that the readings, measured back from the rebuilt 3D cloud, match the targets (closed loop; largest miss from target ~8 mm, median ~1 mm). The green/blue values are SET BY CONSTRUCTION (assumed scanner accuracy), not results.
-- Older simulated-vs-Blender-model comparison files (distances/lengths) were removed because they described the previous simulated state. Scripts: `poc_cad_targets.py`, `poc_apply_targets.py`, `poc_targets_outputs.py`.
+## UPDATE 2 (current): readings revised on request
+- Removed: the CAD 3050 bedroom reading (bottom-middle) and the CAD 7070 reading on the right-hand stair/lift-lobby area (it was not inside a flat). The flat-4 hall reading is now the correct one: CAD 7070 between the hall walls at about x = 6, y = 4.2 / 11.2 (pair F026-F099).
+- Added more in-room readings across the flats (CAD distances from CAD dimension strings or the CAD wall-face geometry); balconies included. One added bedroom pair (F082-F256) was dropped because its CAD value conflicted with a neighbouring reading on the same wall (it would have been a 5th red).
+- Current set: 37 readings = 26 green (<=7 mm), 7 blue (7-15 mm), 4 red (>15 mm). Red: flat-1 kitchen +67, flat-2 kitchen +68, flat-3 hall +131, flat-4 hall +105 (mm vs CAD).
+- Coverage limit: the survey captured few clean wall faces in the bottom-middle flat, so it has no reading after the 3050 reading was removed.
+- Green/blue values are set by construction (assumed scanner accuracy); SIMULATED - NOT MEASURED.

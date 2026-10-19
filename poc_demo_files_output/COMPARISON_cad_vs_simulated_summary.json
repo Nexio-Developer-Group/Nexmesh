@@ -1,25 +1,25 @@
 {
- "readings": 29,
+ "readings": 37,
  "bins": {
-  "green": 19,
-  "blue": 6,
+  "green": 26,
+  "blue": 7,
   "red": 4
  },
- "median_abs_mm": 2.9024683736879524,
- "p90_abs_mm": 66.66599457829007,
- "max_abs_mm": 129.3786985918241,
- "real_lidar_median_abs_mm": 50.876310730562636,
+ "median_abs_mm": 3.936588288153871,
+ "p90_abs_mm": 33.794855358755484,
+ "max_abs_mm": 131.3303580656093,
+ "real_lidar_median_abs_mm": 44.04194271584083,
  "red_readings": [
   {
    "pair": "F016-F055",
-   "cad": 2400.0,
-   "simulated": 2466,
-   "delta": 66,
+   "cad": 2400.001170485945,
+   "simulated": 2467,
+   "delta": 67,
    "room": "KITCHEN"
   },
   {
    "pair": "F018-F052",
-   "cad": 2400.0,
+   "cad": 2400.0172772115907,
    "simulated": 2468,
    "delta": 68,
    "room": "KITCHEN"
@@ -27,16 +27,16 @@
   {
    "pair": "F024-F102",
    "cad": 7070.0,
-   "simulated": 7199,
-   "delta": 129,
+   "simulated": 7201,
+   "delta": 131,
    "room": "LIVING / DINNING"
   },
   {
-   "pair": "F086-F259",
+   "pair": "F026-F099",
    "cad": 7070.0,
-   "simulated": 7179,
-   "delta": 109,
-   "room": "hall"
+   "simulated": 7175,
+   "delta": 105,
+   "room": "LIVING / DINNING"
   }
  ],
  "note": "SIMULATED: green/blue values are set by an assumed scanner spec; red readings are the kept/same-type deviations. Hallway readings removed."
