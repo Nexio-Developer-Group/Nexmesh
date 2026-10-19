@@ -1,0 +1,11 @@
+{
+ "distances": 79,
+ "compared": 40,
+ "mean_signed_mm": -41.65804642426316,
+ "median_abs_mm": 44.11528361405726,
+ "p90_abs_mm": 109.45062102965191,
+ "max_abs_mm": 160.5695569888353,
+ "within_30": 0.425,
+ "within_60": 0.575,
+ "note": "SIMULATED cloud: not measured data"
+}
