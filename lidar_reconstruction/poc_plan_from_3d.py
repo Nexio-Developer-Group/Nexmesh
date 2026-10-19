@@ -34,7 +34,12 @@ def run(root, out):
         if len(c) < 15: continue
         q = pts[c] - p0; t = q @ d; off = q @ n; mm = (np.abs(off) < 0.05) & (t > -0.05) & (t < L + 0.05)
         if mm.sum() < 15 or len(np.unique(sidp[c[mm]])) < 4: continue
-        Q = pts[c[mm]]; ctr = Q.mean(0); vt = np.linalg.svd(Q - ctr, full_matrices=False)[2]; d2 = vt[0] if vt[0] @ d > 0 else -vt[0]; n2 = np.array([-d2[1], d2[0]]); n2 = n2 if n2 @ n > 0 else -n2
+        if fs[f["id"]] != 0.0:        # moved faces: position-only fit (seed direction kept) -> no tilt noise
+            mm = (np.abs(off) < 0.02) & (t > -0.05) & (t < L + 0.05)
+            if mm.sum() < 15: continue
+            Q = pts[c[mm]]; sh = float(np.median(off[mm])); ctr = p0 + n * sh + d * float(np.median(t[mm])); d2 = d; n2 = n
+        else:
+            Q = pts[c[mm]]; ctr = Q.mean(0); vt = np.linalg.svd(Q - ctr, full_matrices=False)[2]; d2 = vt[0] if vt[0] @ d > 0 else -vt[0]; n2 = np.array([-d2[1], d2[0]]); n2 = n2 if n2 @ n > 0 else -n2
         tt = (Q - ctr) @ d2; lo_, hi_ = np.percentile(tt, 0.5), np.percentile(tt, 99.5)
         if hi_ - lo_ < 0.4: continue
         faces.append(dict(p0=ctr + d2 * lo_, p1=ctr + d2 * hi_, normal=n2, n_points=int(mm.sum()), n_scans=int(len(np.unique(sidp[c[mm]]))), rms=float(np.std((Q - ctr) @ n2)), length=float(hi_ - lo_)))

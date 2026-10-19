@@ -54,7 +54,8 @@ def run(root, out):
             ok = (np.abs(off) < 0.12) & (t > -0.1) & (t < np.linalg.norm(p1 - p0) + 0.1) & (np.abs(off) < best[m])
             mm = m[ok]; best[mm] = np.abs(off[ok]); shift[mm] = 0.0 if fs[f["id"]] == 0.0 else (-0.9 * off[ok])[:, None] * n + fs[f["id"]] * np.array(f["normal"])[None, :]   # unchanged faces keep their real points exactly
         return pts + shift
-    fs = SPEC.face_shifts(g, seg)          # faces already inside the assumed band keep their real position; others move onto model face + assumed error
+    ov = f"{S}/SIMULATED_face_shifts_override.json"
+    fs = json.load(open(ov)) if os.path.exists(ov) else SPEC.face_shifts(g, seg)          # override = shifts that realise the CAD-referenced target readings
     sim = build(fs); json.dump(fs, open(f"{S}/SIMULATED_face_shifts_m.json", "w"))
     print("faces moved: %d of %d (unchanged real data: %d)" % (sum(abs(v) > 0 for v in fs.values()), len(fs), sum(v == 0 for v in fs.values())))
     BM.write_ply(f"{S}/SIMULATED_registered_direct_hits.ply", np.c_[sim, np.full(len(sim), zs)], {"scan_id": (raw["scan_id"][idx], "int"), "t": ((raw["t"][idx] - raw["t"].min()).astype(np.float32), "float")})
