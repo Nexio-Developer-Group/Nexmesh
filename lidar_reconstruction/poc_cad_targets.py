@@ -13,7 +13,7 @@ RED = {("F016", "F055"): 66, ("F018", "F052"): 68, ("F024", "F102"): 130, ("F026
 EXTRA = {("F073", "F097"): 4875, ("F096", "F162"): 4875, ("F052", "F230"): 2600, ("F089", "F241"): 2250, ("F063", "F247"): 2300, ("F087", "F242"): 2300, ("F213", "F260"): 1500,
          ("F055", "F229"): 2600, ("F152", "F268"): 3350,
          ("F026", "F099"): 7070}      # CAD dimension strings; the flat-4 hall 7070 string sits at (6.4, 7.7)
-DROP = {("F102", "F244"), ("F070", "F137")}      # duplicate of the flat-3 hall reading; reading removed on request
+DROP = {("F102", "F244"), ("F070", "F137"), ("F082", "F256")}      # duplicate of the flat-3 hall reading; reading removed on request
 
 
 def build(root, seed=11, n_blue=5):
