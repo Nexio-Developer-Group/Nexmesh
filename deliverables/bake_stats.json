@@ -1,0 +1,10 @@
+{
+ "texel_size_cm": 0.8,
+ "faces_total": 1672,
+ "faces_seen": 431,
+ "surface_area_total_m2": 2520.185430221688,
+ "surface_area_with_real_texture_m2": 485.52943843466096,
+ "percent_surface_covered": 19.26562357722826,
+ "cameras_used": 865,
+ "atlas_px_used_valid_pct": 45.427072048187256
+}
