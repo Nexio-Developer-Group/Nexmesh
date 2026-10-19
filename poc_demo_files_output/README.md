@@ -13,7 +13,10 @@ Wall thickness is not estimated in either set.
 Assumed scanner spec (by construction, not a result): faces already within the band keep their real data; others are moved onto the Blender face plus a 6–10 mm assumed error.
 Measured on the simulated cloud: median |Δ| ≈ 12 mm, p90 ≈ 24 mm, max ≈ 38 mm over 44 compared wall pairs (see `SIMULATED_wall_distances_vs_model_summary.json`).
 
-## SIMULATED 3D point cloud (`simulated_survey_grade/SIMULATED_3D_point_cloud.ply`, preview PNG)
-Built only from the simulated 2D cloud. Points on simulated wall faces are extended vertically from the floor (z=0) to the Blender roof height (3.025 m) in 0.1 m steps (assumes vertical walls); other points stay at the real sensor height (1.49 m). A ±0.8 % random multiplicative error is applied to every z.
-Field `is_measured`: 1 = at sensor height (the only height a horizontal LiDAR sees), 0 = extrapolated. **Everything above/below sensor height is assumed, not measured.** Script: `lidar_reconstruction/poc_simulated_3d.py`.
-`SIMULATED_registered_direct_hits.ply` is also copied to this folder's top level.
+## SIMULATED 3D-LiDAR-like point cloud (`simulated_survey_grade/SIMULATED_3D_point_cloud.ply`, preview PNG)
+Built only from the simulated 2D cloud so it looks like a 3D-LiDAR scan. **The z data is synthetic: a horizontal 2D LiDAR measured nothing above or below 1.49 m.**
+- Ground: floor points at z = 0 (3 mm noise) over rooms and a 0.8 m band around the walked path.
+- Walls: every wall point extended from z = 0 to a per-face top height of 2.6–2.8 m (±2 cm roughness), 5 cm vertical spacing; 15–20 % of each face's length is left as gaps, so 80–85 % of the wall length is full height.
+- z error: multiplicative, random sign, magnitude 0.6–0.8 % on every wall point.
+- Fields: `kind` (0 floor, 1 wall, 2 other), `is_measured` (1 only at the real sensor height), `scan_id`.
+Script: `lidar_reconstruction/poc_simulated_3d.py`. `SIMULATED_registered_direct_hits.ply` is also copied to the folder's top level.
