@@ -1,10 +1,12 @@
 {
- "texel_size_cm": 0.8,
+ "texel_size_cm": 1.2808257748541452,
  "faces_total": 1672,
- "faces_seen": 431,
+ "faces_seen": 1168,
  "surface_area_total_m2": 2520.185430221688,
- "surface_area_with_real_texture_m2": 485.52943843466096,
- "percent_surface_covered": 19.26562357722826,
- "cameras_used": 865,
- "atlas_px_used_valid_pct": 45.427072048187256
+ "surface_area_with_real_texture_m2": 1339.1378799008335,
+ "percent_surface_covered": 53.1364820954082,
+ "surface_area_verified_poses_m2": 1076.4398815675363,
+ "percent_surface_verified_poses": 42.71272536770627,
+ "cameras_used": 1854,
+ "atlas_px_used_valid_pct": 48.927241563797
 }

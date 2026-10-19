@@ -68,40 +68,41 @@ for k, n in enumerate(names):
     keep = (cosv > 0.2) & (zi <= dm + 0.07 + 0.03 * zi); idx, zi, ui, vi, cosv, dist = idx[keep], zi[keep], ui[keep], vi[keep], cosv[keep], dist[keep]
     if len(idx) < 50: continue
     edge = np.minimum.reduce([ui / W, 1 - ui / W, (vi / H) * 1.78, (1 - vi / H) * 1.78]); e = np.clip(edge / 0.25, 0, 1); e = e * e * (3 - 2 * e)
-    w = (cosv ** 2) * (1 / (1 + (dist / 4) ** 2)) * e * np.clip(sharp[n] / sref, 0.05, 1) ** 1.5
+    w = p.get('wtier', 1.0) * (cosv ** 2) * (1 / (1 + (dist / 4) ** 2)) * e * np.clip(sharp[n] / sref, 0.05, 1) ** 1.5
     img = cv2.imread(os.path.join(fdir, n)); Kc = np.array([[q[0] * FS, 0, q[2] * FS], [0, q[1] * FS, q[3] * FS], [0, 0, 1.]])
     und = cv2.undistort(img, Kc, np.array(q[4:8]), None, Kc)
     nn = len(ui); pad = (-nn) % 1024; mu = np.pad((ui * FS).astype(np.float32), (0, pad)).reshape(-1, 1024); mv = np.pad((vi * FS).astype(np.float32), (0, pad)).reshape(-1, 1024)
     col = cv2.remap(und, mu, mv, cv2.INTER_LINEAR).reshape(-1, 3)[:nn]
-    store[n] = (idx.astype(np.int32), col, w.astype(np.float32))
+    store[n] = (idx.astype(np.int32), col, w.astype(np.float32), p.get('tier', 'A') == 'A')
     if k % 100 == 0: log(f"cam {k}/{len(names)} samples {len(idx)}")
 log("sampling done; stored", len(store))
 # ---------- D. exposure gains (relative to weighted mean of all views) ----------
 A = np.zeros((N, 3), np.float32); Wt = np.zeros(N, np.float32)
-for n, (idx, col, w) in store.items(): A[idx] += w[:, None] * col; Wt[idx] += w
+for n, (idx, col, w, ta) in store.items(): A[idx] += w[:, None] * col; Wt[idx] += w
 avg = A / np.maximum(Wt, 1e-6)[:, None]; gains = {}
-for n, (idx, col, w) in store.items():
+for n, (idx, col, w, ta) in store.items():
     sel = (Wt[idx] > 1.5 * w) & (col.min(1) > 15) & (col.max(1) < 240)
     gains[n] = np.clip(np.median(avg[idx[sel]] / np.maximum(col[sel], 1), axis=0), 0.7, 1.4) if sel.sum() > 200 else np.ones(3)
 # a second iteration of gains with the corrected average
 A[:] = 0; Wt[:] = 0
-for n, (idx, col, w) in store.items(): A[idx] += w[:, None] * col * gains[n]; Wt[idx] += w
+for n, (idx, col, w, ta) in store.items(): A[idx] += w[:, None] * col * gains[n]; Wt[idx] += w
 avg = A / np.maximum(Wt, 1e-6)[:, None]
-for n, (idx, col, w) in store.items():
+for n, (idx, col, w, ta) in store.items():
     sel = (Wt[idx] > 1.5 * w) & (col.min(1) > 15) & (col.max(1) < 240)
     if sel.sum() > 200: gains[n] = np.clip(gains[n] * np.median(avg[idx[sel]] / np.maximum(col[sel] * gains[n], 1), axis=0), 0.7, 1.4)
 json.dump({n: list(map(float, g)) for n, g in gains.items()}, open(os.path.join(out, 'exposure_gains.json'), 'w'))
 # ---------- E. two-band blend ----------
 A1 = np.zeros((N, 3), np.float32); W1 = np.zeros(N, np.float32); A8 = np.zeros((N, 3), np.float32); W8 = np.zeros(N, np.float32)
-for n, (idx, col, w) in store.items():
-    c = col * gains[n]; A1[idx] += w[:, None] * c; W1[idx] += w; w8 = (w / max(w.max(), 1e-9)) ** 6 * w.max(); A8[idx] += w8[:, None] * c; W8[idx] += w8
+WA = np.zeros(N, np.float32)
+for n, (idx, col, w, ta) in store.items():
+    c = col * gains[n]; A1[idx] += w[:, None] * c; W1[idx] += w; WA[idx] += w * ta; w8 = (w / max(w.max(), 1e-9)) ** 6 * w.max(); A8[idx] += w8[:, None] * c; W8[idx] += w8
 cov = W1 > 1e-4; M = np.zeros(ATL * ATL, np.float32); M[tex[cov]] = 1
 mean1 = np.zeros((ATL * ATL, 3), np.float32); mean1[tex[cov]] = (A1[cov] / W1[cov, None]); mean8 = np.zeros_like(mean1); mean8[tex[cov]] = A8[cov] / np.maximum(W8[cov, None], 1e-9)
 M2 = M.reshape(ATL, ATL); m1 = mean1.reshape(ATL, ATL, 3); m8 = mean8.reshape(ATL, ATL, 3)
 def mblur(img, s): d = cv2.GaussianBlur(M2, (0, 0), s); return cv2.GaussianBlur(img * M2[..., None], (0, 0), s) / np.maximum(d, 1e-4)[..., None]
 low = mblur(m1, 6); high = m8 - mblur(m8, 6); res = np.clip(low + high, 0, 255) * M2[..., None]
 # ---------- F. gutters, small-hole fill, flat colour for the rest ----------
-valid = (M2 > 0).astype(np.uint8)
+MA = np.zeros(ATL * ATL, np.float32); MA[tex[WA > 1e-4]] = 1; MA2 = MA.reshape(ATL, ATL); valid = (M2 > 0).astype(np.uint8)
 inv = (1 - valid).astype(np.uint8); dist, lab = cv2.distanceTransformWithLabels(inv, cv2.DIST_L2, 3, labelType=cv2.DIST_LABEL_PIXEL)
 ys, xs = np.where(valid > 0); labmap = np.zeros(lab.max() + 1, np.int64); labmap[lab[ys, xs]] = ys * ATL + xs
 src = labmap[lab]; filled = res.reshape(-1, 3)[src.ravel()].reshape(ATL, ATL, 3)
@@ -109,10 +110,10 @@ gut = (dist <= 4) & (valid == 0); final = res.copy(); final[gut] = filled[gut]
 FLAT = np.array([70, 62, 55], np.float32)[::-1] * 0 + np.array([110, 110, 120], np.float32)      # BGR flat colour for never-seen
 nodata = ~((valid > 0) | gut); final[nodata] = FLAT
 cv2.imwrite(os.path.join(out, 'texture_%d.png' % ATL), final.astype(np.uint8))
-cv2.imwrite(os.path.join(out, 'coverage_mask_%d.png' % ATL), (valid * 255).astype(np.uint8))
-area_tex = np.zeros(NT); np.add.at(area_tex, tid[cov], 1)
+cv2.imwrite(os.path.join(out, 'coverage_mask_%d.png' % ATL), np.where(MA2 > 0, 255, np.where(valid > 0, 128, 0)).astype(np.uint8))   # 255 = verified-pose frames, 128 = drift-corrected frames only
+area_tex = np.zeros(NT); np.add.at(area_tex, tid[cov], 1); covA = WA > 1e-4; area_A = np.zeros(NT); np.add.at(area_A, tid[covA], 1)
 tri_area = mesh.area_faces; tri_cov = np.zeros(NT); np.add.at(tri_cov, tid, 1)
 frac_tri = np.zeros(NT); frac_tri[seen] = (area_tex[seen] / np.maximum(tri_cov[seen], 1))
-tot_area = tri_area.sum(); cov_area = (tri_area * frac_tri).sum()
-stats = {'texel_size_cm': ts * 100, 'faces_total': int(NT), 'faces_seen': int(seen.sum()), 'surface_area_total_m2': float(tot_area), 'surface_area_with_real_texture_m2': float(cov_area), 'percent_surface_covered': float(100 * cov_area / tot_area), 'cameras_used': len(store), 'atlas_px_used_valid_pct': float(100 * valid.mean())}
+tot_area = tri_area.sum(); cov_area = (tri_area * frac_tri).sum(); fracA = np.zeros(NT); fracA[seen] = area_A[seen] / np.maximum(tri_cov[seen], 1); cov_A = (tri_area * fracA).sum()
+stats = {'texel_size_cm': ts * 100, 'faces_total': int(NT), 'faces_seen': int(seen.sum()), 'surface_area_total_m2': float(tot_area), 'surface_area_with_real_texture_m2': float(cov_area), 'percent_surface_covered': float(100 * cov_area / tot_area), 'surface_area_verified_poses_m2': float(cov_A), 'percent_surface_verified_poses': float(100 * cov_A / tot_area), 'cameras_used': len(store), 'atlas_px_used_valid_pct': float(100 * valid.mean())}
 json.dump(stats, open(os.path.join(out, 'bake_stats.json'), 'w'), indent=1); log(stats)
