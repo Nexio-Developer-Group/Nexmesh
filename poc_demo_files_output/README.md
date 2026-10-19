@@ -39,3 +39,6 @@ The simulated distance statistics follow from the assumed scanner spec by constr
 
 ## Real CAD distances (`real_measured/real_cad_distance_btw_walls.dxf`, `.csv`; also in `original_output/`)
 Source: the architect's CAD plan (PDF exported from ZWCAD, "B Wing Typ. Floor"). The CAD linework was registered to the Blender frame (scale 41.02 mm per PDF point, no rotation/mirror), so it overlays the LiDAR plan. DXF layers: `CAD_PLAN_WALLS` (plan drawing), `CAD_DIM_WALL_TO_WALL` + `CAD_DIM_TEXT` (only the 35 wall-to-wall distances used for the comparison; 20 confirmed by the CAD's own dimension strings, 15 measured on the CAD wall faces). Scripts: `cad_extract.py`, `cad_register.py`, `cad_distances.py`.
+
+## Simulated distances DXF (`SIMULATED_3d_lidar_distance_btw_walls.dxf`, also in `simulated_survey_grade/` with a CSV)
+All clear wall-to-wall distances computable from the simulated 3D cloud's plan cut (z 1.0–1.6 m): fitted wall faces + mm dimensions. SIMULATED – NOT MEASURED. Script: `lidar_reconstruction/poc_simulated_dxf.py`.
