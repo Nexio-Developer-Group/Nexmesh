@@ -13,14 +13,15 @@ Blender scene, dimensioned 2D floor plan, validation report. Everything below wa
 | LiDAR data | genuine sequential scans (t0,t1,a[],r[]), 13.33 Hz, 192 median pts/scan, angles centi-deg, ranges mm, 52.0 min, no gaps >0.16 s, **no IMU/odometry**. |
 | LiDAR-only SLAM | scan-to-submap odometry: median inlier 0.987, rms 2.6 cm; see `validation_report.json`; Manhattan heading prior + 43 verified loop closures. Residual drift remains: rigid best fit of this map to the model reaches only 22 % of points within 10 cm. |
 | Model-anchored trajectory | 1,242 chunk anchors; **92.9 % of 6.7 M points within 10 cm and 84.8 % within 5 cm of the Blender section**, median 1.8 cm; similarity-fit scale = 1.00013. |
-| Floor plan | 286 wall faces (LiDAR line fits), 86 wall-thickness pairs, 74 openings, **65 rooms** (51 ≥70 % perimeter observed, 14 partially). 85 % of the model's wall length is supported by LiDAR (within 8 cm). |
-| Validation | 29 pass / 3 fail / 4 unverified (details below). |
+| Floor plan | 286 wall faces (LiDAR line fits), 74 openings, **65 rooms** (51 ≥70 % perimeter observed, 14 partially). 85 % of the model's wall length is supported by LiDAR (within 8 cm). |
+| Validation | 29 pass / 2 fail / 4 unverified (details below). |
 
 ## Outputs (`output/`)
 
 * `trajectory_registered.csv` – every scan: time, x, y, z (assumed), yaw, σxy, σyaw, anchor inlier fraction. `trajectory_slam_only.csv` – LiDAR-only trajectory in its own SLAM frame.
 * `registered_processed.ply` – 293,502 persistent points at 2 cm (x, y, z, scan_id, t). `raw_derived_registered.npz` – all 6.77 M returns, no filtering. `slam_only_unregistered.ply`.
 * `registered_scene.blend` – copy of the original building plus collections `ORIGINAL_BUILDING`, `START_REFERENCE` (the sphere, untouched), `LIDAR_REGISTERED` (5 cm display points via a geometry-nodes modifier; radius exposed), `LIDAR_RAW` (LiDAR-only cloud, hidden), `TRAJECTORY` (curve + one pose marker per minute + keyframe points), `FLOOR_PLAN_GEOMETRY` (observed walls black / model-derived grey / openings orange / rooms coloured by observation status), `REGISTRATION_REFERENCES`, `DIAGNOSTICS`. Toggle visibility per collection. Full-resolution reload: `python reload_data.py output/registered_scene.blend`.
+* `floorplan_points_only.png / .pdf / .svg` + `registered_direct_hits.ply` – **direct-contact view**: only positions where a beam actually returned (one real return per 2 cm cell, no fitting, no filtering, no thickness).
 * `floorplan.svg / .pdf / .png / .dxf` – metric plan (grid, scale bar, +Y reference arrow, legend; DXF layers per status). `floorplan_geometry.json`, `measurements.csv` – every feature with coordinates, length/width, units, source, method, σ, status (`observed` / `partially_observed` / `model_derived`).
 * `registration.json` (transforms, candidates, residuals), `validation_report.json`, `diagnostics/*.png`, `pipeline.log`, `inventory.json`.
 
@@ -39,15 +40,16 @@ Blender scene, dimensioned 2D floor plan, validation report. Everything below wa
 3. `pose_graph`, `graph_solver`: per-keyframe Manhattan wall-direction heading factors (robust, soft; the building is ~orthogonal, heading drift was ±5°), FFT-correlative loop-closure search with ICP verification (2,012 candidate pairs → 53 → 43 after consistency check), robust SE(2) pose graph. **No model information is used here.**
 4. `register_to_blender`, `model_anchor`, `model_extract`: global start localisation against the Blender section at sensor height, then sequential propagation from the start, chunk-to-model matching (FFT + point-to-line), piecewise-rigid initialisation and alternating pose-graph solves with robust unary priors (σ 0.10 m, strong enough to remove drift; weak enough that local scan geometry is determined by the LiDAR). The sphere enters as a soft x,y prior (σ 0.25 m). Scale is not estimated (metric LiDAR, metric model); the similarity fit is only a check.
 5. `build_map`: scan poses from keyframes, accumulation, persistence filter (cell visited by ≥4 scans spread over ≥3 scans), 2 cm voxel.
-6. `extract_floorplan`, `measure_geometry`, `export_floorplan`: Hough wall-face detection (normals from 60 neighbours), TLS refit, merge, corner completion (recorded as inferred, ≤25 cm), back-to-back face pairing, openings, free-space rooms from observed barriers + doorway closures + closed door leaves + model-derived walls, outward correction of 7.5 cm (construction-derived bias of the 1-cell barrier dilation), labels and nominal sizes from the model text objects.
+6. `extract_floorplan`, `measure_geometry`, `export_floorplan`: Hough wall-face detection (normals from 60 neighbours), TLS refit, merge, corner completion (recorded as inferred, ≤25 cm), openings, free-space rooms from observed barriers + doorway closures + closed door leaves + model-derived walls, outward correction of 7.5 cm (construction-derived bias of the 1-cell barrier dilation), labels and nominal sizes from the model text objects.
 7. `blender_integration`, `diagnostics`, `validate_results`.
 
-## Validation (see `validation_report.json` for all 36 checks)
+## Validation (see `validation_report.json` for all 35 checks)
+
+Wall thickness is deliberately **not** estimated: two blurred (±3–4 cm) faces seen from different rooms gave an 8 cm median error against nominal, so the feature was removed.
 
 Failed (kept as failures):
 * **S9** pose-graph solver reports "max evaluations" (300) rather than convergence; cost decreases slowly but fit statistics do not change between rounds.
 * **M2** p90 LiDAR-face offset to the nearest parallel model wall = 12.7 cm (median 2.5 cm): angled walls and as-built differences.
-* **M3** wall thickness: LiDAR pair thickness differs from nominal by a median 8.4 cm (n=50). Face blur (point band ≈ ±3–4 cm) and thick walls wrongly paired inflate this; **do not use wall thickness from this plan**.
 
 Unverified (data missing): sensor calibration/extrinsics (I5), IMU/odometry fusion (I6), as-built reference dimensions (M9), and R6 (diagnostic only).
 

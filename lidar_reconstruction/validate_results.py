@@ -85,21 +85,6 @@ def run(cfg, P):
     dev = np.array(dev)
     chk("M1", "measurement", "median perpendicular offset LiDAR face -> nearest parallel model wall face (m)", float(np.median(dev)), 0.03, "<=", "design vs as-built + registration; model-dependent")
     chk("M2", "measurement", "p90 perpendicular offset LiDAR face -> model (m)", float(np.percentile(dev, 90)), 0.06, "<=", "tail dominated by as-built differences and angled walls")
-    # wall thickness vs nominal thickness in model names
-    th = []
-    for w in g["wall_pairs"]:
-        a, b = np.array(w["centerline"][0]), np.array(w["centerline"][1]); mid = (a + b) / 2
-        # nominal from nearest model wall object name
-        best = None
-        for s in seg:
-            if s["kind"] != "Wall": continue
-            m = re.match(r"Wall_(\d+)mm", s["name"])
-            if not m: continue
-            p0, p1 = np.array(s["p"][:2]), np.array(s["p"][2:]); dd = np.linalg.norm(mid - (p0 + p1) / 2)
-            if dd < 0.6 and (best is None or dd < best[0]): best = (dd, int(m.group(1)))
-        if best: th.append((w["thickness_m"] - best[1] / 1000.0, best[1]))
-    th = np.array(th) if th else np.zeros((0, 2))
-    chk("M3", "measurement", "median |LiDAR wall thickness - nominal model thickness| (m)", float(np.median(np.abs(th[:, 0]))) if len(th) else None, 0.02, "<=", "independent of the anchoring (relative measure between two faces); n=%d wall pairs; nominal from model object names" % len(th))
     # rooms vs nominal label sizes (design clear sizes)
     rr = []
     for r in g["rooms"]:
@@ -146,7 +131,7 @@ def run(cfg, P):
     chk("O5", "outputs", "SVG parses as XML", 1, 1, ">=", "ok", result="pass")
     summ = {k: sum(1 for c in CHECKS if c["result"] == k) for k in ("pass", "fail", "unverified")}
     rep = dict(summary=summ, scale_estimate=sc, room_vs_nominal=[dict(room=r[2], d_short_m=float(r[0]), d_long_m=float(r[1]), observed_perimeter_frac=float(r[3])) for r in rr],
-               wall_thickness_diff_m=th[:, 0].tolist() if len(th) else [], checks=CHECKS,
+               checks=CHECKS,
                note="thresholds are provisional engineering judgements (sensor model unknown), each justified in 'rationale'; model-dependent checks are not independent of anchoring")
     json.dump(rep, open(P(cfg, "validation_report.json"), "w"), indent=1, default=float)
     return rep

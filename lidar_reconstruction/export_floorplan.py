@@ -59,6 +59,7 @@ def export_all(cfg, P, g, pts):
         fig.savefig(P(cfg, "floorplan." + ext), dpi=200 if ext == "png" else None, bbox_inches="tight")
     plt.close(fig)
     export_dxf(P(cfg, "floorplan.dxf"), g)
+    export_points_only(cfg, P)
 
 
 def export_dxf(path, g):
@@ -82,3 +83,26 @@ def export_dxf(path, g):
         c = np.array(r["polygon"]).mean(0); a, b = r["min_rect_m"]
         msp.add_text("%s %s x %s m (%s)" % (r["label"] or r["id"], _fmt(b), _fmt(a), r["status"]), height=0.12, dxfattribs={"layer": "A-ANNO-TEXT"}).set_placement(tuple(c), align=ezdxf.enums.TextEntityAlignment.MIDDLE_CENTER)
     doc.saveas(path)
+
+
+def export_points_only(cfg, P):
+    """Direct-contact map: only positions where a LiDAR beam returned (one actual return per 2 cm cell, no fitting, no
+    persistence filtering, no thickness, no outlines). PNG / PDF / SVG (rasterised points) + PLY."""
+    import build_map as BM
+    from geometry import voxel_filter
+    from scipy.spatial import cKDTree
+    z = np.load(P(cfg, "raw_derived_registered.npz")); xy = z["xy"].astype(float)
+    v = voxel_filter(xy, 0.02); idx = cKDTree(xy).query(v)[1]
+    zz = float(z["z"][0])
+    BM.write_ply(P(cfg, "registered_direct_hits.ply"), np.c_[xy[idx], np.full(len(idx), zz)], {"scan_id": (z["scan_id"][idx], "int"), "t": ((z["t"][idx] - z["t"].min()).astype(np.float32), "float")})
+    fig, ax = plt.subplots(figsize=(16.5, 11.7))
+    ax.scatter(xy[idx, 0], xy[idx, 1], s=0.35, c="k", linewidths=0, rasterized=True)
+    lo, hi = xy[idx].min(0) - 1.5, xy[idx].max(0) + 1.5
+    ax.set_xlim(lo[0], hi[0]); ax.set_ylim(lo[1], hi[1]); ax.set_aspect("equal")
+    ax.set_xticks(np.arange(np.floor(lo[0] / 5) * 5, hi[0], 5)); ax.set_yticks(np.arange(np.floor(lo[1] / 5) * 5, hi[1], 5))
+    ax.grid(True, color="#ccc", lw=0.5); ax.set_xlabel("X (m) — Blender world frame"); ax.set_ylabel("Y (m)")
+    x0, y0 = hi[0] - 9, lo[1] + 1.0; ax.plot([x0, x0 + 5], [y0, y0], "k-", lw=3); ax.text(x0 + 2.5, y0 + 0.3, "5 m", ha="center", fontsize=8)
+    ax.set_title("LiDAR direct-contact points only (%d points, one real return per 2 cm cell; no fitted walls, no thickness)" % len(idx), fontsize=9)
+    for ext in ("png", "pdf", "svg"):
+        fig.savefig(P(cfg, "floorplan_points_only." + ext), dpi=200 if ext == "png" else 150, bbox_inches="tight")
+    plt.close(fig)

@@ -10,10 +10,6 @@ def write_tables(cfg, P, g):
         rows.append(dict(id=f["id"], type="wall_face", x0=f["p0"][0], y0=f["p0"][1], x1=f["p1"][0], y1=f["p1"][1], length_m=L, width_m="",
                          source="LiDAR (registered, persistent returns)", method="Hough peak + TLS line fit, %d pts / %d scans, rms %.3f m" % (f["n_points"], f["n_scans"], f["rms"]),
                          sigma_m=f["sigma_m"], status="observed"))
-    for k, w in enumerate(g["wall_pairs"]):
-        a, b = np.array(w["centerline"][0]), np.array(w["centerline"][1])
-        rows.append(dict(id="W%03d" % k, type="wall_thickness", x0=a[0], y0=a[1], x1=b[0], y1=b[1], length_m=float(np.hypot(*(b - a))), width_m=w["thickness_m"],
-                         source="LiDAR (two back-to-back faces %s,%s)" % tuple(w["faces"]), method="perpendicular distance between paired faces", sigma_m=w["sigma_thickness_m"], status="observed"))
     for o in g["openings"]:
         rows.append(dict(id=o["id"], type="opening", x0=o["p0"][0], y0=o["p0"][1], x1=o["p1"][0], y1=o["p1"][1], length_m=o["width"], width_m=o["width"],
                          source="LiDAR (gap between collinear faces %s)" % ",".join(o["faces"]), method="gap between face endpoints" + ("; model door nearby" if o["model_door_nearby"] else "; no model door nearby"),

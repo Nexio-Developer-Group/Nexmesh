@@ -162,27 +162,6 @@ def _collinear(a, b, ang_tol, off_tol, gap):
     return tb[0] <= ta[1] + gap and ta[0] <= tb[1] + gap
 
 
-def pair_faces(faces, tmin=0.06, tmax=0.40, ang_tol=np.deg2rad(3.0)):
-    """Pair back-to-back faces (normals pointing away from each other) -> wall thickness and centreline."""
-    walls = []
-    for i, a in enumerate(faces):
-        for j in range(i + 1, len(faces)):
-            b = faces[j]
-            if np.rad2deg(np.arccos(np.clip(-(a["normal"] @ b["normal"]), -1, 1))) > np.rad2deg(ang_tol):
-                continue
-            d = np.array([a["normal"][1], -a["normal"][0]])
-            # b must lie behind a (opposite its normal): signed offset
-            off = (a["normal"] @ ((b["p0"] + b["p1"]) / 2)) - a["normal"] @ a["p0"]
-            if not (-tmax <= off <= -tmin):
-                continue
-            ta = sorted([a["p0"] @ d, a["p1"] @ d]); tb = sorted([b["p0"] @ d, b["p1"] @ d])
-            lo, hi = max(ta[0], tb[0]), min(ta[1], tb[1])
-            if hi - lo < 0.3:
-                continue
-            walls.append(dict(a=i, b=j, thickness=float(-off), overlap=float(hi - lo), t0=float(lo), t1=float(hi), d=d, nrm=a["normal"], r_a=float(a["normal"] @ a["p0"])))
-    return walls
-
-
 def seg_coverage(p0, p1, tree, tol=0.06, step=0.05):
     L_ = np.linalg.norm(p1 - p0); n = max(2, int(L_ / step))
     s = p0 + (p1 - p0) * np.linspace(0, 1, n)[:, None]
@@ -205,7 +184,6 @@ def run(cfg, P):
     for k, f in enumerate(faces):
         f["id"] = "F%03d" % k
         f["sigma_m"] = float(np.sqrt((f["rms"] / np.sqrt(max(f["n_scans"], 1))) ** 2 + sigma_reg ** 2))
-    walls = pair_faces(faces)
     ltree = cKDTree(pts)
     # ---- model geometry (section at LiDAR height) and coverage by LiDAR
     mw = [s for s in seg if s["kind"] in ("Wall", "Column", "Window")]
@@ -247,10 +225,10 @@ def run(cfg, P):
     # ---- rooms from free space
     rooms, corridors = rooms_from_free_space(faces, model_unobs, doors, pts, txt, fp, openings)
     out = dict(frame="Blender world, metres, +Y reference direction", origin=[0, 0], sensor_height_m=inv["sphere"]["world_loc"][2],
-               faces=[_ser(f) for f in faces], wall_pairs=[_serw(w, faces) for w in walls], openings=[_ser(o) for o in openings],
+               faces=[_ser(f) for f in faces], openings=[_ser(o) for o in openings],
                model_derived_unobserved=[_ser(m) for m in model_unobs], rooms=rooms,
                stats=dict(model_wall_len_m=model_tot_len, model_wall_len_supported_m=model_obs_len, sigma_registration_m=sigma_reg,
-                          n_faces=len(faces), n_pairs=len(walls), n_openings=len(openings)))
+                          n_faces=len(faces), n_openings=len(openings)))
     json.dump(out, open(P(cfg, "floorplan_geometry.json"), "w"), indent=1)
     import export_floorplan, measure_geometry
     measure_geometry.write_tables(cfg, P, out)
@@ -268,13 +246,6 @@ def _ser(o):
     for k, v in o.items():
         out[k] = v.tolist() if isinstance(v, np.ndarray) else (float(v) if isinstance(v, (np.floating,)) else v)
     return out
-
-
-def _serw(w, faces):
-    a, b = faces[w["a"]], faces[w["b"]]
-    d, n = w["d"], w["nrm"]; ra, rb = w["r_a"], w["r_a"] - w["thickness"]; rc = (ra + rb) / 2
-    return dict(faces=[a["id"], b["id"]], thickness_m=w["thickness"], overlap_m=w["overlap"], centerline=[(d * w["t0"] + n * rc).tolist(), (d * w["t1"] + n * rc).tolist()],
-                sigma_thickness_m=float(np.hypot(a["sigma_m"], b["sigma_m"])))
 
 
 ROOM_NAME = re.compile(r"^(BEDROOM|TOILET|KITCHEN|LIVING|PASSAGE|LOBBY|BALCONY|DRY BAL|LIFT SHAFT|STUDY|UTILITY|STORE|STAIR|SERVICE)", re.I)
