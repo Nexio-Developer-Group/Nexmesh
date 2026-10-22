@@ -1,0 +1,8 @@
+solutions/*/repo/
+solutions/*/env/
+data/*/frames/
+data/*/*.mp4
+data/*/*.tif
+__pycache__/
+*.pyc
+.venv/
