@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 982 266" width="982" height="266" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#555"/></marker></defs>
+<text x="20" y="28" font-size="15" font-weight="bold">S5 SWA-PF (substitute semantic map; odometry from noisy telemetry)</text>
+<rect x="20" y="50" width="210" height="64" rx="8" fill="#e8eef9" stroke="#555"/>
+<text x="125.0" y="76" font-size="12.5" font-weight="bold" text-anchor="middle">Camera frame</text>
+<text x="125.0" y="94" font-size="10.5" fill="#333" text-anchor="middle">BGR 1280x800</text>
+<rect x="264" y="50" width="210" height="64" rx="8" fill="#dff1e4" stroke="#555"/>
+<text x="369.0" y="76" font-size="12.5" font-weight="bold" text-anchor="middle">SegFormer-B0 (7 classes)</text>
+<text x="369.0" y="94" font-size="10.5" fill="#333" text-anchor="middle">PyTorch 1.10 CPU, shipped weights</text>
+<rect x="508" y="50" width="210" height="64" rx="8" fill="#fff3d6" stroke="#555"/>
+<text x="613.0" y="76" font-size="12.5" font-weight="bold" text-anchor="middle">Class images x100 yaws</text>
+<text x="613.0" y="94" font-size="10.5" fill="#333" text-anchor="middle">400x400, bowl weight, integral</text>
+<text x="613.0" y="107" font-size="10.5" fill="#333" text-anchor="middle">images</text>
+<rect x="752" y="50" width="210" height="64" rx="8" fill="#efe0f7" stroke="#555"/>
+<text x="857.0" y="76" font-size="12.5" font-weight="bold" text-anchor="middle">Semantic map + distance maps</text>
+<text x="857.0" y="94" font-size="10.5" fill="#333" text-anchor="middle">offline; OUR substitute labels</text>
+<rect x="20" y="148" width="210" height="64" rx="8" fill="#fde3e0" stroke="#555"/>
+<text x="125.0" y="174" font-size="12.5" font-weight="bold" text-anchor="middle">Particle weighting</text>
+<text x="125.0" y="192" font-size="10.5" fill="#333" text-anchor="middle">N x (x,y,alt,yaw), 160000/sum^2</text>
+<rect x="264" y="148" width="210" height="64" rx="8" fill="#fde3e0" stroke="#555"/>
+<text x="369.0" y="174" font-size="12.5" font-weight="bold" text-anchor="middle">Motion update + resample</text>
+<text x="369.0" y="192" font-size="10.5" fill="#333" text-anchor="middle">odometry + Gaussian noise</text>
+<rect x="508" y="148" width="210" height="64" rx="8" fill="#fde3e0" stroke="#555"/>
+<text x="613.0" y="174" font-size="12.5" font-weight="bold" text-anchor="middle">Spread check + DBSCAN</text>
+<text x="613.0" y="192" font-size="10.5" fill="#333" text-anchor="middle">cluster centre, &gt;=50% particles</text>
+<rect x="752" y="148" width="210" height="64" rx="8" fill="#d9e8ff" stroke="#555"/>
+<text x="857.0" y="174" font-size="12.5" font-weight="bold" text-anchor="middle">Estimate (lat, lon)</text>
+<text x="857.0" y="192" font-size="10.5" fill="#333" text-anchor="middle">accepted when converged</text>
+<line x1="230" y1="82.0" x2="262" y2="82.0" stroke="#555" marker-end="url(#a)"/>
+<line x1="474" y1="82.0" x2="506" y2="82.0" stroke="#555" marker-end="url(#a)"/>
+<line x1="718" y1="82.0" x2="750" y2="82.0" stroke="#555" marker-end="url(#a)"/>
+<path d="M857.0,114 L857.0,131.0 L125.0,131.0 L125.0,146" fill="none" stroke="#555" marker-end="url(#a)"/>
+<line x1="230" y1="180.0" x2="262" y2="180.0" stroke="#555" marker-end="url(#a)"/>
+<line x1="474" y1="180.0" x2="506" y2="180.0" stroke="#555" marker-end="url(#a)"/>
+<line x1="718" y1="180.0" x2="750" y2="180.0" stroke="#555" marker-end="url(#a)"/>
+<rect x="20" y="234" width="12" height="12" fill="#e8eef9" stroke="#555"/><text x="36" y="244" font-size="10">input/hint</text>
+<rect x="140" y="234" width="12" height="12" fill="#dff1e4" stroke="#555"/><text x="156" y="244" font-size="10">learned model</text>
+<rect x="260" y="234" width="12" height="12" fill="#fff3d6" stroke="#555"/><text x="276" y="244" font-size="10">geometry</text>
+<rect x="380" y="234" width="12" height="12" fill="#fde3e0" stroke="#555"/><text x="396" y="244" font-size="10">filter/gate</text>
+<rect x="500" y="234" width="12" height="12" fill="#d9e8ff" stroke="#555"/><text x="516" y="244" font-size="10">output</text>
+<rect x="620" y="234" width="12" height="12" fill="#efe0f7" stroke="#555"/><text x="636" y="244" font-size="10">OUR substitute</text>
+</svg>

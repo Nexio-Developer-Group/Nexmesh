@@ -48,22 +48,29 @@ def shade_weather(ax, w):
     for e in w["haze"]: ax.axvspan(e["t0"], e["t1"], color="tab:gray", alpha=0.15, lw=0)
 
 
-def fig_trajectory(sol, label, run_dir, truth, ref, out, n):
-    est = load_est(run_dir); err = errors(est, truth)
-    img = plt.imread(os.path.join(ROOT, "data/nidar/map_esri_z19.png"))[..., ::-1]
-    tx, ty = ref.latlon_to_px(truth["lat"], truth["lon"])
-    fig, ax = plt.subplots(figsize=(7, 7))
-    ax.imshow(img, alpha=0.6)
-    ax.plot(tx, ty, "k-", lw=1.5, label="true path")
-    ok = est["accepted"]
+def fig_trajectory(sol, label, run_dir, truth, ref, out, n, imagery=False):
+    """Default: no imagery (Esri tiles are benchmark-only and are not redistributed in the report); local ENU metres."""
+    est = load_est(run_dir)
+    tx, ty = ref.latlon_to_px(truth["lat"], truth["lon"]); ok = est["accepted"]
     ex, ey = ref.latlon_to_px(est["lat"], est["lon"])
-    ax.scatter(ex[ok], ey[ok], s=6, c=COL.get(sol, "r"), label=f"accepted fix ({ok.sum()})")
+    fig, ax = plt.subplots(figsize=(7, 7))
+    if imagery:
+        img = plt.imread(os.path.join(ROOT, "data/nidar/map_esri_z19.png"))[..., ::-1]; ax.imshow(img, alpha=0.6); sc = 1.0; ox = oy = 0
+    else:
+        m = ref.ground_m_per_px(18.52); sc = m; ox, oy = tx[0], ty[0]
+    X = lambda v: (v - ox) * sc if not imagery else v
+    Y = lambda v: (oy - v) * sc if not imagery else v
+    ax.plot(X(tx), Y(ty), "k-", lw=1.5, label="true path")
+    ax.scatter(X(ex[ok]), Y(ey[ok]), s=8, c=COL.get(sol, "r"), label=f"accepted fix ({ok.sum()})", zorder=3)
     rej = (~ok) & ~np.isnan(est["lat"])
-    if rej.any(): ax.scatter(ex[rej], ey[rej], s=6, c="r", marker="x", label=f"rejected ({rej.sum()})")
-    pad = 250
-    ax.set_xlim(tx.min() - pad, tx.max() + pad); ax.set_ylim(ty.max() + pad, ty.min() - pad)
-    ax.set_title(f"{label}: trajectory overlay (synthetic NIDAR-like)"); ax.legend(loc="upper right", fontsize=7); ax.axis("off")
-    fig.savefig(os.path.join(out, f"{sol}_trajectory.png"), dpi=130, bbox_inches="tight"); plt.close(fig)
+    if rej.any(): ax.scatter(X(ex[rej]), Y(ey[rej]), s=8, c="r", marker="x", label=f"not accepted ({rej.sum()})", zorder=2)
+    if not imagery:
+        pad = 150; ax.set_xlim(X(tx).min() - pad, X(tx).max() + pad); ax.set_ylim(Y(ty).min() - pad, Y(ty).max() + pad)
+        ax.set_aspect("equal"); ax.grid(alpha=.3); ax.set_xlabel("east of start (m)"); ax.set_ylabel("north of start (m)")
+    else:
+        pad = 250; ax.set_xlim(tx.min() - pad, tx.max() + pad); ax.set_ylim(ty.max() + pad, ty.min() - pad); ax.axis("off")
+    ax.set_title(f"{label}: trajectory (synthetic NIDAR-like)"); ax.legend(loc="best", fontsize=7)
+    fig.savefig(os.path.join(out, f"{sol}_trajectory{'_map' if imagery else ''}.png"), dpi=130, bbox_inches="tight"); plt.close(fig)
 
 
 def fig_error_time(sol, label, run_dir, truth, out, w):

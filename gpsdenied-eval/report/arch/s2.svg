@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 982 266" width="982" height="266" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#555"/></marker></defs>
+<text x="20" y="28" font-size="15" font-weight="bold">S2 uav-geolocalization (CAEVL + VIO; VIO = OUR substitute, not OpenVINS)</text>
+<rect x="20" y="50" width="210" height="64" rx="8" fill="#e8eef9" stroke="#555"/>
+<text x="125.0" y="76" font-size="12.5" font-weight="bold" text-anchor="middle">Camera frame + yaw + baro</text>
+<text x="125.0" y="94" font-size="10.5" fill="#333" text-anchor="middle">north-up rotate/scale (our</text>
+<text x="125.0" y="107" font-size="10.5" fill="#333" text-anchor="middle">adaptation)</text>
+<rect x="264" y="50" width="210" height="64" rx="8" fill="#fff3d6" stroke="#555"/>
+<text x="369.0" y="76" font-size="12.5" font-weight="bold" text-anchor="middle">Canny edge map</text>
+<text x="369.0" y="94" font-size="10.5" fill="#333" text-anchor="middle">OpenCV 70/200</text>
+<rect x="508" y="50" width="210" height="64" rx="8" fill="#dff1e4" stroke="#555"/>
+<text x="613.0" y="76" font-size="12.5" font-weight="bold" text-anchor="middle">CAEVL encoder 1024-d</text>
+<text x="613.0" y="94" font-size="10.5" fill="#333" text-anchor="middle">PyTorch CPU, our 50-min training</text>
+<rect x="752" y="50" width="210" height="64" rx="8" fill="#dff1e4" stroke="#555"/>
+<text x="857.0" y="76" font-size="12.5" font-weight="bold" text-anchor="middle">NN search over tile descriptors</text>
+<text x="857.0" y="94" font-size="10.5" fill="#333" text-anchor="middle">optional corridor around VIO prior</text>
+<rect x="20" y="148" width="210" height="64" rx="8" fill="#efe0f7" stroke="#555"/>
+<text x="125.0" y="174" font-size="12.5" font-weight="bold" text-anchor="middle">VIO substitute</text>
+<text x="125.0" y="192" font-size="10.5" fill="#333" text-anchor="middle">phase correlation + yaw + baro</text>
+<text x="125.0" y="205" font-size="10.5" fill="#333" text-anchor="middle">(OpenVINS not run)</text>
+<rect x="264" y="148" width="210" height="64" rx="8" fill="#fde3e0" stroke="#555"/>
+<text x="369.0" y="174" font-size="12.5" font-weight="bold" text-anchor="middle">fuse.py consensus RANSAC</text>
+<text x="369.0" y="192" font-size="10.5" fill="#333" text-anchor="middle">30 s window, 60 m inlier radius</text>
+<rect x="508" y="148" width="210" height="64" rx="8" fill="#fde3e0" stroke="#555"/>
+<text x="613.0" y="174" font-size="12.5" font-weight="bold" text-anchor="middle">Align / EKF / causal</text>
+<text x="613.0" y="192" font-size="10.5" fill="#333" text-anchor="middle">VIO trajectory aligned to</text>
+<text x="613.0" y="205" font-size="10.5" fill="#333" text-anchor="middle">accepted fixes</text>
+<rect x="752" y="148" width="210" height="64" rx="8" fill="#d9e8ff" stroke="#555"/>
+<text x="857.0" y="174" font-size="12.5" font-weight="bold" text-anchor="middle">Fused estimate</text>
+<text x="857.0" y="192" font-size="10.5" fill="#333" text-anchor="middle">-&gt; GPS_INPUT bridge</text>
+<line x1="230" y1="82.0" x2="262" y2="82.0" stroke="#555" marker-end="url(#a)"/>
+<line x1="474" y1="82.0" x2="506" y2="82.0" stroke="#555" marker-end="url(#a)"/>
+<line x1="718" y1="82.0" x2="750" y2="82.0" stroke="#555" marker-end="url(#a)"/>
+<path d="M857.0,114 L857.0,131.0 L125.0,131.0 L125.0,146" fill="none" stroke="#555" marker-end="url(#a)"/>
+<line x1="230" y1="180.0" x2="262" y2="180.0" stroke="#555" marker-end="url(#a)"/>
+<line x1="474" y1="180.0" x2="506" y2="180.0" stroke="#555" marker-end="url(#a)"/>
+<line x1="718" y1="180.0" x2="750" y2="180.0" stroke="#555" marker-end="url(#a)"/>
+<rect x="20" y="234" width="12" height="12" fill="#e8eef9" stroke="#555"/><text x="36" y="244" font-size="10">input/hint</text>
+<rect x="140" y="234" width="12" height="12" fill="#dff1e4" stroke="#555"/><text x="156" y="244" font-size="10">learned model</text>
+<rect x="260" y="234" width="12" height="12" fill="#fff3d6" stroke="#555"/><text x="276" y="244" font-size="10">geometry</text>
+<rect x="380" y="234" width="12" height="12" fill="#fde3e0" stroke="#555"/><text x="396" y="244" font-size="10">filter/gate</text>
+<rect x="500" y="234" width="12" height="12" fill="#d9e8ff" stroke="#555"/><text x="516" y="244" font-size="10">output</text>
+<rect x="620" y="234" width="12" height="12" fill="#efe0f7" stroke="#555"/><text x="636" y="244" font-size="10">OUR substitute</text>
+</svg>

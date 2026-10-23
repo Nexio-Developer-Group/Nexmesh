@@ -16,3 +16,5 @@ data/nidar_oblique/frames/
 data/nidar_oblique/video.mp4
 data/nidar_oblique/map_esri_z19.png
 results/*/sitl/*/sitl_wd/
+results/s3/figures/failures/
+results/*/figures/failures/
