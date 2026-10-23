@@ -31,7 +31,7 @@ def quat_to_R(q):
                      [2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x*x+y*y)]])
 
 
-def complementary_tilt(imu_csv, k=0.02):
+def complementary_tilt_imu(imu_csv, k=0.02):
     """Complementary filter: gyro Euler-rate integration for roll/pitch, pulled towards the accelerometer tilt
     (SITL accel reads -g rotated by attitude, so tilt is observable) with gain k per 50 Hz sample (tau ~ 1 s)."""
     d = pd.read_csv(imu_csv); t = d.t.values
@@ -48,3 +48,12 @@ def complementary_tilt(imu_csv, k=0.02):
         roll += k * (ra - roll); pitch += k * (pa - pitch)
         out[i] = roll, pitch
     return t, out
+
+
+import os
+def complementary_tilt(imu_csv, k=0.02):
+    """Nadir (gimbal-stabilised) data: roll=pitch=0 (default).  Set S2_TILT=on for the body-fixed oblique data (data/nidar_oblique)."""
+    t, a = complementary_tilt_imu(imu_csv, k)
+    if os.environ.get('S2_TILT', 'off') != 'on':
+        a = np.zeros_like(a)
+    return t, a

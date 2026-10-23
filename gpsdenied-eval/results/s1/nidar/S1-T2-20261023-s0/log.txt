@@ -7,3 +7,4 @@ startup_s=26.0 build_info={'n_tiles': 1225, 'db_dim': 1536, 'db_bytes': 7526400,
 [31/153] t=30.0 acc=False mode=track gate=tilt inl=77 err_raw=4.2 ms=5084 
 [41/153] t=40.0 acc=False mode=track gate=tilt inl=81 err_raw=3.8 ms=3831 
 [51/153] t=50.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=577.6 ms=13983 
+[61/153] t=60.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=226.4 ms=12823 

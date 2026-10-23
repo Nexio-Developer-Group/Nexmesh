@@ -1,38 +1,36 @@
 Using loss: L2. Using perceptual loss: False
 Using Canny edges: True.
-  db 0/900 3s
-  db 640/900 52s
 db tiles=900 tile_m=120.0 stride_m=60.0 index_mb=3.69 build_s=68
-25 / 764 enc 222 ms
-50 / 764 enc 224 ms
-75 / 764 enc 229 ms
-100 / 764 enc 224 ms
-125 / 764 enc 220 ms
-150 / 764 enc 221 ms
-175 / 764 enc 224 ms
-200 / 764 enc 220 ms
-225 / 764 enc 221 ms
-250 / 764 enc 223 ms
-275 / 764 enc 219 ms
-300 / 764 enc 220 ms
-325 / 764 enc 219 ms
-350 / 764 enc 219 ms
-375 / 764 enc 218 ms
-400 / 764 enc 220 ms
-425 / 764 enc 219 ms
-450 / 764 enc 219 ms
-475 / 764 enc 221 ms
-500 / 764 enc 219 ms
-525 / 764 enc 218 ms
-550 / 764 enc 217 ms
-575 / 764 enc 217 ms
-600 / 764 enc 215 ms
-625 / 764 enc 214 ms
-650 / 764 enc 215 ms
-675 / 764 enc 214 ms
-700 / 764 enc 215 ms
-725 / 764 enc 214 ms
-750 / 764 enc 215 ms
+25 / 764 enc 121 ms
+50 / 764 enc 105 ms
+75 / 764 enc 98 ms
+100 / 764 enc 104 ms
+125 / 764 enc 107 ms
+150 / 764 enc 110 ms
+175 / 764 enc 109 ms
+200 / 764 enc 107 ms
+225 / 764 enc 109 ms
+250 / 764 enc 106 ms
+275 / 764 enc 104 ms
+300 / 764 enc 106 ms
+325 / 764 enc 107 ms
+350 / 764 enc 111 ms
+375 / 764 enc 111 ms
+400 / 764 enc 111 ms
+425 / 764 enc 113 ms
+450 / 764 enc 113 ms
+475 / 764 enc 115 ms
+500 / 764 enc 118 ms
+525 / 764 enc 119 ms
+550 / 764 enc 120 ms
+575 / 764 enc 122 ms
+600 / 764 enc 123 ms
+625 / 764 enc 123 ms
+650 / 764 enc 123 ms
+675 / 764 enc 123 ms
+700 / 764 enc 123 ms
+725 / 764 enc 124 ms
+750 / 764 enc 124 ms
 {
  "label": "synthetic NIDAR-like (map and frames from the same Esri imagery: optimistic)",
  "tile_m": 120.0,
@@ -41,48 +39,48 @@ db tiles=900 tile_m=120.0 stride_m=60.0 index_mb=3.69 build_s=68
  "index_mb": 3.6864,
  "db_build_s": 68.03976798057556,
  "step": 1,
- "encode_ms_mean": 214.80667917669638,
- "encode_ms_p95": 382.36717690047044,
+ "encode_ms_mean": 124.220837861228,
+ "encode_ms_p95": 264.05084005041317,
  "full": {
   "n": 764,
-  "recall_50": 1.5706806282722512,
-  "recall_100": 1.963350785340314,
-  "recall_250": 9.55497382198953,
-  "median_err": 688.3699055801264,
-  "p95_err": 1239.1559763446735,
-  "mean_err": 702.3092978854996,
-  "recall_100_clear": 2.9296875,
+  "recall_50": 3.7958115183246073,
+  "recall_100": 4.5811518324607325,
+  "recall_250": 9.162303664921465,
+  "median_err": 655.6605135536213,
+  "p95_err": 1146.0656347391025,
+  "mean_err": 662.7033061291096,
+  "recall_100_clear": 6.8359375,
   "recall_100_hard": 0.0,
   "cand_mean": 900.0,
-  "search_ms_median": 0.12309500016272068
+  "search_ms_median": 0.07764100018903264
  },
- "top20_hit100_pct": 36.64921465968586,
- "true_tile_rank_median": 86.0,
- "top1_tile_hit_pct": 1.5706806282722512,
+ "top20_hit100_pct": 43.455497382198956,
+ "true_tile_rank_median": 64.0,
+ "top1_tile_hit_pct": 3.7958115183246073,
  "corridor_200": {
   "n": 764,
-  "recall_50": 12.041884816753926,
-  "recall_100": 23.69109947643979,
-  "recall_250": 99.86910994764398,
-  "median_err": 136.30947035783504,
-  "p95_err": 226.1233224773473,
-  "mean_err": 133.43010308674937,
-  "recall_100_clear": 29.6875,
-  "recall_100_hard": 11.507936507936508,
-  "cand_mean": 35.269633507853406,
-  "search_ms_median": 0.024906500129873166
+  "recall_50": 24.083769633507853,
+  "recall_100": 35.602094240837694,
+  "recall_250": 100.0,
+  "median_err": 121.18380316152746,
+  "p95_err": 193.3775559649612,
+  "mean_err": 112.25047357248809,
+  "recall_100_clear": 47.8515625,
+  "recall_100_hard": 10.714285714285714,
+  "cand_mean": 35.03010471204188,
+  "search_ms_median": 0.02668449997145217
  },
  "corridor_300": {
   "n": 764,
-  "recall_50": 6.151832460732985,
-  "recall_100": 12.43455497382199,
-  "recall_250": 81.67539267015707,
-  "median_err": 177.74988908306727,
-  "p95_err": 304.2415927887821,
-  "mean_err": 180.1039023428178,
-  "recall_100_clear": 15.625,
-  "recall_100_hard": 5.952380952380952,
-  "cand_mean": 78.24476439790575,
-  "search_ms_median": 0.031578500056639314
+  "recall_50": 13.612565445026178,
+  "recall_100": 18.586387434554975,
+  "recall_250": 77.22513089005236,
+  "median_err": 198.0101097635814,
+  "p95_err": 289.92281440107314,
+  "mean_err": 175.77501142296904,
+  "recall_100_clear": 25.78125,
+  "recall_100_hard": 3.968253968253968,
+  "cand_mean": 78.78926701570681,
+  "search_ms_median": 0.03270399975008331
  }
 }

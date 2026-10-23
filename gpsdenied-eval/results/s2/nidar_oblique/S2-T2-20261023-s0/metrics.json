@@ -1,0 +1,53 @@
+{
+ "label": "synthetic NIDAR-like (map and frames from the same Esri imagery: optimistic)",
+ "tile_m": 120.0,
+ "stride_m": 60.0,
+ "tiles": 900,
+ "index_mb": 3.6864,
+ "db_build_s": 68.03976798057556,
+ "step": 1,
+ "encode_ms_mean": 214.80667917669638,
+ "encode_ms_p95": 382.36717690047044,
+ "full": {
+  "n": 764,
+  "recall_50": 1.5706806282722512,
+  "recall_100": 1.963350785340314,
+  "recall_250": 9.55497382198953,
+  "median_err": 688.3699055801264,
+  "p95_err": 1239.1559763446735,
+  "mean_err": 702.3092978854996,
+  "recall_100_clear": 2.9296875,
+  "recall_100_hard": 0.0,
+  "cand_mean": 900.0,
+  "search_ms_median": 0.12309500016272068
+ },
+ "top20_hit100_pct": 36.64921465968586,
+ "true_tile_rank_median": 86.0,
+ "top1_tile_hit_pct": 1.5706806282722512,
+ "corridor_200": {
+  "n": 764,
+  "recall_50": 12.041884816753926,
+  "recall_100": 23.69109947643979,
+  "recall_250": 99.86910994764398,
+  "median_err": 136.30947035783504,
+  "p95_err": 226.1233224773473,
+  "mean_err": 133.43010308674937,
+  "recall_100_clear": 29.6875,
+  "recall_100_hard": 11.507936507936508,
+  "cand_mean": 35.269633507853406,
+  "search_ms_median": 0.024906500129873166
+ },
+ "corridor_300": {
+  "n": 764,
+  "recall_50": 6.151832460732985,
+  "recall_100": 12.43455497382199,
+  "recall_250": 81.67539267015707,
+  "median_err": 177.74988908306727,
+  "p95_err": 304.2415927887821,
+  "mean_err": 180.1039023428178,
+  "recall_100_clear": 15.625,
+  "recall_100_hard": 5.952380952380952,
+  "cand_mean": 78.24476439790575,
+  "search_ms_median": 0.031578500056639314
+ }
+}
