@@ -1,0 +1,38 @@
+{
+ "note": "CPU only, 2 threads; no Jetson, no GPU, TensorRT not available. Jetson numbers NOT measured.",
+ "megaloc_torch": {
+  "p50": 300.1963915012311,
+  "p95": 347.997024999313,
+  "rss_mb": 2093.33984375
+ },
+ "megaloc_onnx_cpu": {
+  "p50": 237.87536100280704,
+  "p95": 315.3133362488005,
+  "rss_mb": 3906.77734375,
+  "cosine_vs_torch": 1.0,
+  "onnx_mb": 914.75047
+ },
+ "xfeat_net_torch": {
+  "p50": 177.79303350107512,
+  "p95": 243.95913119969916,
+  "rss_mb": 3906.77734375
+ },
+ "xfeat_net_onnx_cpu": {
+  "p50": 91.68371899977501,
+  "p95": 136.1669664003784,
+  "rss_mb": 3906.77734375,
+  "max_abs_diff": 0.0002003312110900879
+ },
+ "lighterglue_torch_match": {
+  "p50": 331.8333530023665,
+  "p95": 397.8112257000248,
+  "rss_mb": 3906.77734375
+ },
+ "xfeat_extract_torch_1280x800": {
+  "p50": 224.65589599960367,
+  "p95": 269.7192775498479,
+  "rss_mb": 3906.77734375
+ },
+ "lighterglue_onnx_error": "ied-eval/solutions/s6_jetson_composite/env/lib/python3.12/site-packages/torch/onnx/_internal/torchscript_exporter/symbolic_helper.py\", line 477, in wrapper\n    return fn(g, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/Nexmesh/gpsdenied-eval/solutions/s6_jetson_composite/env/lib/python3.12/site-packages/torch/onnx/_internal/torchscript_exporter/symbolic_helper.py\", line 387, in wrapper\n    return fn(g, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/Nexmesh/gpsdenied-eval/solutions/s6_jetson_composite/env/lib/python3.12/site-packages/torch/onnx/_internal/torchscript_exporter/symbolic_opset9.py\", line 986, in transpose\n    axes[dim0], axes[dim1] = axes[dim1], axes[dim0]\n                             ~~~~^^^^^^\nIndexError: list index out of range\n",
+ "tensorrt": "not run: `pip install tensorrt` sdist build fails without NVIDIA driver (nvidia-smi not found); tensorrt-cu12 libs wheel install failed (no disk space / no GPU). FP16 engine build requires GPU."
+}
