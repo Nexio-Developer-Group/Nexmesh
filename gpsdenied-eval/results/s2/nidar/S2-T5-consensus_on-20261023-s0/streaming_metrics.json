@@ -1,0 +1,14 @@
+{
+ "name": "streaming_consensus_on",
+ "n_live": 764,
+ "rmse": 790.5663615222956,
+ "median": 750.4668108562644,
+ "max": 1312.287916437092,
+ "final": 307.9244056691125,
+ "rmse_vio_same_frames": 61.213247349497856,
+ "gain_vs_vio_pct": -1191.495543454093,
+ "n_fix_in_fit": 405,
+ "fix_precision_100": 0.7407407407407408,
+ "final_scale": 2.0805687910233113,
+ "final_yaw_deg": 1.3075279922418446
+}

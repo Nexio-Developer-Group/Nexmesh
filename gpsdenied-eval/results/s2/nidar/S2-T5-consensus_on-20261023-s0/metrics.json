@@ -1,0 +1,20 @@
+{
+ "frames": 764,
+ "accepted": 764,
+ "fix_rate": 100.0,
+ "median": 750.4668108562644,
+ "p95": 1264.5278843219664,
+ "rmse": 790.5663615222956,
+ "max": 1312.287916437092,
+ "precision_100": 36.518324607329845,
+ "recall_10": 1.4397905759162304,
+ "recall_50": 30.6282722513089,
+ "recall_100": 36.518324607329845,
+ "time_to_first_fix": 0.0,
+ "name": "streaming_consensus_on",
+ "n_live": 764,
+ "final": 307.9244056691125,
+ "rmse_vio_same_frames": 61.213247349497856,
+ "gain_vs_vio_pct": -1191.495543454093,
+ "label": "synthetic NIDAR-like; VIO layer = OUR-VIO-SUBSTITUTE (not OpenVINS)"
+}

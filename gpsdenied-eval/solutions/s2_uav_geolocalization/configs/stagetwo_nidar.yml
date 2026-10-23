@@ -5,6 +5,7 @@ architecture:
   device: 'cpu'
   dir_model: 'AutoEncoder'
   backbone: 'stageone_nidar'
+  load_weights_backbone: False  # resume: full stage-2 state loaded from stagetwo.pth (stageone.pth deleted for disk)
   invariance_coeff: 25
   std_coeff: 25
   cov_coeff: 1

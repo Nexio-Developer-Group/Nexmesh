@@ -17,3 +17,4 @@
 - 2026-10-23 P5 s4: GISNav NOT run: gisnav image 6.94GB compressed (ENOSPC on pull), PX4/Gazebo build + GPU/X11 needed; T1-T7 not run; static ANALYSIS/SETUP delivered (solutions/s4_gisnav, results/s4)
 - 2026-10-23 S6: MegaLoc loaded (local clone of torch.hub repo, github zip API 400), pipeline works (sub-m error, 400-570 inl); TensorRT pip install fails (no nvidia-smi / disk) -> T1 full run started
 - 2026-10-23 S7 paper_only: review done; Bearing-UAV run on synthetic NIDAR 28 m median vs 23 m prior baseline -> results/s7/bearing
+- 2026-10-23 P5 s2: T1,T2,T3,T4,T5,T6,T7 done (fusion worse than VIO alone: undertrained CPU encoder ~2% recall@100); OpenVINS built but not run (ENOSPC); T8 implemented not run (results/s2)

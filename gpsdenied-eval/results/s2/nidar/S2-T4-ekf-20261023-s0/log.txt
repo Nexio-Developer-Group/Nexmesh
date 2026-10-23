@@ -1,0 +1,27 @@
+$ /home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/env/bin/python /home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/repo/tools/fuse.py --vio /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-ekf-20261023-s0/inputs/vio.txt --fixes /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-ekf-20261023-s0/inputs/fixes.csv --gt /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-ekf-20261023-s0/inputs/gt.csv --mode ekf --out /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-ekf-20261023-s0/fused_cli.csv
+VIO   764 poses   0.0..152.6
+fixes 764         0.0..152.6
+consensus pre-filter: 226 of 764 fixes kept (29.6%)
+
+RANSAC init over first 60 s: 48/98 fixes consistent
+  scale 1.279   yaw +69.3 deg
+
+fixes: 97 accepted, 129 rejected (42.9% accepted)
+steps spent locked out (covariance inflating): 368 of 763
+final scale 0.231   yaw +25.9 deg
+
+over 1466 m of truth
+                    VIO alone      fused
+  RMSE (m)             955.4      790.2
+  median (m)           953.0      774.1
+  final (m)           1123.1      979.3
+  max (m)             1279.7     1028.5
+  drift (%)            76.63      66.82
+
+  error growth, first half -> second half
+    VIO alone    734.4 ->  1120.9 m
+    fused        736.4 ->   826.4 m
+
+wrote /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-ekf-20261023-s0/fused_cli.csv
+
+

@@ -1,0 +1,27 @@
+{
+ "label": "synthetic NIDAR-like (map and frames from the same Esri imagery: optimistic)",
+ "tile_m": 60.0,
+ "stride_m": 30.0,
+ "tiles": 3721,
+ "index_mb": 15.241216,
+ "db_build_s": 285.14787769317627,
+ "step": 5,
+ "encode_ms_mean": 190.11570857518345,
+ "encode_ms_p95": 375.24793979973765,
+ "full": {
+  "n": 153,
+  "recall_50": 2.6143790849673203,
+  "recall_100": 4.57516339869281,
+  "recall_250": 9.803921568627452,
+  "median_err": 697.268236602556,
+  "p95_err": 1219.363852216296,
+  "mean_err": 705.364916163033,
+  "recall_100_clear": 5.825242718446602,
+  "recall_100_hard": 2.0,
+  "cand_mean": 3721.0,
+  "search_ms_median": 2.0053400003234856
+ },
+ "top20_hit100_pct": 30.718954248366014,
+ "true_tile_rank_median": 686.0,
+ "top1_tile_hit_pct": 2.6143790849673203
+}

@@ -1,0 +1,20 @@
+{
+ "frames": 764,
+ "accepted": 655,
+ "fix_rate": 85.73298429319372,
+ "median": 1016.9892391985684,
+ "p95": 1396.491404699533,
+ "rmse": 1057.1739664635563,
+ "max": 1462.9514881966522,
+ "precision_100": 0.0,
+ "recall_10": 0.0,
+ "recall_50": 0.0,
+ "recall_100": 0.0,
+ "time_to_first_fix": null,
+ "name": "fuse.py --mode causal (batch, as shipped)",
+ "n_live": 655,
+ "final": 364.63867406812324,
+ "rmse_vio_same_frames": 64.43732437688034,
+ "gain_vs_vio_pct": -1540.6236240976866,
+ "label": "synthetic NIDAR-like; VIO layer = OUR-VIO-SUBSTITUTE (not OpenVINS)"
+}

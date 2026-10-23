@@ -1,0 +1,4 @@
+#9 1822.0 --- stderr: ov_msckf
+#9 1822.0 Finished <<< ov_msckf [17min 16s]
+#9 1822.0 Summary: 5 packages finished [30min 21s]
+#9 1822.0   5 packages had stderr output: ov_core ov_data ov_eval ov_init ov_msckf

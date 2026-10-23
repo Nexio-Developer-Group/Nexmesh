@@ -48,7 +48,7 @@ def cmd_t1(a):
     """VIO only (OUR-VIO-SUBSTITUTE). No retrieval, no fusion."""
     from ahrs import complementary_tilt
     from vio_sub import VioSubstitute
-    d = run_dir('S2-T1'); log = open(os.path.join(d, 'log.txt'), 'w')
+    d = run_dir(a.tag or 'S2-T1'); log = open(os.path.join(d, 'log.txt'), 'w')
     ref = MapRef(MAP_JSON); mpp = ref.ground_m_per_px(18.52)
     ti, att = complementary_tilt(os.path.join(ROOT, 'data/nidar/imu.csv'), 0.05)
     v = VioSubstitute(yaw_bias_deg=a.yaw_bias, scale_err=a.scale_err)

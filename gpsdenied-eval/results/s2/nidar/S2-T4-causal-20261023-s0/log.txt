@@ -1,0 +1,22 @@
+$ /home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/env/bin/python /home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/repo/tools/fuse.py --vio /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-causal-20261023-s0/inputs/vio.txt --fixes /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-causal-20261023-s0/inputs/fixes.csv --gt /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-causal-20261023-s0/inputs/gt.csv --mode causal --out /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-causal-20261023-s0/fused_cli.csv
+VIO   764 poses   0.0..152.6
+fixes 764         0.0..152.6
+consensus pre-filter: 226 of 764 fixes kept (29.6%)
+
+causal mode - only past predictions are used at each instant
+  localised from t+22 s onward (86% of the flight)
+  final scale estimate 2.386
+
+  over the localised period    VIO alone      fused
+    RMSE (m)              468.8     1057.2
+    median (m)            430.2     1017.0
+    max (m)               601.3     1463.0
+    final (m)             408.6      364.6
+
+    first half -> second half
+      VIO     527.2 ->   399.6 m
+      fused   972.3 ->  1082.4 m
+
+wrote /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-causal-20261023-s0/fused_cli.csv
+
+

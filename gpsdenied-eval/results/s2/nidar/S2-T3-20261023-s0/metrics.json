@@ -1,0 +1,81 @@
+{
+ "fused": {
+  "frames": 764,
+  "accepted": 764,
+  "fix_rate": 100.0,
+  "median": 749.6162977939699,
+  "p95": 1264.5278843248163,
+  "rmse": 789.6535289782081,
+  "max": 1310.7612468190202,
+  "precision_100": 36.518324607329845,
+  "recall_10": 1.4397905759162304,
+  "recall_50": 30.6282722513089,
+  "recall_100": 36.518324607329845,
+  "time_to_first_fix": 0.0,
+  "final_err": 307.58188064392886
+ },
+ "raw": {
+  "frames": 764,
+  "accepted": 764,
+  "fix_rate": 100.0,
+  "median": 687.5873952762205,
+  "p95": 1237.7743610288053,
+  "rmse": 768.1779874380749,
+  "max": 1654.4442528056566,
+  "precision_100": 1.963350785340314,
+  "recall_10": 0.6544502617801047,
+  "recall_50": 1.5706806282722514,
+  "recall_100": 1.963350785340314,
+  "time_to_first_fix": 47.0,
+  "final_err": 299.68377651213183
+ },
+ "vio": {
+  "frames": 764,
+  "accepted": 764,
+  "fix_rate": 100.0,
+  "median": 61.331741379533455,
+  "p95": 92.74737886952211,
+  "rmse": 61.144250294970426,
+  "max": 119.95878049820693,
+  "precision_100": 96.72774869109948,
+  "recall_10": 1.4397905759162304,
+  "recall_50": 33.37696335078534,
+  "recall_100": 96.72774869109948,
+  "time_to_first_fix": 0.0,
+  "final_err": 19.345356845583588
+ },
+ "post_warmup": {
+  "frames": 485,
+  "t_start": 55.8,
+  "rmse_fused": 990.3867526041581,
+  "rmse_vio": 67.07461051793824,
+  "rmse_gain_pct": -1376.5449176023048,
+  "median_fused": 995.1183040743592,
+  "median_vio": 62.61905976840676,
+  "final_fused": 307.58188064392886,
+  "final_vio": 19.345356845583588,
+  "max_fused": 1310.7612468190202,
+  "max_vio": 119.95878049820693
+ },
+ "whole_flight": {
+  "rmse_fused": 789.6535289782081,
+  "rmse_vio": 61.144250294970426,
+  "rmse_gain_pct": -1191.4599903814064
+ },
+ "fix_acceptance": {
+  "n_fixes": 764,
+  "raw_precision_100": 1.963350785340314,
+  "arrival_accepted": 101,
+  "arrival_precision_100": 0.0,
+  "arrival_recall_of_good": 0.0,
+  "ever_accepted": 405,
+  "ever_precision_100": 0.7407407407407408
+ },
+ "label": "synthetic NIDAR-like; VIO layer = OUR-VIO-SUBSTITUTE (not OpenVINS)",
+ "config": {
+  "tile_m": "120.0",
+  "stride_m": "60.0",
+  "seed": "0",
+  "weights": "/home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/weights/stagetwo.pth"
+ }
+}

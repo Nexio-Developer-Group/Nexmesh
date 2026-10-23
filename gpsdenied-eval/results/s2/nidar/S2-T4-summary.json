@@ -1,0 +1,32 @@
+{
+ "causal": {
+  "name": "fuse.py --mode causal (batch, as shipped)",
+  "n_live": 655,
+  "rmse": 1057.1739664635563,
+  "median": 1016.9892391985684,
+  "max": 1462.9514881966522,
+  "final": 364.63867406812324,
+  "rmse_vio_same_frames": 64.43732437688034,
+  "gain_vs_vio_pct": -1540.6236240976866
+ },
+ "align": {
+  "name": "fuse.py --mode align (batch, as shipped)",
+  "n_live": 764,
+  "rmse": 433.64138636157116,
+  "median": 407.977904655405,
+  "max": 683.0416809884293,
+  "final": 96.17720658445218,
+  "rmse_vio_same_frames": 61.213247349497856,
+  "gain_vs_vio_pct": -608.4110141807865
+ },
+ "ekf": {
+  "name": "fuse.py --mode ekf (batch, as shipped)",
+  "n_live": 763,
+  "rmse": 790.1890372255724,
+  "median": 774.0888804889887,
+  "max": 1028.4860941345737,
+  "final": 979.2673876261052,
+  "rmse_vio_same_frames": 61.253347745118376,
+  "gain_vs_vio_pct": -1190.0340411003037
+ }
+}

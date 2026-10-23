@@ -80,3 +80,23 @@ if a.cmd == 't5':
         e, _ = F.step(t[i], vio[i], fix[i]); est[i] = vio[i] if e is None else e
     res['determinism_max_diff_m'] = float(np.abs(est - ref_e).max()); print('determinism', res['determinism_max_diff_m'])
     json.dump(res, open(os.path.join(OUT, 'S2-T5-summary.json'), 'w'), indent=1)
+if a.cmd == 't9':
+    # SANITY / STRESS TEST (synthetic fixes, NOT CAEVL output): does the fusion layer help when fixes are partly right?
+    rng = np.random.default_rng(0); res = {}
+    vio_sets = {'vio_substitute': vio}
+    d1 = os.path.join(OUT, 'S2-T1b-degraded-20261023-s0', 'vio_track.csv')
+    if os.path.exists(d1):
+        v = pd.read_csv(d1); vio_sets['vio_degraded(3deg yaw bias,-4% scale)'] = en(np.interp(t, v.t, v.lat), np.interp(t, v.t, v.lon))
+    for vn, V in vio_sets.items():
+        for p in (0.1, 0.2, 0.4):
+            fx = gt_i + rng.normal(0, 30, gt_i.shape); bad = rng.random(len(t)) > p
+            fx[bad] = np.c_[rng.uniform(img.shape[1] * mpp * 0.2, img.shape[1] * mpp * 0.8, bad.sum()), -rng.uniform(img.shape[0] * mpp * 0.2, img.shape[0] * mpp * 0.8, bad.sum())]
+            for cons in (True, False):
+                F = s2core.StreamFuser(seed=0, consensus=cons); est = np.zeros((len(t), 2))
+                for i in range(len(t)):
+                    e, _ = F.step(t[i], V[i], fx[i]); est[i] = V[i] if e is None else e
+                e = np.hypot(*(est - gt_i).T); ev = np.hypot(*(V - gt_i).T)
+                res[f'{vn}|inlier_frac={p}|consensus={cons}'] = dict(rmse_fused=rms(e), rmse_vio=rms(ev), gain_pct=float(100 * (1 - rms(e) / rms(ev))), final_fused=float(e[-1]), final_vio=float(ev[-1]))
+                print(vn, p, cons, res[f'{vn}|inlier_frac={p}|consensus={cons}'])
+    os.makedirs(os.path.join(OUT, 'S2-T3x-sanity-20261023-s0'), exist_ok=True)
+    json.dump(res, open(os.path.join(OUT, 'S2-T3x-sanity-20261023-s0/metrics.json'), 'w'), indent=1)
