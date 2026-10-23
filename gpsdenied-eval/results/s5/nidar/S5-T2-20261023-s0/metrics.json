@@ -1,0 +1,32 @@
+{
+ "frames": 153,
+ "accepted": 100,
+ "fix_rate": 65.359477124183,
+ "median": 106.7844000659203,
+ "p95": 119.89702566747724,
+ "rmse": 103.34197430792189,
+ "max": 122.7444448462385,
+ "precision_100": 31.0,
+ "recall_10": 0.0,
+ "recall_50": 0.0,
+ "recall_100": 20.26143790849673,
+ "time_to_first_fix": 50.0,
+ "time_converged_and_stays_50m": null,
+ "raw_centroid_median_last10": 88.21148705878187,
+ "config": {
+  "run_id": "S5-T2-20261023-s0",
+  "stride": 5,
+  "n": 20000,
+  "init": 0,
+  "res": 1.0,
+  "seed": 0,
+  "max_frames": 0,
+  "t_start": 0,
+  "sig_v": 0.5,
+  "sig_yaw": 1.5,
+  "no_odo": false,
+  "label": null,
+  "out_root": "/home/user/Nexmesh/gpsdenied-eval/solutions/s5_swa_pf/../../results/s5/nidar"
+ },
+ "note": "synthetic NIDAR-like; substitute semantic map from same segmenter; odometry=noisy telemetry velocity/yaw"
+}

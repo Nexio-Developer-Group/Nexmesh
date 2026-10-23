@@ -18,7 +18,8 @@ def run(adapter, frames_dir, truth, map_path, out_dir, mode="offline", rate_hz=5
     os.makedirs(out_dir, exist_ok=True)
     np.random.seed(seed)
     t0 = time.time(); adapter.init(map_path, config or {}); startup = time.time() - t0
-    files = sorted(f for f in os.listdir(frames_dir) if f.lower().endswith((".jpg", ".png")))
+    files = sorted((f for f in os.listdir(frames_dir) if f.lower().endswith((".jpg", ".png"))),
+                   key=lambda f: float(os.path.splitext(f)[0]))  # numeric order (10.000 after 2.000)
     times = np.array([float(os.path.splitext(f)[0]) for f in files])
     est, lat_ms, dropped = [], [], 0
     clock0, busy_until = time.time(), 0.0
@@ -33,7 +34,7 @@ def run(adapter, frames_dir, truth, map_path, out_dir, mode="offline", rate_hz=5
         hints = None
         if hints_on:
             i = int(np.argmin(np.abs(truth["t"] - t)))
-            hints = {"baro_alt": float(truth["alt"][i]), "att": (0.0, 0.0, float(truth["yaw"][i]))}
+            hints = {"baro_alt": float(truth["alt"][i]), "att": (0.0, 0.0, float(truth["yaw"][i])), "yaw_deg": float(truth["yaw"][i])}  # att[2] is DEGREES (compass, cw from north)
         s = time.perf_counter(); r = adapter.step(img, float(t), hints); d = time.perf_counter() - s
         busy_until = (t - times[0]) + d
         lat_ms.append(d * 1000); r["t"] = float(t); est.append(r)

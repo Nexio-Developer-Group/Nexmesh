@@ -57,9 +57,9 @@ def weather_at(t, sched):
     return min(blur, 4.0), min(haze, 0.85)
 
 
-def init(map_path, meta, sched):
+def init(map_path, meta, sched, stabilised=False):
     m = cv2.imread(map_path, cv2.IMREAD_GRAYSCALE)
-    ST.update(map=m, meta=meta, sched=sched)
+    ST.update(map=m, meta=meta, sched=sched, stabilised=stabilised)
     rng = np.random.default_rng(7)
     lf = cv2.resize(rng.random((6, 10)).astype(np.float32), (W * 2, H * 2), interpolation=cv2.INTER_CUBIC)
     ST["haze_field"] = (lf - lf.min()) / (lf.max() - lf.min())
@@ -78,6 +78,7 @@ def merc_px(lat, lon, meta):
 
 def render(args):
     i, t, lat, lon, roll, pitch, yaw, alt = args
+    if ST.get("stabilised"): roll = pitch = 0.0  # gimbal-stabilised nadir camera (yaw follows heading)
     meta, sched = ST["meta"], ST["sched"]
     cr, sr, cp, sp, cy, sy = math.cos(roll), math.sin(roll), math.cos(pitch), math.sin(pitch), math.cos(yaw), math.sin(yaw)
     Rz = np.array([[cy, -sy, 0], [sy, cy, 0], [0, 0, 1]]); Ry = np.array([[cp, 0, sp], [0, 1, 0], [-sp, 0, cp]])
@@ -111,7 +112,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--flight", required=True); ap.add_argument("--map", required=True)
     ap.add_argument("--out", required=True); ap.add_argument("--procs", type=int, default=4)
-    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--limit", type=int, default=0); ap.add_argument("--stabilised", action="store_true")
     a = ap.parse_args()
     os.makedirs(os.path.join(a.out, "frames"), exist_ok=True)
     truth, imu = build_truth(a.flight)
@@ -121,7 +122,7 @@ def main():
                       {"t0": 0.82 * dur, "t1": 0.88 * dur, "strength": 0.55}]}
     meta = json.load(open(os.path.splitext(a.map)[0] + ".json"))
     json.dump({"width": W, "height": H, "fps": FPS, "hfov_deg": HFOV, "fx": F, "fy": F, "cx": W / 2, "cy": H / 2,
-               "type": "grayscale global-shutter, pinhole, no distortion", "megapixels": W * H / 1e6,
+               "type": "grayscale global-shutter, pinhole, no distortion", "mount": "gimbal-stabilised nadir (roll=pitch=0)" if a.stabilised else "body-fixed (quad pitches ~-30 deg in cruise)", "megapixels": W * H / 1e6,
                "agl_m": float(np.median(truth["alt"])), "gsd_m_px": float(np.median(truth["alt"])) / F,
                "map_mpp": meta["mpp_at_centre"], "source_map": meta["source"]}, open(os.path.join(a.out, "camera.json"), "w"), indent=1)
     json.dump(sched, open(os.path.join(a.out, "weather.json"), "w"), indent=1)
@@ -140,7 +141,7 @@ def main():
     jobs = [(k, truth["t"][k], truth["lat"][k], truth["lon"][k], truth["roll"][k], truth["pitch"][k], truth["yaw"][k], truth["alt"][k]) for k in idx]
     vw = cv2.VideoWriter(os.path.join(a.out, "video.mp4"), cv2.VideoWriter_fourcc(*"mp4v"), FPS, (W, H), True)
     wlog = []
-    with Pool(a.procs, initializer=init, initargs=(a.map, meta, sched)) as p:
+    with Pool(a.procs, initializer=init, initargs=(a.map, meta, sched, a.stabilised)) as p:
         for i, g, b, hz in p.imap(render, jobs, chunksize=8):
             vw.write(cv2.cvtColor(g, cv2.COLOR_GRAY2BGR))
             if i % (FPS // 5) == 0: cv2.imwrite(os.path.join(a.out, "frames", f"{truth['t'][i]:.3f}.png"), g)

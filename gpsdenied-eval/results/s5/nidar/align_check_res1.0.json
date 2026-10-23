@@ -1,0 +1,82 @@
+[
+ {
+  "t": 10,
+  "argmax_offset_north_down_m": [
+   110.0,
+   0.0
+  ],
+  "w_at_truth": 9.069070494582832e-11,
+  "w_max": 1.584595676895617e-09,
+  "rank_of_truth": 528
+ },
+ {
+  "t": 30,
+  "argmax_offset_north_down_m": [
+   110.0,
+   0.0
+  ],
+  "w_at_truth": 3.083248240054459e-11,
+  "w_max": 4.068005377000361e-10,
+  "rank_of_truth": 264
+ },
+ {
+  "t": 45,
+  "argmax_offset_north_down_m": [
+   110.0,
+   0.0
+  ],
+  "w_at_truth": 3.6755559533474536e-13,
+  "w_max": 1.2718101571884688e-10,
+  "rank_of_truth": 884
+ },
+ {
+  "t": 70,
+  "argmax_offset_north_down_m": [
+   110.0,
+   -30.0
+  ],
+  "w_at_truth": 1.6979962358040779e-12,
+  "w_max": 1.4745893742174054e-11,
+  "rank_of_truth": 888
+ },
+ {
+  "t": 90,
+  "argmax_offset_north_down_m": [
+   -10.0,
+   -120.0
+  ],
+  "w_at_truth": 2.825835919428865e-12,
+  "w_max": 2.710361449165255e-11,
+  "rank_of_truth": 839
+ },
+ {
+  "t": 110,
+  "argmax_offset_north_down_m": [
+   -90.0,
+   60.0
+  ],
+  "w_at_truth": 3.025033834536117e-10,
+  "w_max": 8.948723539958792e-09,
+  "rank_of_truth": 440
+ },
+ {
+  "t": 130,
+  "argmax_offset_north_down_m": [
+   -110.0,
+   70.0
+  ],
+  "w_at_truth": 1.0019946677930491e-11,
+  "w_max": 4.220938529253537e-11,
+  "rank_of_truth": 189
+ },
+ {
+  "t": 150,
+  "argmax_offset_north_down_m": [
+   -50.0,
+   30.0
+  ],
+  "w_at_truth": 1.4504381203039873e-11,
+  "w_max": 3.052695041194653e-10,
+  "rank_of_truth": 312
+ }
+]

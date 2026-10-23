@@ -1,0 +1,24 @@
+   nearest truth time to matched pos 0.0 dist 29.752129209608775
+t=10 yaw=360 best score 0.35 sign -1 offset south 107.1 m east 0.1 m
+   nearest truth time to matched pos 9.6 dist 0.3631321070226367
+t=20 yaw=360 best score 0.28 sign -1 offset south 108.5 m east 0.3 m
+   nearest truth time to matched pos 19.6 dist 0.786339686598575
+t=30 yaw=359 best score 0.29 sign -1 offset south 107.9 m east 0.3 m
+   nearest truth time to matched pos 29.6 dist 1.1978862773163872
+t=40 yaw=359 best score 0.39 sign -1 offset south 107.6 m east 0.6 m
+   nearest truth time to matched pos 47.2 dist 0.06214987131747163
+t=50 yaw=359 best score 0.68 sign 1 offset south 23.4 m east 0.0 m
+   nearest truth time to matched pos 60.6 dist 55.80466341857437
+t=60 yaw=89 best score 0.44 sign 1 offset south 55.8 m east 6.8 m
+   nearest truth time to matched pos 73.4 dist 28.55806015415108
+t=75 yaw=89 best score 0.58 sign 1 offset south 28.6 m east -17.1 m
+   nearest truth time to matched pos 86.2 dist 0.17803157005911527
+t=90 yaw=89 best score 0.74 sign -1 offset south 0.1 m east -39.8 m
+   nearest truth time to matched pos 78.4 dist 186.07942090566374
+t=100 yaw=90 best score 0.60 sign 1 offset south -186.4 m east -224.2 m
+   nearest truth time to matched pos 144.8 dist 146.11607843123713
+t=115 yaw=211 best score 0.19 sign 1 offset south 187.5 m east -289.6 m
+   nearest truth time to matched pos 63.4 dist 83.49152844747594
+t=130 yaw=211 best score 0.22 sign 1 offset south -290.6 m east -276.2 m
+   nearest truth time to matched pos 144.0 dist 146.73627844572636
+t=145 yaw=211 best score 0.20 sign 1 offset south -87.5 m east -118.4 m

@@ -75,7 +75,7 @@ class Adapter:
     def step(self, frame, timestamp, hints):
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         if self.cfg["derotate"] and hints:
-            rgb = self._derotate(rgb, math.degrees(hints["att"][2]))
+            rgb = self._derotate(rgb, -float(hints["yaw_deg"]))  # cv2 angle>0 is counter-clockwise; north-up needs -heading
         out = dict(lat=None, lon=None, alt=None, yaw=None, conf=0.0, accepted=False, flag="", n_inliers=0, top1_sim=0.0)
         with torch.no_grad():
             q = self.dino(self.tf(Image.fromarray(rgb)).unsqueeze(0))
