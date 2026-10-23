@@ -1,0 +1,6 @@
+openvins_gpl/src/
+caevl_src/
+caevl_upstream_src/
+weights/
+work/
+build.log

@@ -1,0 +1,10 @@
+{
+  "source": "written for synthetic NIDAR-like camera (data/nidar/camera.json); repo format = configs/camera_visloc*.json (focal_px, heading_sign, heading_offset_deg)",
+  "focal_px": 1108.5125168440816,
+  "north_up_ccw_deg": "heading_sign * heading_deg + heading_offset_deg",
+  "heading_sign": 1,
+  "heading_offset_deg": 0.0,
+  "note": "video image-up = flight heading (yaw, clockwise from N) -> rotate CCW by yaw to get north-up; verified by smoke test",
+  "gsd_m_px_at_200m": 0.1804,
+  "map_mpp": 0.2831
+}
