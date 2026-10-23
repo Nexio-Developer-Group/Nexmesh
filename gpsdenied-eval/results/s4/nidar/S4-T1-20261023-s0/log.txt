@@ -1,0 +1,12 @@
+# S4-T1 setup attempts Fri Oct 23 11:02:41 UTC 2026
+host: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 cores, no GPU (nvidia-smi absent), docker Docker version 29.9.1, build dfc520d, Docker Compose version v5.6.0
+/dev/vda        252G   37G  2.6G  94% /
+--- attempt 1: prebuilt ghcr.io/hmakelin/gisnav:latest (amd64 manifest sha256:785cd6d5...)
+24 layers 6.94 GB compressed (gisnav service only; px4/mapserver/micro-ros/qgc are separate)
+pull result earlier: layers downloaded until 'failed to copy: ... no space left on device'
+--- attempt 2: ros:foxy / micro-ros-agent base sizes
+{"manifests":[{"annotations":{"com.docker.official-images.bashbrew.arch":"amd64","org.opencontainers.image.base.digest":"sha256:37f516c975da9fffccad5722f6e283091076d27f63010437e6f0cbb8eee17200","org.opencontainers.image.base.name":"ros:foxy-ros-core-focal","org.opencontainers.image.created":"2025-06
+{"schemaVersion":2,"mediaType":"application/vnd.oci.image.index.v1+json","manifests":[{"mediaType":"application/vnd.oci.image.manifest.v1+json","digest":"sha256:84e7157716f7d08c9f5f886ff3f1fa81062205cbd6ad92e38e6a1304fbc1a38e","size":4280,"platform":{
+--- attempt 3: px4 service builds PX4 v1.14.2 + Tools/setup/ubuntu.sh (Gazebo Classic, JDK, toolchain) on ubuntu:focal, plus QGroundControl and mapserver images; docker build cache already 8.1 GB (shared). Not started: would exceed lead's 4 GB cap and free disk.
+/dev/vda        252G   37G  2.5G  94% /
+Total reclaimed space: 0B

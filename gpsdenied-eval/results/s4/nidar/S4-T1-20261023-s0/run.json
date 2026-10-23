@@ -1,0 +1,5 @@
+{
+ "test": "S4-T1",
+ "status": "not_run",
+ "reason": "docker images too large for available disk (gisnav image 6.94 GB compressed; ENOSPC), no GPU, no X11; see log.txt and SETUP.md"
+}
