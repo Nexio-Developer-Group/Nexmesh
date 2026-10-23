@@ -1,3 +1,4 @@
 work/
 tmp/
 *.npy
+results/s5/figures/failures/*.png

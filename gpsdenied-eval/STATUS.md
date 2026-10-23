@@ -20,3 +20,4 @@
 - 2026-10-23 P5 s2: T1,T2,T3,T4,T5,T6,T7 done (fusion worse than VIO alone: undertrained CPU encoder ~2% recall@100); OpenVINS built but not run (ENOSPC); T8 implemented not run (results/s2)
 - 2026-10-23 DATA DEFECT: original frames were body-fixed oblique (quad pitch -30 deg). Re-rendered gimbal-stabilised nadir (data/nidar); old set kept as data/nidar_oblique (stress). All solution agents told to re-run. Harness fixes: numeric frame sort; yaw hint documented in DEGREES.
 - 2026-10-23 P5 s2: re-ran on nadir data (results/s2/nidar), old oblique moved to results/s2/nidar_oblique; fusion still worse than VIO alone; OpenVINS 2nd build ok but ENOSPC at export
+- 2026-10-23 S5 DONE: nadir T2 median 2.46 m/rmse 3.53 m (substitute map, 1 Hz, 20k particles, 37 s first step); T3/T4/T5/T6 done; T1/T8 not run (MAFS unavailable); T7 implemented (solutions/s5_swa_pf/constrained_replay.sh); oblique stress in results/s5/nidar_oblique; see solutions/s5_swa_pf/ANALYSIS.md
