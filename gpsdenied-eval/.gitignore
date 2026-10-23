@@ -6,3 +6,4 @@ data/*/*.tif
 __pycache__/
 *.pyc
 .venv/
+data/nidar/map_esri_z19.png

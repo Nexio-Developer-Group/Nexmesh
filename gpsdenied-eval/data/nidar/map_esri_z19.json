@@ -1,0 +1,15 @@
+{
+ "z": 19,
+ "tile_x0": 369693,
+ "tile_y0": 234676,
+ "width": 6656,
+ "height": 6656,
+ "tiles": 676,
+ "missing": 0,
+ "mpp_at_centre": 0.28311875762770544,
+ "centre": [
+  18.5204,
+  73.8567
+ ],
+ "source": "Esri World_Imagery (benchmark only)"
+}
