@@ -1,0 +1,48 @@
+{
+ "all_verified": {
+  "frames": 50,
+  "accepted": 12,
+  "fix_rate": 24.0,
+  "median": 114.83934157015776,
+  "p95": 725.1914169152167,
+  "rmse": 309.68020048320176,
+  "max": 744.108538811186,
+  "precision_100": 25.0,
+  "recall_10": 4.0,
+  "recall_50": 4.0,
+  "recall_100": 6.0,
+  "time_to_first_fix": 0.0
+ },
+ "fallback_only": {
+  "frames": 50,
+  "accepted": 38,
+  "fix_rate": 76.0,
+  "median": 510.94664404410594,
+  "p95": 1168.5139564004694,
+  "rmse": 660.9822102966585,
+  "max": 1182.2832645119006,
+  "precision_100": 5.263157894736842,
+  "recall_10": 0.0,
+  "recall_50": 2.0,
+  "recall_100": 4.0,
+  "time_to_first_fix": 0.0
+ },
+ "config": {
+  "derotate": false,
+  "scale_norm": true,
+  "topk": 5,
+  "max_candidates": 3
+ },
+ "step": 15,
+ "n_frames": 50,
+ "startup_s": 657.0721213817596,
+ "index_build_s": 652.423125743866,
+ "index_mb": 0.554496,
+ "tiles": 361,
+ "scale_ratio": 1.5693923126691705,
+ "latency_ms": {
+  "p50": 18687.458366999977,
+  "p95": 35351.905040350015
+ },
+ "peak_rss_mb": 2691.34765625
+}

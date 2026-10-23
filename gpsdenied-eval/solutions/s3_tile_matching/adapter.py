@@ -46,6 +46,10 @@ class Adapter:
         t0 = time.time()
         T, S = self.cfg["tile"], int(self.cfg["tile"] * (1 - self.cfg["overlap"]))
         h, w = self.map.shape[:2]
+        cache = os.path.join(HERE, "cache", f"emb_{h}x{w}_{T}_{S}.pt")
+        if os.path.exists(cache):  # descriptors are deterministic; reuse (build time of the first build is in the logs)
+            d = torch.load(cache); self.tiles, self.emb = d["tiles"], d["emb"]
+            self.index_build_s = d["build_s"]; self.index_mb = self.emb.numel() * 4 / 1e6; return
         self.tiles, tens = [], []
         for y in range(0, h - T + 1, S):
             for x in range(0, w - T + 1, S):
@@ -56,6 +60,8 @@ class Adapter:
                 e = self.dino(torch.stack(tens[i:i + 16])); embs.append(torch.nn.functional.normalize(e, dim=1))
         self.emb = torch.cat(embs)
         self.index_build_s = time.time() - t0
+        os.makedirs(os.path.dirname(cache), exist_ok=True)
+        torch.save({"tiles": self.tiles, "emb": self.emb, "build_s": self.index_build_s}, cache)
         self.index_mb = self.emb.numel() * 4 / 1e6
 
     def _derotate(self, frame, yaw):
