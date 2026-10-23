@@ -1,0 +1,44 @@
+{
+ "building": {
+  "frames": 53,
+  "converged_frames": 46,
+  "median_err": 2.8195537973451015,
+  "p90": 5.740417752913471
+ },
+ "vegetation": {
+  "frames": 24,
+  "converged_frames": 24,
+  "median_err": 3.1621986025585342,
+  "p90": 8.405909406857376
+ },
+ "water": {
+  "frames": 26,
+  "converged_frames": 26,
+  "median_err": 3.489352306194607,
+  "p90": 5.296862204809388
+ },
+ "mixed": {
+  "frames": 50,
+  "converged_frames": 47,
+  "median_err": 1.5896977601773756,
+  "p90": 3.0788775862670255
+ },
+ "weather_blur": {
+  "frames": 18,
+  "converged_frames": 18,
+  "median_err": 2.006630167163106,
+  "p90": 3.025036628908238
+ },
+ "weather_haze": {
+  "frames": 41,
+  "converged_frames": 41,
+  "median_err": 3.394440358053161,
+  "p90": 6.115287402716008
+ },
+ "weather_clear": {
+  "frames": 103,
+  "converged_frames": 93,
+  "median_err": 2.010109647200526,
+  "p90": 5.104821626506254
+ }
+}

@@ -1,0 +1,2 @@
+t=0.0 acc=False n=16000 spread=326.7 raw_err=343.1 err=nan step=37.3s (seg 1.6 pf 35.7)
+t=1.0 acc=False n=12800 spread=321.2 raw_err=358.8 err=nan step=33.5s (seg 1.2 pf 32.3)

@@ -1,3 +1,10 @@
 run S1-T1-20261023-s0 cmd=solutions/s1_gnss_denied_nav/driver.py --date 20261023 --id S1-T1 --stride 5 --config {"query_kp":1024}
 config={'patch_m': 140.0, 'tracking': False, 'gate': True, 'use_baro': True, 'use_heading': True, 'nominal_height': 200.0, 'yaw_unit': 'deg', 'rerank_k': 10, 'model': 'facebook/dinov2-base', 'weights': None, 'stride_m': 50.0, 'query_kp': 1024, 'search_m': 450.0, 'cache_dir': '/home/user/Nexmesh/gpsdenied-eval/solutions/s1_gnss_denied_nav/cache', 'min_inliers': 25}
 startup_s=22.1 build_info={'n_tiles': 1225, 'db_dim': 1536, 'db_bytes': 7526400, 'descriptor_build_s': 685.2529060840607, 'mapfeat_build_s': 202.48730778694153, 'n_map_keypoints': 47958, 'mapf_gsd': 0.5, 'mapf_image_px': [4970, 4970], 'mapf_bytes': 123595356}
+[1/153] t=0.0 acc=True mode=global gate=ok inl=133 err_raw=1.2 ms=41027 
+[11/153] t=10.0 acc=True mode=global gate=ok inl=143 err_raw=1.3 ms=43038 
+[21/153] t=20.0 acc=True mode=global gate=ok inl=172 err_raw=2.2 ms=46986 
+[31/153] t=30.0 acc=False mode=global gate=few_inliers_raw inl=8 err_raw=198.3 ms=37702 
+[41/153] t=40.0 acc=True mode=global gate=ok inl=131 err_raw=2.5 ms=26721 
+[51/153] t=50.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=577.6 ms=15263 
+[61/153] t=60.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=226.4 ms=26169 

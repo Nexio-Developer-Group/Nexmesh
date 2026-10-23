@@ -1,0 +1,50 @@
+[
+ {
+  "t": 4.0,
+  "raw_err_m": 385.8814558511935,
+  "converged": false,
+  "scene": "building",
+  "blur": false,
+  "haze": false
+ },
+ {
+  "t": 74.0,
+  "raw_err_m": 11.30228698585909,
+  "converged": true,
+  "scene": "vegetation",
+  "blur": false,
+  "haze": false
+ },
+ {
+  "t": 135.0,
+  "raw_err_m": 7.583730643769011,
+  "converged": true,
+  "scene": "building",
+  "blur": false,
+  "haze": false
+ },
+ {
+  "t": 60.0,
+  "raw_err_m": 7.099745931059513,
+  "converged": true,
+  "scene": "water",
+  "blur": false,
+  "haze": true
+ },
+ {
+  "t": 116.0,
+  "raw_err_m": 5.0562476372280045,
+  "converged": true,
+  "scene": "mixed",
+  "blur": false,
+  "haze": false
+ },
+ {
+  "t": 50.0,
+  "raw_err_m": 4.838319144113764,
+  "converged": true,
+  "scene": "water",
+  "blur": false,
+  "haze": true
+ }
+]

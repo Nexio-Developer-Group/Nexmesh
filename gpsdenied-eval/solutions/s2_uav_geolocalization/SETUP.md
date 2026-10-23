@@ -1,6 +1,6 @@
 # S2 setup log (uav-geolocalization = CAEVL + OpenVINS + fuse.py)
 
-All results: **synthetic NIDAR-like** data (map and frames both from the same Esri imagery, so the appearance gap is optimistic).
+Primary results (results/s2/nidar/) are on the gimbal-stabilised nadir data; the earlier body-fixed oblique results are in results/s2/nidar_oblique/ (stress result). All results: **synthetic NIDAR-like** data (map and frames both from the same Esri imagery, so the appearance gap is optimistic).
 **The VIO layer in every result is `OUR-VIO-SUBSTITUTE`, NOT OpenVINS** (see "OpenVINS" below).
 
 ## Components, commits, licences
@@ -25,7 +25,8 @@ python make_train_tiles.py 1800                      # 1800 train + 240 val refe
 cd caevl_src
 python caevl/ae/train.py -c ../configs/ae_nidar.yml            # stage 1 (1 epoch)
 python caevl/ft_stage/train.py -c ../configs/stagetwo_nidar.yml  # stage 2 (epoch 1), then again with --load-weights (epoch 2)
-cd .. ; python run_s2.py t1 ; python retrieval_eval.py --tag S2-T2 --tile 120 --corridors 200,300 --vio <T1 vio_track.csv>
+cd .. ; S2_TILT=on is needed only to reproduce the oblique runs.
+python run_s2.py t1 ; python retrieval_eval.py --tag S2-T2 --tile 120 --corridors 200,300 --vio <T1 vio_track.csv>
 python run_s2.py t3 ; python run_s2.py t3 --tag S2-T3c --corridor 200 ; python post.py t4|t5|t9 ; python make_figs.py
 retrieval_eval.py --tag S2-T7-tile{60,120,240} --tile {60,120,240} --step 5
 ```
@@ -49,7 +50,7 @@ Own script (`s2core.Retriever`; the repo's `munfrl_map_tiles.py` is MUN-FRL-file
 | 240 m | 120 m | 196 | 0.8 MB | 16 s |
 
 ## Adaptations needed (not in the author's code)
-1. **Camera tilt.** The synthetic flight is pitched -30 deg in cruise (truth60.csv), so frames are oblique. Harness hints pass att=(0,0,yaw) (pitch ignored). `s2lib.query_crop_att` resamples the frame onto a north-up ground plane through full attitude (same idea as author's make_queries_oriented.py), centred on the optical-axis ground point; vehicle fix = tile centre minus the known offset. Attitude: roll/pitch from our own complementary filter on imu.csv (`ahrs.py`, median error 0.1-0.2 deg, up to 13 deg in short transients), yaw and baro altitude from the hints.
+1. **Camera tilt (oblique data only).** The first dataset version was body-fixed, pitched -30 deg in cruise. For that data `s2lib.query_crop_att` resampled frames onto a north-up ground plane through full attitude (roll/pitch from our own complementary filter on imu.csv, `ahrs.py`, set `S2_TILT=on`); those results are in results/s2/nidar_oblique/. The current primary data (data/nidar) is a gimbal-stabilised nadir render, so roll=pitch=0 (default), only compass yaw (hint, in DEGREES) and baro altitude are used.
 2. **Streaming fusion.** fuse.py is a batch CLI. `s2core.StreamFuser` re-implements the loop of `causal_mode` step by step, importing `causal_consensus`, `fit_similarity`, `rotz` unchanged from repo/tools/fuse.py. It deliberately omits the CLI's whole-flight consensus pre-filter (non-causal). Re-run from logs it reproduces the adapter output to 8e-9 m.
 3. Start position (take-off point) is assumed known (config `start_latlon`); the VIO is anchored there. Before the fusion transform exists (warm-up) the adapter returns the VIO-only estimate with flag `warmup_vio_only` and accepted=True.
 
