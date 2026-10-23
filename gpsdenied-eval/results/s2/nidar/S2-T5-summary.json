@@ -1,0 +1,31 @@
+{
+ "streaming_consensus_on": {
+  "name": "streaming_consensus_on",
+  "n_live": 764,
+  "rmse": 798.536579022125,
+  "median": 805.7590993163834,
+  "max": 1346.289544126763,
+  "final": 315.8539771459142,
+  "rmse_vio_same_frames": 5.034957624264769,
+  "gain_vs_vio_pct": -15759.847065519873,
+  "n_fix_in_fit": 432,
+  "fix_precision_100": 7.4074074074074066,
+  "final_scale": 2.95241381137446,
+  "final_yaw_deg": -30.088076862822916
+ },
+ "streaming_consensus_off": {
+  "name": "streaming_consensus_off",
+  "n_live": 764,
+  "rmse": 580.2825567275576,
+  "median": 292.6734858100525,
+  "max": 1154.7478253911725,
+  "final": 334.0811452428703,
+  "rmse_vio_same_frames": 5.034957624264769,
+  "gain_vs_vio_pct": -11425.073298154986,
+  "n_fix_in_fit": 764,
+  "fix_precision_100": 4.5811518324607325,
+  "final_scale": 2.8764267849655294,
+  "final_yaw_deg": -17.22171417625309
+ },
+ "determinism_max_diff_m": 1.8017658476310316e-08
+}

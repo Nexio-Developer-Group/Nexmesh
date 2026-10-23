@@ -1,0 +1,23 @@
+$ /home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/env/bin/python /home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/repo/tools/fuse.py --vio /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-align-20261023-s0/inputs/vio.txt --fixes /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-align-20261023-s0/inputs/fixes.csv --gt /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-align-20261023-s0/inputs/gt.csv --mode align --out /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-align-20261023-s0/fused_cli.csv
+VIO   764 poses   0.0..152.6
+fixes 764         0.0..152.6
+consensus pre-filter: 241 of 764 fixes kept (31.5%)
+
+alignment mode
+  global fit: scale 3.037, yaw -34.6 deg
+  0 of 5 windows had >= 6 fixes; the rest fall back to the global fit
+
+over 1466 m of truth
+                    global fit   windowed
+  RMSE (m)              576.3      576.3
+  median (m)            562.5      562.5
+  final (m)             454.0      454.0
+  max (m)               898.2      898.2
+
+  first half -> second half
+    global     629.4 ->   483.0 m
+    windowed   629.4 ->   483.0 m
+
+wrote /home/user/Nexmesh/gpsdenied-eval/results/s2/nidar/S2-T4-align-20261023-s0/fused_cli.csv
+
+

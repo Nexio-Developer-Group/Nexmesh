@@ -1,0 +1,85 @@
+config {'tile_m': 120.0, 'stride_m': 60.0, 'seed': 0, 'weights': '/home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/weights/stagetwo.pth', 'corridor_m': 200.0}
+Using loss: L2. Using perceptual loss: False
+Using Canny edges: True.
+{
+ "fused": {
+  "frames": 764,
+  "accepted": 764,
+  "fix_rate": 100.0,
+  "median": 93.42842844536804,
+  "p95": 209.05422372367872,
+  "rmse": 115.69414179142247,
+  "max": 230.4878113419753,
+  "precision_100": 57.32984293193717,
+  "recall_10": 18.979057591623036,
+  "recall_50": 18.979057591623036,
+  "recall_100": 57.32984293193717,
+  "time_to_first_fix": 0.0,
+  "final_err": 76.39307190093383
+ },
+ "raw": {
+  "frames": 764,
+  "accepted": 764,
+  "fix_rate": 100.0,
+  "median": 137.8936595172077,
+  "p95": 303.51475340387043,
+  "rmse": 164.57480276285634,
+  "max": 356.73547222784543,
+  "precision_100": 31.80628272251309,
+  "recall_10": 0.6544502617801047,
+  "recall_50": 21.98952879581152,
+  "recall_100": 31.80628272251309,
+  "time_to_first_fix": 6.2,
+  "final_err": 99.34646953753689
+ },
+ "vio": {
+  "frames": 764,
+  "accepted": 764,
+  "fix_rate": 100.0,
+  "median": 4.811090793099975,
+  "p95": 7.996370362460829,
+  "rmse": 5.02930246457238,
+  "max": 8.10733518569132,
+  "precision_100": 100.0,
+  "recall_10": 100.0,
+  "recall_50": 100.0,
+  "recall_100": 100.0,
+  "time_to_first_fix": 0.0,
+  "final_err": 7.890034877823563
+ },
+ "post_warmup": {
+  "frames": 619,
+  "t_start": 29.0,
+  "rmse_fused": 128.5316294249742,
+  "rmse_vio": 5.568908036815992,
+  "rmse_gain_pct": -2208.0221216664554,
+  "median_fused": 104.70631855244295,
+  "median_vio": 5.171105909520392,
+  "final_fused": 76.39307190093383,
+  "final_vio": 7.890034877823563,
+  "max_fused": 230.4878113419753,
+  "max_vio": 8.10733518569132
+ },
+ "whole_flight": {
+  "rmse_fused": 115.69414179142247,
+  "rmse_vio": 5.02930246457238,
+  "rmse_gain_pct": -2200.401350016228
+ },
+ "fix_acceptance": {
+  "n_fixes": 764,
+  "raw_precision_100": 31.80628272251309,
+  "arrival_accepted": 301,
+  "arrival_precision_100": 36.87707641196013,
+  "arrival_recall_of_good": 45.67901234567901,
+  "ever_accepted": 638,
+  "ever_precision_100": 36.52037617554859
+ },
+ "label": "synthetic NIDAR-like; VIO layer = OUR-VIO-SUBSTITUTE (not OpenVINS)",
+ "config": {
+  "tile_m": "120.0",
+  "stride_m": "60.0",
+  "seed": "0",
+  "weights": "/home/user/Nexmesh/gpsdenied-eval/solutions/s2_uav_geolocalization/weights/stagetwo.pth",
+  "corridor_m": "200.0"
+ }
+}

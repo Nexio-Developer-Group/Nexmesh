@@ -1,0 +1,10 @@
+Body-fixed 30-deg-oblique camera (old data/nidar_oblique), stress probe, 7 frames, attitude from truth60 used for rectification, hints yaw in radians (own test harness), shared-CPU latency (untrustworthy).
+idx accepted n_inl err_m total_s
+0 True 574 0.22 3.79
+20 True 478 0.09 5.18
+100 True 531 0.07 4.98
+150 True 427 0.24 6.19
+300 True 517 0.13 5.81
+500 True 542 0.43 27.16
+700 True 443 0.39 9.17
+Without attitude (nadir assumption) on the oblique frames the north-up NCC against the map was 0.1-0.2 (no usable match): tilt must be known/estimated. No full oblique run was completed (killed when data defect found).

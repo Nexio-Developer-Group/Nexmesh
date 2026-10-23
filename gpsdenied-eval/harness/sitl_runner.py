@@ -108,19 +108,14 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
             raise RuntimeError("no GPS disable param")
         m.mav.set_mode_send(m.target_system, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, m.mode_mapping()["GUIDED"])
         wait(lambda: any("is using GPS" in x[1] for x in texts), 1800, "EKF using GPS")
-        for attempt in range(40):
-            m.mav.command_long_send(m.target_system, m.target_component, 400, 0, 1, 21196, 0, 0, 0, 0, 0)
-            t0 = time.time()
-            while time.time() - t0 < 1.5:
-                pump()
-                if st["hb"] and st["hb"][0] & 128: break
-            if st["hb"] and st["hb"][0] & 128: break
-        else: raise RuntimeError("could not arm")
-        tk_last = -99.0
+        tk_last = -99.0; arm_last = -99.0
 
-        def takeoff_done():
-            nonlocal tk_last
-            if st["t"] - tk_last > 5 and st.get("rel", 0) < 3:  # (re)send until the climb starts
+        def takeoff_done():  # arm and take off together: the autopilot auto-disarms 10 s (sim) after arming
+            nonlocal tk_last, arm_last
+            armed = bool(st["hb"] and st["hb"][0] & 128)
+            if not armed and st["t"] - arm_last > 1.0:
+                m.mav.command_long_send(m.target_system, m.target_component, 400, 0, 1, 21196, 0, 0, 0, 0, 0); arm_last = st["t"]
+            elif armed and st.get("rel", 0) < 3 and st["t"] - tk_last > 1.0:
                 m.mav.command_long_send(m.target_system, m.target_component, 22, 0, 0, 0, 0, 0, 0, 0, agl); tk_last = st["t"]
             return st.get("rel", 0) > agl - 3
         wait(takeoff_done, 2400, "takeoff")
