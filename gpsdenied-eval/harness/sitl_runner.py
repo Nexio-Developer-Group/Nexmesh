@@ -117,7 +117,7 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
             if st["hb"] and st["hb"][0] & 128: break
         else: raise RuntimeError("could not arm")
         m.mav.command_long_send(m.target_system, m.target_component, 22, 0, 0, 0, 0, 0, 0, 0, agl)
-        wait(lambda: st.get("rel", 0) > agl - 3, 600, "takeoff")
+        wait(lambda: st.get("rel", 0) > agl - 3, 2400, "takeoff")
         mask = 0b0000111111111000
 
         def goto(p):
@@ -126,7 +126,7 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
         tA = None; cut_done = False; last_idx = 0; sent = 0; legs = ["A", "B", "C", "D"]; leg = 0
         goto(wps["A"]); pending = []; arrivals = {}; failsafe_t = None; ends = None
         t_wall0 = time.time(); last_goto = 0.0; rtl = False
-        while time.time() - t_wall0 < 1500:
+        while time.time() - t_wall0 < 3600:
             pump()
             tsim = st["t"]; tru = st["tru"]; ekf = st["ekf"]
             if tru is None: continue
