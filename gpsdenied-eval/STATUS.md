@@ -15,3 +15,5 @@
 - 2026-10-23 P5 s2: HARNESS BUG run_replay.run sorts frames lexicographically (10.000 before 2.000) -> temporal adapters break; S2 uses own driver with numeric sort (solutions/s2_uav_geolocalization/run_s2.py)
 - 2026-10-23 P3 S3 smoke (50 frames, 1 per 3 s, no hints): fix_rate 24%, median 115 m, p95 725 m; index build 652 s (CPU shared with 3 agents + SITL); latency p50 18.7 s UNDER LOAD (not valid). Frames rotate with heading, S3 has no de-rotation -> expected weakness; running S3-T1b with compass de-rotation as our labelled extension.
 - 2026-10-23 P5 s4: GISNav NOT run: gisnav image 6.94GB compressed (ENOSPC on pull), PX4/Gazebo build + GPU/X11 needed; T1-T7 not run; static ANALYSIS/SETUP delivered (solutions/s4_gisnav, results/s4)
+- 2026-10-23 S6: MegaLoc loaded (local clone of torch.hub repo, github zip API 400), pipeline works (sub-m error, 400-570 inl); TensorRT pip install fails (no nvidia-smi / disk) -> T1 full run started
+- 2026-10-23 S7 paper_only: review done; Bearing-UAV run on synthetic NIDAR 28 m median vs 23 m prior baseline -> results/s7/bearing
