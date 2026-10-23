@@ -1,0 +1,16 @@
+{
+ "width": 1280,
+ "height": 800,
+ "fps": 60,
+ "hfov_deg": 60.0,
+ "fx": 1108.5125168440816,
+ "fy": 1108.5125168440816,
+ "cx": 640.0,
+ "cy": 400.0,
+ "type": "grayscale global-shutter, pinhole, no distortion",
+ "megapixels": 1.024,
+ "agl_m": 199.998,
+ "gsd_m_px": 0.1804201549021668,
+ "map_mpp": 0.28311875762770544,
+ "source_map": "Esri World_Imagery (benchmark only)"
+}

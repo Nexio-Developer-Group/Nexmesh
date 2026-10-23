@@ -1,0 +1,1 @@
+- 2026-10-23 S5: MAFS unobtainable (T1/T8 not run). SWA-PF CPU env works (py3.9, torch1.10 cpu). On OBLIQUE frames: as-is T2 median 107 m (camera tilt 30 deg), attitude-rectified ext. converges to 2.6 m at t=37 then loses lock at turn; moved to results/s5/nidar_oblique; waiting for nadir re-render (results/s5/nidar_oblique/)

@@ -12,3 +12,6 @@ data/nidar/preview_12s.mp4
 solutions/s3_tile_matching/cache/
 solutions/s7_paper_only/*/.git
 solutions/s7_paper_only/yfs90/
+data/nidar_oblique/frames/
+data/nidar_oblique/video.mp4
+data/nidar_oblique/map_esri_z19.png

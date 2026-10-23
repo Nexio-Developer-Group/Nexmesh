@@ -23,7 +23,7 @@ class Adapter:
     def step(self, frame, timestamp, hints):
         g = frame if frame.ndim == 2 else cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         baro = float(hints["baro_alt"]) if hints else self.pipe.cfg["default_alt"]
-        yaw = float(hints["att"][2]) if hints else 0.0
+        yaw = math.radians(float(hints["att"][2])) if hints else 0.0   # harness yaw hint is in DEGREES
         roll = pitch = 0.0
         if self.t60 is not None:
             roll = float(np.interp(timestamp, self.t60["t"], self.t60["roll"])); pitch = float(np.interp(timestamp, self.t60["t"], self.t60["pitch"]))

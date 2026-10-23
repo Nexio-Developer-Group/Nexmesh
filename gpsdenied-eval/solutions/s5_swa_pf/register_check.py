@@ -4,7 +4,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE + '/.
 import geo, run_replay
 D = HERE + '/../../data/nidar'; ref = geo.MapRef(D + '/map_esri_z19.json'); gm = ref.ground_m_per_px(18.52)
 big = cv2.imread(D + '/map_esri_z19.png', 0); tr = run_replay.load_truth(D + '/truth.csv')
-for t in [10, 20, 30, 40, 50, 60, 75, 90, 100, 115, 130, 145]:
+for t in [10, 30, 60, 90, 120, 145]:
     i = int(np.argmin(abs(tr['t'] - t))); X, Y = ref.latlon_to_px(tr['lat'][i], tr['lon'][i]); yaw = tr['yaw'][i]
     fr = cv2.imread(f'{D}/frames/{t:.3f}.png', 0)
     s = 0.18 / gm; f = cv2.resize(fr, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)

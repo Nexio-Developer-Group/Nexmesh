@@ -8,6 +8,7 @@
  "cx": 640.0,
  "cy": 400.0,
  "type": "grayscale global-shutter, pinhole, no distortion",
+ "mount": "gimbal-stabilised nadir (roll=pitch=0)",
  "megapixels": 1.024,
  "agl_m": 199.998,
  "gsd_m_px": 0.1804201549021668,

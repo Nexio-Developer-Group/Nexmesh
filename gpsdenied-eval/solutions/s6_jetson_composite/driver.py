@@ -19,10 +19,10 @@ def main():
     cfg = json.loads(a.cfg); cfg["att_source"] = a.att
     out = os.path.join(a.out_root, a.run_id); os.makedirs(out, exist_ok=True)
     frames = os.path.join(ROOT, "data", "nidar", "frames")
-    fl = sorted(os.listdir(frames))[::a.stride]
+    fl = sorted(os.listdir(frames), key=lambda f: float(os.path.splitext(f)[0]))[::a.stride]
     if a.limit: fl = fl[:a.limit]
     tmp = os.path.join("/tmp", "s6_frames_" + a.run_id); shutil.rmtree(tmp, ignore_errors=True); os.makedirs(tmp)
-    for f in fl: os.symlink(os.path.join(frames, f), os.path.join(tmp, f))
+    for f in fl: os.symlink(os.path.join(frames, f), os.path.join(tmp, "%09.3f.png" % float(os.path.splitext(f)[0])))  # zero-padded: harness sorts names as strings
     truth = run_replay.load_truth(os.path.join(ROOT, "data", "nidar", "truth.csv"))
     ad = AD.Adapter()
     est, meta = run_replay.run(ad, tmp, truth, os.path.join(ROOT, "data", "nidar", "map_esri_z19.png"), out, a.mode, seed=a.seed, config=cfg)
