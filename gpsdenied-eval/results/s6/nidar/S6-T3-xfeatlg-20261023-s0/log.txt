@@ -1,0 +1,2 @@
+run S6-T3-xfeatlg-20261023-s0 frames=153 accepted=141 fix_rate=92.2% median=0.38524491843631026 p95=1.0092311388168094 rmse=0.578119702106116 prec100=100.0
+{"init": {"retriever_load_s": 3.810314655303955, "matcher_load_s": 0.3185763359069824, "index_s": 0.05620312690734863, "index_build_s": 0.0, "index_mb": 21.12}, "latency": {"p50": 935.4690170002868, "p95": 4957.845549801279}}

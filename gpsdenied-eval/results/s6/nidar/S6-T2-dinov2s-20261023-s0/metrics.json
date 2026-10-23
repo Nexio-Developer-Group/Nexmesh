@@ -1,0 +1,13 @@
+{
+ "retriever": "dinov2s",
+ "frames": 153,
+ "recall_at_1": 39.869281045751634,
+ "recall_at_5": 63.39869281045752,
+ "embed_ms_p50": 59.06939900160069,
+ "embed_ms_p95": 89.04969299983351,
+ "index_build_s": 0.0,
+ "index_mb": 1.92,
+ "dim": 768,
+ "criterion": "tile (512px) contains footprint centre",
+ "note": "synthetic NIDAR-like, 1 Hz; latency measured under shared CPU load"
+}

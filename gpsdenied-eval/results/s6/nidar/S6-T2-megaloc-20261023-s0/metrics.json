@@ -1,0 +1,13 @@
+{
+ "retriever": "megaloc",
+ "frames": 153,
+ "recall_at_1": 84.31372549019608,
+ "recall_at_5": 95.42483660130719,
+ "embed_ms_p50": 272.62570899983984,
+ "embed_ms_p95": 356.22874060063623,
+ "index_build_s": 0.0,
+ "index_mb": 21.12,
+ "dim": 8448,
+ "criterion": "tile (512px) contains footprint centre",
+ "note": "synthetic NIDAR-like, 1 Hz; latency measured under shared CPU load"
+}

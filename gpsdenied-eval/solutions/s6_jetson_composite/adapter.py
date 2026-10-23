@@ -11,7 +11,7 @@ import s6lib as L
 class Adapter:
     def init(self, map_path, config):
         cfg = dict(config or {})
-        self.att_source = cfg.pop("att_source", os.environ.get("S6_ATT", "truth60"))
+        self.att_source = cfg.pop("att_source", os.environ.get("S6_ATT", "hints"))
         cfg.setdefault("att_reliable", self.att_source == "truth60")
         self.pipe = L.Pipeline(map_path, cfg)
         self.t60 = None

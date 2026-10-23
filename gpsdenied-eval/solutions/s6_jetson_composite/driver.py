@@ -13,7 +13,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-id", required=True); ap.add_argument("--stride", type=int, default=1)
     ap.add_argument("--cfg", default="{}"); ap.add_argument("--mode", default="offline"); ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--att", default="truth60"); ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--att", default="hints"); ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--out-root", default=os.path.join(ROOT, "results", "s6", "nidar"))
     a = ap.parse_args()
     cfg = json.loads(a.cfg); cfg["att_source"] = a.att

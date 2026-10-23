@@ -17,7 +17,7 @@ r1 = r5 = n = 0; lat = []; rows = []
 S = cfg["q_crop"]; m = cfg["nu_size"] // 2
 for i in range(0, len(tr["t"]), a.stride):
     t = tr["t"][i]; fr = cv2.imread(D + f"frames/{t:.3f}.png", 0); j = np.argmin(abs(t60["t"] - t))
-    img, mask, G, c = L.warp_query(fr, np.radians(tr["yaw"][i]), t60["roll"][j], t60["pitch"][j], tr["alt"][i], mpp, cfg["nu_size"])
+    img, mask, G, c = L.warp_query(fr, np.radians(tr["yaw"][i]), 0.0, 0.0, tr["alt"][i], mpp, cfg["nu_size"])
     nx, ny = ref.latlon_to_px(tr["lat"][i], tr["lon"][i])
     gx, gy = float(nx) + c[0] / mpp, float(ny) - c[1] / mpp          # footprint centre in map px
     crop = cv2.resize(img[m - S // 2:m + S // 2, m - S // 2:m + S // 2], None, fx=cfg["ret_scale"], fy=cfg["ret_scale"], interpolation=cv2.INTER_AREA)
