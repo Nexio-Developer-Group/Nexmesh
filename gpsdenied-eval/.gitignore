@@ -10,3 +10,5 @@ data/nidar/map_esri_z19.png
 data/nidar/video.mp4
 data/nidar/preview_12s.mp4
 solutions/s3_tile_matching/cache/
+solutions/s7_paper_only/*/.git
+solutions/s7_paper_only/yfs90/

@@ -107,7 +107,7 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
         else:
             raise RuntimeError("no GPS disable param")
         m.mav.set_mode_send(m.target_system, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, m.mode_mapping()["GUIDED"])
-        for _ in range(60): pump(0.1)
+        wait(lambda: any("is using GPS" in x[1] for x in texts), 1800, "EKF using GPS")
         for attempt in range(40):
             m.mav.command_long_send(m.target_system, m.target_component, 400, 0, 1, 21196, 0, 0, 0, 0, 0)
             t0 = time.time()
@@ -116,8 +116,14 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
                 if st["hb"] and st["hb"][0] & 128: break
             if st["hb"] and st["hb"][0] & 128: break
         else: raise RuntimeError("could not arm")
-        m.mav.command_long_send(m.target_system, m.target_component, 22, 0, 0, 0, 0, 0, 0, 0, agl)
-        wait(lambda: st.get("rel", 0) > agl - 3, 2400, "takeoff")
+        tk_last = -99.0
+
+        def takeoff_done():
+            nonlocal tk_last
+            if st["t"] - tk_last > 5 and st.get("rel", 0) < 3:  # (re)send until the climb starts
+                m.mav.command_long_send(m.target_system, m.target_component, 22, 0, 0, 0, 0, 0, 0, 0, agl); tk_last = st["t"]
+            return st.get("rel", 0) > agl - 3
+        wait(takeoff_done, 2400, "takeoff")
         mask = 0b0000111111111000
 
         def goto(p):
@@ -191,6 +197,7 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
         bridge.close()
     finally:
         proc.terminate()
+        json.dump(texts, open(os.path.join(out, "statustext_all.json"), "w"))
     with open(os.path.join(out, "ekf_vs_truth.csv"), "w", newline="") as f:
         w = csv.writer(f); w.writerow(["t_sim", "t_mission", "true_lat", "true_lon", "ekf_lat", "ekf_lon", "err_m", "mode", "ekf_flags"]); w.writerows(rows)
     arr = np.array([(r[1], r[6]) for r in rows]) if rows else np.zeros((0, 2))
