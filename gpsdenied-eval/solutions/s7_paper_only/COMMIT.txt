@@ -1,0 +1,4 @@
+d16e558a14bd0a9142c6901793fe6a6813e4e954 liukejia121/bearinguav (2026-05-01)
+0b44a8430273bf9c888cd61715d8c1fb68fc7f57 arplaboratory/STHN (2026-05-16)
+968eaf8445bf64a6c8f999ab18942dd8997913ff YFS90/GNSS-Denied-UAV-Geolocalization (2024-11-28)
+Bearing weights: HaoyZhou/bearinguav Bearing_UAV.zip 131 MB (HF sha 31098d2e)

@@ -1,0 +1,21 @@
+{
+ "frames": 153,
+ "accepted": 153,
+ "fix_rate": 100.0,
+ "median": 28.19441970447262,
+ "p95": 48.81858801057999,
+ "rmse": 30.19627881639936,
+ "max": 59.662267221789435,
+ "precision_100": 100.0,
+ "recall_10": 9.15032679738562,
+ "recall_50": 95.42483660130719,
+ "recall_100": 100.0,
+ "time_to_first_fix": 0.0,
+ "heading_err_median_deg": 93.63505700683595,
+ "heading_err_mean_deg": 96.18815892129513,
+ "baseline_block_centre_err_median_m": 23.066181645970968,
+ "baseline_block_centre_err_mean_m": 22.171785267934812,
+ "baseline_random_heading_expected_deg": 90.0,
+ "label": "synthetic NIDAR-like; oracle block prior within +-0.9 units (32 m); 153 frames (step 5); seed 0",
+ "latency_ms_median": 4440.197029000046
+}
