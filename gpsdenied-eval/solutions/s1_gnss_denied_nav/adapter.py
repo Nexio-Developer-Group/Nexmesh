@@ -15,6 +15,8 @@ config keys (all optional):
   nominal_height height used when use_baro=False (default 200 m)
   yaw_unit       'deg' (what harness/run_replay.py really sends) or 'rad'
   rerank_k       top-k tiles for LightGlue (default 10)
+  query_kp       SuperPoint max keypoints on the query (repo default 2048)
+  search_m       map window side (m) matched per candidate tile (repo default 450)
   cache_dir      dir for cached tile DB / map keypoints (default solutions/s1.../cache)
 """
 from __future__ import annotations
@@ -124,7 +126,7 @@ class Adapter:
         from gdnav.query import Camera
         self.cfg = dict(patch_m=140.0, tracking=False, gate=True, use_baro=True, use_heading=True,
                         nominal_height=200.0, yaw_unit="deg", rerank_k=10, model="facebook/dinov2-base",
-                        weights=None, stride_m=50.0, cache_dir=str(HERE / "cache"), min_inliers=25)
+                        weights=None, stride_m=50.0, query_kp=2048, search_m=450.0, cache_dir=str(HERE / "cache"), min_inliers=25)
         self.cfg.update(config or {})
         c = self.cfg
         cam = json.loads((HERE / "camera.json").read_text())
@@ -186,6 +188,8 @@ class Adapter:
                                    mapf_bytes=int(self.loc.mapf.keypoints.numel() * 4 + self.loc.mapf.descriptors.numel() * 4
                                                   + self.loc.mapf.image.nbytes))
             info_f.write_text(json.dumps(self.build_info, indent=1))
+        self.loc.reranker.extractor.conf.max_num_keypoints = int(c["query_kp"])   # map keypoints already built
+        self.loc.reranker.search_m = float(c["search_m"])
         self.prior = None
         self.last_accept_t = -1e9
         self.n_frames = 0

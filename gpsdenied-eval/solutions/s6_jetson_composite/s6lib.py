@@ -29,7 +29,7 @@ DEFAULT = dict(
     topk=5, early_inl=70,
     nu_size=1024,              # rectified north-up query canvas (map px)
     ref_size=1280,             # ref patch for matching (map px, native map res)
-    kpts=3000,
+    kpts=2048,
     min_inl=20, ransac_px=4.0,
     gate=True, gate_h_frac=0.10, gate_h_min=12.0, gate_tilt_deg=10.0, gate_yaw_deg=15.0, max_res_px=3.0, att_reliable=True,
     tracking=False, track_miss_reset=3, track_vmax=30.0, track_margin=40.0, track_min_inl=15,
@@ -80,7 +80,7 @@ def make_retriever(name):
 # ------------------------------------------------------------------ matchers
 class XFeatLG:
     name = "xfeat_lg"
-    def __init__(self, kpts=3000, use_lg=True):
+    def __init__(self, kpts=2048, use_lg=True):
         from modules.xfeat import XFeat
         self.x = XFeat(top_k=kpts); self.use_lg = use_lg
         if not use_lg: self.name = "xfeat_mnn"

@@ -59,7 +59,7 @@ def main():
     ad = adapter_mod.Adapter()
     t0 = time.time(); ad.init(a.map, cfg); startup = time.time() - t0
     P(f"run {run_id} cmd={' '.join(sys.argv)}\nconfig={ad.cfg}\nstartup_s={startup:.1f} build_info={ad.build_info}")
-    files = sorted(f for f in os.listdir(a.frames) if f.endswith(".png"))
+    files = sorted((f for f in os.listdir(a.frames) if f.endswith(".png")), key=lambda f: float(f[:-4]))   # numeric (lexicographic sort of harness/run_replay.py misorders 100.0 before 20.2)
     files = files[::a.stride]
     if a.limit: files = files[:a.limit]
     times = np.array([float(f[:-4]) for f in files])

@@ -1,0 +1,15 @@
+%YAML:1.0
+cam0:
+  T_imu_cam:   # camera->IMU: camera x=right, y=image-down, z=optical (down); IMU FRD (x fwd = image up)
+    - [ 0.0, -1.0, 0.0, 0.0]
+    - [ 1.0,  0.0, 0.0, 0.0]
+    - [ 0.0,  0.0, 1.0, 0.0]
+    - [ 0.0,  0.0, 0.0, 1.0]
+  cam_overlaps: []
+  camera_model: pinhole
+  distortion_model: radtan
+  distortion_coeffs: [0.0, 0.0, 0.0, 0.0]
+  intrinsics: [554.2563, 554.2563, 320.0, 200.0]
+  resolution: [640, 400]
+  rostopic: /cam0/image_raw
+  timeshift_cam_imu: 0.0

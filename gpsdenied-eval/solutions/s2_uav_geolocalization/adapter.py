@@ -41,7 +41,7 @@ class Adapter:
         t = float(timestamp)
         g = frame if frame.ndim == 2 else cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         alt = float(hints['baro_alt']) if hints and hints.get('baro_alt') else self.last_alt
-        yaw = float(hints['att'][2]) if hints and hints.get('att') else self.last_yaw
+        yaw = (math.radians(float(hints['att'][2])) if self.c.get('yaw_unit', 'deg') == 'deg' else float(hints['att'][2])) if hints and hints.get('att') else self.last_yaw
         self.last_alt, self.last_yaw = alt, yaw
         k = min(int(np.searchsorted(self.imu_t, t)), len(self.imu_t) - 1)
         roll, pitch = self.imu_att[k]
