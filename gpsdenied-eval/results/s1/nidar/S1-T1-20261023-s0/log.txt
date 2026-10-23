@@ -9,3 +9,12 @@ startup_s=22.1 build_info={'n_tiles': 1225, 'db_dim': 1536, 'db_bytes': 7526400,
 [51/153] t=50.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=577.6 ms=15263 
 [61/153] t=60.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=226.4 ms=26169 
 [71/153] t=70.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=272.6 ms=29505 
+[81/153] t=80.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=14.4 ms=23337 
+[91/153] t=90.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=869.8 ms=21896 
+[101/153] t=100.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=248.4 ms=32032 
+[111/153] t=110.0 acc=False mode=global gate=few_inliers_raw inl=6 err_raw=160.8 ms=28301 
+[121/153] t=120.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=854.9 ms=36307 
+[131/153] t=130.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=886.9 ms=36413 
+[141/153] t=140.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=16.5 ms=36037 
+[151/153] t=150.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=1049.2 ms=33806 
+METRICS {"frames": 153, "accepted": 34, "fix_rate": 22.22222222222222, "median": 1.4036757403102973, "p95": 7.047420113735758, "rmse": 3.083382336893815, "max": 7.576331513245139, "precision_100": 100.0, "recall_10": 22.22222222222222, "recall_50": 22.22222222222222, "recall_100": 22.22222222222222, "time_to_first_fix": 0.0, "accepted_within_10": 100.0, "accepted_within_50": 100.0, "false_fixes_gt50": 0, "false_fixes_gt100": 0, "frames_processed": 153, "stride": 5, "latency_ms_p50": 34029.26222499991, "latency_ms_p95": 46540.96508799994, "run_id": "S1-T1-20261023-s0", "data": "synthetic NIDAR-like"}
