@@ -4,7 +4,7 @@ Examples (run from repo root with solutions/s1_gnss_denied_nav/env/bin/python, u
   T1 : driver.py --id S1-T1 --stride 1
   T2 : driver.py --id S1-T2 --stride 5 --config '{"tracking":true}'
   T3 : driver.py --id S1-T3 --mode realtime --config '{"tracking":true}'      (lead runs, alone)
-  T9 : driver.py --id S1-T9 --stride 5 --config '{"tracking":true}' --inject
+  T9 : driver.py --id S1-T9 --stride 5 --limit 61 --config '{"tracking":true}' --inject --inject-set early   (T9late = default late windows)
 """
 import argparse, csv, json, os, platform, resource, subprocess, sys, time
 from pathlib import Path
@@ -18,6 +18,8 @@ import adapter as adapter_mod  # noqa: E402
 
 # failure-injection windows (t seconds from cruise start); chosen outside the video's own blur/haze windows
 INJECT = {"blur": (35.0, 45.0), "lowlight": (72.0, 82.0), "wrong_heading": (110.0, 122.0), "drop50": (136.0, 152.8)}
+# "early" set: windows inside the period where S1 holds lock (0-48 s) so injected faults act on a live track
+INJECT_EARLY = {"wrong_heading": (3.0, 9.0), "drop50": (12.0, 20.0), "lowlight": (33.0, 38.0), "blur": (40.0, 45.0)}
 
 
 def corrupt(img, t, rng):
@@ -39,7 +41,7 @@ def main():
     ap.add_argument("--id", required=True); ap.add_argument("--stride", type=int, default=1)
     ap.add_argument("--config", default="{}"); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--mode", default="offline", choices=["offline", "realtime"])
-    ap.add_argument("--inject", action="store_true"); ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--inject", action="store_true"); ap.add_argument("--inject-set", default="late", choices=["late", "early"]); ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--no-hints", action="store_true")
     ap.add_argument("--frames", default=str(ROOT / "data/nidar/frames"))
     ap.add_argument("--truth", default=str(ROOT / "data/nidar/truth.csv"))
@@ -47,6 +49,7 @@ def main():
     ap.add_argument("--date", default=time.strftime("%Y%m%d"))
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
+    if a.inject_set == "early": INJECT.clear(); INJECT.update(INJECT_EARLY)
     run_id = f"{a.id}-{a.date}-s{a.seed}"
     out = Path(a.out or ROOT / "results/s1/nidar" / run_id); out.mkdir(parents=True, exist_ok=True)
     log = open(out / "log.txt", "w")

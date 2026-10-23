@@ -1,0 +1,7 @@
+{
+ "attempt2_dynamo_opset18": "OK",
+ "attempt3_torchscript_opset16": "IndexError: list index out of range",
+ "torch_fixed_depth_ms": 2401.092527500168,
+ "onnx_dynamo_ms": 2123.69495799976,
+ "onnx_size_mb": 46.64792
+}

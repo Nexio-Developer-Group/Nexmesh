@@ -1,0 +1,8 @@
+{
+ "s1": {"label": "S1 gnss-denied-nav", "nidar": "results/s1/nidar/S1-T1-20261023-s0", "sitl": "results/s1/sitl"},
+ "s2": {"label": "S2 CAEVL+VIO(substitute) fused", "nidar": "results/s2/nidar/S2-T3-20261023-s0", "sitl": "results/s2/sitl"},
+ "s3": {"label": "S3 tile-matching", "nidar": "results/s3/nidar/S3-T1-20261023-s0", "sitl": "results/s3/sitl"},
+ "s4": {"label": "S4 gisnav (not run)"},
+ "s5": {"label": "S5 SWA-PF (substitute semantic map)", "nidar": "results/s5/nidar/S5-T2-20261023-s0", "sitl": "results/s5/sitl"},
+ "s6": {"label": "S6 our composite", "nidar": "results/s6/nidar/S6-T1-20261023-s0", "sitl": "results/s6/sitl"}
+}

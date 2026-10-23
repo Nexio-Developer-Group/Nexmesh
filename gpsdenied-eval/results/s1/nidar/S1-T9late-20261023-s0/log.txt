@@ -1,0 +1,20 @@
+run S1-T9-20261023-s0 cmd=solutions/s1_gnss_denied_nav/driver.py --date 20261023 --id S1-T9 --stride 5 --inject --config {"query_kp":1024,"tracking":true}
+config={'patch_m': 140.0, 'tracking': True, 'gate': True, 'use_baro': True, 'use_heading': True, 'nominal_height': 200.0, 'yaw_unit': 'deg', 'rerank_k': 10, 'model': 'facebook/dinov2-base', 'weights': None, 'stride_m': 50.0, 'query_kp': 1024, 'search_m': 450.0, 'cache_dir': '/home/user/Nexmesh/gpsdenied-eval/solutions/s1_gnss_denied_nav/cache', 'min_inliers': 25}
+startup_s=26.4 build_info={'n_tiles': 1225, 'db_dim': 1536, 'db_bytes': 7526400, 'descriptor_build_s': 685.2529060840607, 'mapfeat_build_s': 202.48730778694153, 'n_map_keypoints': 47958, 'mapf_gsd': 0.5, 'mapf_image_px': [4970, 4970], 'mapf_bytes': 123595356}
+[1/153] t=0.0 acc=True mode=global gate=ok inl=133 err_raw=1.2 ms=18209 
+[11/153] t=10.0 acc=True mode=track gate=ok inl=136 err_raw=1.8 ms=5439 
+[21/153] t=20.0 acc=True mode=track gate=ok inl=167 err_raw=1.6 ms=5509 
+[31/153] t=30.0 acc=True mode=track gate=ok inl=159 err_raw=0.9 ms=6055 
+[41/153] t=40.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=820.8 ms=10205 blur
+[51/153] t=50.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=577.6 ms=12291 
+[61/153] t=60.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=226.4 ms=14460 
+[71/153] t=70.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=272.6 ms=13236 
+[81/153] t=80.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=717.7 ms=15511 lowlight
+[91/153] t=90.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=869.8 ms=15542 
+[101/153] t=100.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=248.4 ms=15699 
+[111/153] t=110.0 acc=False mode=global gate=few_inliers_raw inl=5 err_raw=849.2 ms=17859 wrong_heading
+[121/153] t=120.0 acc=False mode=global gate=few_inliers_raw inl=3 err_raw=427.8 ms=12480 wrong_heading
+[131/153] t=130.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=886.9 ms=15293 
+[141/153] t=140.0 acc=False mode=dropped gate=dropped inl=None err_raw=nan ms=0 dropped
+[151/153] t=150.0 acc=False mode=dropped gate=dropped inl=None err_raw=nan ms=0 dropped
+METRICS {"frames": 153, "accepted": 35, "fix_rate": 22.875816993464053, "median": 1.3047281667832424, "p95": 3.6691689514022254, "rmse": 2.029493048057115, "max": 5.872759958399818, "precision_100": 100.0, "recall_10": 22.875816993464053, "recall_50": 22.875816993464053, "recall_100": 22.875816993464053, "time_to_first_fix": 0.0, "accepted_within_10": 100.0, "accepted_within_50": 100.0, "false_fixes_gt50": 0, "false_fixes_gt100": 0, "frames_processed": 144, "stride": 5, "latency_ms_p50": 13232.14365000058, "latency_ms_p95": 19333.560086500984, "run_id": "S1-T9-20261023-s0", "data": "synthetic NIDAR-like"}

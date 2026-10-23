@@ -1,0 +1,20 @@
+run S1-T5-20261023-s0 cmd=solutions/s1_gnss_denied_nav/driver.py --date 20261023 --id S1-T5 --stride 5 --config {"query_kp":1024,"tracking":true,"gate":false}
+config={'patch_m': 140.0, 'tracking': True, 'gate': False, 'use_baro': True, 'use_heading': True, 'nominal_height': 200.0, 'yaw_unit': 'deg', 'rerank_k': 10, 'model': 'facebook/dinov2-base', 'weights': None, 'stride_m': 50.0, 'query_kp': 1024, 'search_m': 450.0, 'cache_dir': '/home/user/Nexmesh/gpsdenied-eval/solutions/s1_gnss_denied_nav/cache', 'min_inliers': 25}
+startup_s=28.8 build_info={'n_tiles': 1225, 'db_dim': 1536, 'db_bytes': 7526400, 'descriptor_build_s': 685.2529060840607, 'mapfeat_build_s': 202.48730778694153, 'n_map_keypoints': 47958, 'mapf_gsd': 0.5, 'mapf_image_px': [4970, 4970], 'mapf_bytes': 123595356}
+[1/153] t=0.0 acc=True mode=global gate=off inl=133 err_raw=1.2 ms=28819 
+[11/153] t=10.0 acc=True mode=track gate=off inl=136 err_raw=1.8 ms=7075 
+[21/153] t=20.0 acc=True mode=track gate=off inl=167 err_raw=1.6 ms=10322 
+[31/153] t=30.0 acc=True mode=track gate=off inl=159 err_raw=0.9 ms=6385 
+[41/153] t=40.0 acc=True mode=track gate=off inl=127 err_raw=1.6 ms=6239 
+[51/153] t=50.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=577.6 ms=14558 
+[61/153] t=60.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=226.4 ms=15217 
+[71/153] t=70.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=272.6 ms=14107 
+[81/153] t=80.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=14.4 ms=12231 
+[91/153] t=90.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=869.8 ms=14290 
+[101/153] t=100.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=248.4 ms=9621 
+[111/153] t=110.0 acc=False mode=global gate=few_inliers_raw inl=6 err_raw=160.8 ms=16967 
+[121/153] t=120.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=854.9 ms=15361 
+[131/153] t=130.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=886.9 ms=17957 
+[141/153] t=140.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=16.5 ms=16489 
+[151/153] t=150.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=1049.2 ms=17208 
+METRICS {"frames": 153, "accepted": 46, "fix_rate": 30.065359477124183, "median": 1.5324991182055447, "p95": 5.433554936750189, "rmse": 2.4312515251212186, "max": 5.872759958399818, "precision_100": 100.0, "recall_10": 30.065359477124183, "recall_50": 30.065359477124183, "recall_100": 30.065359477124183, "time_to_first_fix": 0.0, "accepted_within_10": 100.0, "accepted_within_50": 100.0, "false_fixes_gt50": 0, "false_fixes_gt100": 0, "frames_processed": 153, "stride": 5, "latency_ms_p50": 15360.547631000372, "latency_ms_p95": 20687.05877659886, "run_id": "S1-T5-20261023-s0", "data": "synthetic NIDAR-like"}
