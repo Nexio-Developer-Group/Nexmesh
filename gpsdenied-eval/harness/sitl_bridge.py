@@ -5,7 +5,7 @@ import json, math, time
 from pymavlink import mavutil
 
 R = 6378137.0
-IGNORE = 1 | 2 | 4 | 8 | 16 | 32 | 128  # alt, hdop, vdop, vel_h, vel_v, speed_acc, vert_acc (keep horizontal accuracy)
+IGNORE = 1 | 8 | 16 | 32 | 128  # alt, vel_h, vel_v, speed_acc, vert_acc ignored; hdop/vdop/horiz_acc are sent
 
 
 class SitlBridge:

@@ -19,7 +19,9 @@ SCEN = {  # id -> options
 }
 EXTRA_PARM = """ARMING_CHECK 0
 GPS_TYPE2 14
-GPS_AUTO_SWITCH 1
+GPS_AUTO_SWITCH 0
+GPS_PRIMARY 0
+EK3_GPS_CHECK 0
 EK3_SRC1_POSXY 3
 EK3_SRC1_VELXY 0
 EK3_SRC1_POSZ 1
@@ -131,7 +133,9 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
             if tA is None:
                 if dist(tru, wps["A"]) < 4.0:
                     tA = tsim; arrivals["A"] = 0.0; leg = 1; goto(wps["B"])
-                    if o["cut"] == 0: m.mav.param_set_send(m.target_system, m.target_component, gps_param.encode(), 1, 9); cut_done = True
+                    if o["cut"] == 0:
+                        m.mav.param_set_send(m.target_system, m.target_component, gps_param.encode(), 1, 9); cut_done = True
+                        if o["feed"]: m.mav.param_set_send(m.target_system, m.target_component, b"GPS_PRIMARY", 1, 2)
                 continue
             mt = tsim - tA
             if not rtl and tsim - last_goto > 4 and leg < 4:
@@ -145,6 +149,7 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
                     ends = mt
             if o["cut"] is not None and not cut_done and mt >= o["cut"]:
                 m.mav.param_set_send(m.target_system, m.target_component, gps_param.encode(), 1, 9); cut_done = True
+                if o["feed"]: m.mav.param_set_send(m.target_system, m.target_component, b"GPS_PRIMARY", 1, 2)
                 tlog.append(("gps_cut", mt))
             # frame position along the recorded path -> estimate for that frame
             lo = max(last_idx - 3, 0); hi = min(last_idx + 60, len(tt) - 1)
