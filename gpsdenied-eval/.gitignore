@@ -18,3 +18,4 @@ data/nidar_oblique/map_esri_z19.png
 results/*/sitl/*/sitl_wd/
 results/s3/figures/failures/
 results/*/figures/failures/
+report/REPORT_with_imagery.html

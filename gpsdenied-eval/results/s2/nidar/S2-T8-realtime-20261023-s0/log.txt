@@ -1,0 +1,3 @@
+Using loss: L2. Using perceptual loss: False
+Using Canny edges: True.
+{"p50": 55.862670498754596, "p95": 78.21423929926823, "mean": 58.227712174116824, "achieved_hz": 17.17395313437227}

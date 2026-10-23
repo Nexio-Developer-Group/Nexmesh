@@ -40,6 +40,23 @@ def svg(sol):
 
 
 # ---------- SITL aggregation ----------
+_MIS = json.load(open(os.path.join(ROOT, "data/nidar/flight_sitl/mission.json")))["waypoints"]
+_D = _MIS["D"]
+
+
+def reached_d(trace, summ, radius=30.0):
+    """Mission completed = the vehicle's TRUE position came within 30 m of waypoint D before any EKF failsafe/LAND (the runner's own
+    4 m arrival test is stricter than the fix quality of some solutions allows)."""
+    if not os.path.exists(trace): return bool(summ.get("mission_completed"))
+    t_fs = summ.get("failsafe_or_land_t")
+    for r in csv.DictReader(open(trace)):
+        t = float(r["t_mission"])
+        if t_fs is not None and t > t_fs: return False
+        dn = math.radians(float(r["true_lat"]) - _D[0]) * 6378137.0
+        de = math.radians(float(r["true_lon"]) - _D[1]) * 6378137.0 * math.cos(math.radians(_D[0]))
+        if math.hypot(dn, de) <= radius: return True
+    return False
+
 def sitl(sol):
     out = {}
     for scn in SCN:
@@ -47,6 +64,7 @@ def sitl(sol):
         for fpath in sorted(glob.glob(os.path.join(ROOT, "results", sol, "sitl", f"{scn}-s*/summary.json"))):
             d = json.load(open(fpath))
             if "error" in d: continue
+            d["mission_completed"] = reached_d(os.path.join(os.path.dirname(fpath), "ekf_vs_truth.csv"), d)  # re-derived: within 30 m of D before any failsafe
             rs.append(d)
         if rs:
             out[scn] = dict(n=len(rs), max_err=np.mean([r["max_ekf_err_m"] for r in rs if r["max_ekf_err_m"] is not None] or [np.nan]),
@@ -285,6 +303,7 @@ md.append("**What could not be tested.** " + open(os.path.join(RP, "not_tested.m
 
 md.append("## 2. Test setup\n")
 md.append(open(os.path.join(RP, "test_setup.md")).read() if os.path.exists(os.path.join(RP, "test_setup.md")) else "")
+md.append(open(os.path.join(RP, "test_matrix.md")).read() if os.path.exists(os.path.join(RP, "test_matrix.md")) else "")
 
 for s in SOL:
     md.append(chapter(s))
@@ -309,7 +328,7 @@ md.append("### 3.8 Weighted ranking and sensitivity\n\nScores are min-max scaled
           + RT + "\n\n" + ST + "\n\n" + "Per-criterion scores:\n\n" + "| Solution | " + " | ".join(W0) + " |\n|---|" + "---|" * len(W0) + "\n" + "\n".join(f"| {NAME[s]} | " + " | ".join(f"{SC[k][s]:.2f}" for k in W0) + " |" for s in SOL) + "\n\n" + fig("ranking_chart.png", "Weighted score by criterion for every solution; the sensitivity table lists the order under each weight change"))
 md.append("## 4. SITL results (ArduCopter 4.5.7, scenarios SIM-0 to SIM-7, 3 seeds)\n")
 md.append(open(os.path.join(RP, "sitl_method.md")).read() if os.path.exists(os.path.join(RP, "sitl_method.md")) else "")
-md.append("**Maximum EKF position error after GPS loss (m, mean ± sd over seeds)**\n\n" + sitl_table("err") + "\n\n**Mission completed (share of seeds that reached D without a failsafe/LAND)**\n\n" + sitl_table("done") + "\n\n**EKF failsafe / LAND triggered (share of seeds)**\n\n" + sitl_table("fs") + "\n\n**Distance from home at the end of the run (m, SIM-7 = after return-to-launch)**\n\n" + sitl_table("home") + "\n\n" + fig("all_sitl_comparison.png", "SITL: maximum EKF error per solution for SIM-1 (no vision), SIM-2 and SIM-7, 3 seeds"))
+md.append("**Maximum EKF position error after GPS loss (m, mean ± sd over seeds)**\n\n" + sitl_table("err") + "\n\n**Mission completed (share of seeds whose true position came within 30 m of waypoint D before any EKF failsafe/LAND)**\n\n" + sitl_table("done") + "\n\n**EKF failsafe / LAND triggered (share of seeds)**\n\n" + sitl_table("fs") + "\n\n**Distance from home at the end of the run (m, SIM-7 = after return-to-launch)**\n\n" + sitl_table("home") + "\n\n" + fig("all_sitl_comparison.png", "SITL: maximum EKF error per solution for SIM-1 (no vision), SIM-2 and SIM-7, 3 seeds"))
 md.append(open(os.path.join(RP, "findings.md")).read() if os.path.exists(os.path.join(RP, "findings.md")) else "")
 md.append("## Appendices\n")
 md.append(open(os.path.join(RP, "appendix.md")).read() if os.path.exists(os.path.join(RP, "appendix.md")) else "")
@@ -326,10 +345,35 @@ for (k, w), c in zip(W0.items(), cols):
 ax.set_ylabel("weighted score (0-10)"); ax.legend(fontsize=7); ax.set_title("Weighted ranking breakdown (owner weights)")
 os.makedirs(os.path.join(RP, "figures"), exist_ok=True); fig_.savefig(os.path.join(RP, "figures", "ranking_chart.png"), dpi=130, bbox_inches="tight")
 
+# one-page decision memo
+memo = ["# Decision memo: GPS-denied navigation solutions (one page)\n",
+        "*Synthetic NIDAR-like data, CPU only, same-map imagery: relative evidence only. Full report: `report/REPORT.md` / `REPORT.pdf`.*\n",
+        "**Ranking (owner weights 30/20/20/15/15):** " + "; ".join(f"{i}. {NAME[s_]} {t_:.2f}" for i, (s_, t_) in enumerate(rank, 1)) + (". The winner is unchanged under every +10-point weight change." if stable else ". The winner changes under at least one weighting (see report 3.8).") + "\n",
+        "**Best for each purpose**\n\n" + BF + "\n",
+        "**Recommendation.** " + open(os.path.join(RP, "recommendation.md")).read().strip() + "\n",
+        "**Next three tests.** (1) S6 on real NIDAR video with a different-date map, thresholds frozen, held-out flight. (2) S6 on a Jetson Orin with TensorRT FP16 end to end at 5 Hz (solve the LighterGlue ONNX export first). (3) Closed-loop SITL with a Gazebo-rendered camera and a velocity/odometry aid in the EKF, S6 against S5 on feature-poor terrain with fix outages and outliers.\n",
+        "**Could not be tested:** " + open(os.path.join(RP, "not_tested.md")).read().strip() + "\n"]
+open(os.path.join(RP, "DECISION_MEMO.md"), "w").write("\n".join(memo))
 # HTML
 import markdown
 html_body = markdown.markdown(text, extensions=["tables", "fenced_code", "sane_lists"])
 css = open(os.path.join(RP, "report.css")).read() if os.path.exists(os.path.join(RP, "report.css")) else ""
 html = f"<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>GPS-denied navigation test report</title><style>{css}</style></head><body><main>{html_body}</main></body></html>"
 open(os.path.join(RP, "REPORT.html"), "w").write(html)
+# hosted-artifact fragment (the Artifact tool wraps it in the document skeleton): no html/head/body tags of its own
+css2 = css.replace("main{max-width:1050px;margin:0 auto;padding:24px 16px 80px}", "main{max-width:1050px;margin:0 auto;padding-block:24px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}")
+art = ("<title>GPS-Denied Test Report</title><meta name='claude:viewport-fit-sides' content='cover'><style>" + css2 +
+       "</style><main>" + html_body + "</main>")
+open(os.path.join(RP, "REPORT_artifact.html"), "w").write(art)
+# local-only variant with the failure galleries (these crops contain Esri-derived imagery: benchmark use only, never committed)
+import cv2
+gal = ["<h2>Failure galleries (local file only: crops contain Esri-derived imagery)</h2><p>Each montage: frame (north-up) | map crop at the true position (what it should have matched) | map crop at the pipeline's estimate. Solutions that wrote their own failure figures list them here too.</p>"]
+for s_ in SOL:
+    for p_ in sorted(glob.glob(os.path.join(ROOT, "results", s_, "figures", "failures", "*.png")))[:12]:
+        im = cv2.imread(p_)
+        if im is None: continue
+        sc_ = 1100.0 / im.shape[1]; im = cv2.resize(im, None, fx=min(sc_, 1.0), fy=min(sc_, 1.0)); ok_, buf = cv2.imencode(".jpg", im, [cv2.IMWRITE_JPEG_QUALITY, 70])
+        gal.append(f"<figure><img src='data:image/jpeg;base64,{base64.b64encode(buf).decode()}'/><figcaption>{SHORT[s_]}: {os.path.basename(p_)}</figcaption></figure>")
+html2 = html.replace("</main>", "".join(gal) + "</main>")
+open(os.path.join(RP, "REPORT_with_imagery.html"), "w").write(html2)
 print("ranking:", [(SHORT[s], round(t, 2)) for s, t in rank], "stable winner:", stable)

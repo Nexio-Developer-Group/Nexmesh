@@ -1,0 +1,8 @@
+t=0.0 acc=False n=16000 spread=326.7 raw_err=343.1 err=nan step=34.2s (seg 0.6 pf 33.5)
+t=1.0 acc=False n=12800 spread=321.2 raw_err=358.8 err=nan step=26.9s (seg 0.5 pf 26.4)
+t=2.0 acc=False n=10240 spread=318.3 raw_err=372.8 err=nan step=20.8s (seg 0.4 pf 20.3)
+t=3.0 acc=False n=8192 spread=312.2 raw_err=380.1 err=nan step=17.6s (seg 0.5 pf 17.1)
+t=4.0 acc=False n=6554 spread=306.1 raw_err=385.9 err=nan step=14.2s (seg 0.6 pf 13.6)
+t=5.0 acc=False n=5243 spread=303.7 raw_err=375.5 err=nan step=11.7s (seg 0.5 pf 11.2)
+t=6.0 acc=False n=4194 spread=310.1 raw_err=322.5 err=nan step=9.3s (seg 0.5 pf 8.8)
+t=7.0 acc=False n=3355 spread=285.4 raw_err=216.1 err=nan step=8.0s (seg 0.5 pf 7.5)

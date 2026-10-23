@@ -1,1 +1,53 @@
-{"_note": "filled by serial latency runs (see report/serial_latency.md); null = not run"}
+{
+ "_note": "serial runs on an idle 4-core CPU, no GPU/Jetson; real-time and constrained runs feed frames on a 5 Hz clock for 152.8 s",
+ "s1": {
+  "offline_p50_s": 8.792771568001626,
+  "offline_p95_s": 11.23917792050015,
+  "realtime_processed_pct": 3.0104712041884816,
+  "constrained_p50_s": 15.474868288498328,
+  "constrained_processed_pct": 1.8324607329842932,
+  "peak_rss_mb": 3330.84375,
+  "startup_s": 29.949198722839355,
+  "notes": "tracking config, 1,024 query keypoints, DINOv2-base; tile index cached (first build 15 min); constrained = 1 core"
+ },
+ "s2": {
+  "offline_p50_s": 0.055862670498754596,
+  "offline_p95_s": 0.07821423929926823,
+  "realtime_processed_pct": 100.0,
+  "constrained_p50_s": 0.07196858250063087,
+  "constrained_processed_pct": 100.0,
+  "peak_rss_mb": 1461.5703125,
+  "startup_s": 6.460569143295288,
+  "notes": "OUR VIO substitute + CAEVL on 120 m tiles; steps are cheap, the fix quality is not; constrained = 1 core"
+ },
+ "s3": {
+  "offline_p50_s": 5.610909188999358,
+  "offline_p95_s": 11.73271373380121,
+  "realtime_processed_pct": 3.2722513089005236,
+  "constrained_p50_s": 7.23954953700013,
+  "constrained_processed_pct": 2.486910994764398,
+  "peak_rss_mb": 2612.7265625,
+  "startup_s": 3.1589810848236084,
+  "notes": "embedding index cached (first build 700 s); constrained = 1 core"
+ },
+ "s5": {
+  "offline_p50_s": 15.874283155999365,
+  "offline_p95_s": 31.607454878150378,
+  "realtime_processed_pct": 6.282722513089006,
+  "constrained_p50_s": 3.1257988799989107,
+  "constrained_processed_pct": 6.282722513089006,
+  "peak_rss_mb": 2271.5,
+  "startup_s": 5.39902138710022,
+  "notes": "offline row = first 8 frames at 20,000 particles (first step dominates); constrained row = 2,000 particles on 2 cores (the particle count is reduced; not comparable to the others); real-time column uses the constrained run"
+ },
+ "s6": {
+  "offline_p50_s": 0.9014201690006303,
+  "offline_p95_s": 5.019794206200459,
+  "realtime_processed_pct": 20.680628272251308,
+  "constrained_p50_s": 1.4930752009986463,
+  "constrained_processed_pct": 12.565445026178011,
+  "peak_rss_mb": 2117.0859375,
+  "startup_s": 5.335326671600342,
+  "notes": "tracking config; constrained = 1 core"
+ }
+}

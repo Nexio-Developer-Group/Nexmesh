@@ -1,0 +1,48 @@
+{
+ "all_verified": {
+  "frames": 19,
+  "accepted": 7,
+  "fix_rate": 36.8421052631579,
+  "median": 0.06671842653397833,
+  "p95": 0.13672340003608358,
+  "rmse": 0.08535151139323716,
+  "max": 0.1605236636568938,
+  "precision_100": 100.0,
+  "recall_10": 36.8421052631579,
+  "recall_50": 36.8421052631579,
+  "recall_100": 36.8421052631579,
+  "time_to_first_fix": 0.0
+ },
+ "fallback_only": {
+  "frames": 19,
+  "accepted": 12,
+  "fix_rate": 63.1578947368421,
+  "median": 485.91416506147357,
+  "p95": 951.8845708827555,
+  "rmse": 625.4409322919606,
+  "max": 981.4532034540807,
+  "precision_100": 25.0,
+  "recall_10": 0.0,
+  "recall_50": 0.0,
+  "recall_100": 15.789473684210526,
+  "time_to_first_fix": 0.0
+ },
+ "config": {
+  "derotate": false,
+  "scale_norm": true,
+  "topk": 5,
+  "max_candidates": 3
+ },
+ "step": 1,
+ "n_frames": 19,
+ "startup_s": 5.980203628540039,
+ "index_build_s": 700.3392269611359,
+ "index_mb": 0.554496,
+ "tiles": 361,
+ "scale_ratio": 1.5693923126691705,
+ "latency_ms": {
+  "p50": 7239.54953700013,
+  "p95": 14825.776131700695
+ },
+ "peak_rss_mb": 2552.15234375
+}

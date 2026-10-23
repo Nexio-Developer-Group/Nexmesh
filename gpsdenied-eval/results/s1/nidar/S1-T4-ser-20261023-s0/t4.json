@@ -1,0 +1,45 @@
+{
+ "threads": 2,
+ "torch": "2.14.1+cpu",
+ "retriever_dinov2_base": {
+  "torch_fp32": {
+   "p50_ms": 300.9935445006704,
+   "p95_ms": 391.2948985507682
+  },
+  "max_abs_diff_vs_torch": 2.2444874048233032e-07,
+  "onnx_fp32": {
+   "p50_ms": 276.07717650062114,
+   "p95_ms": 317.85794494790025
+  },
+  "onnx_size_mb": 346.509748,
+  "onnx_int8_dynamic": {
+   "p50_ms": 89.91462150152074,
+   "p95_ms": 128.97885775055326
+  },
+  "int8_size_mb": 90.520531,
+  "int8_cosine_vs_fp32": 0.5792381763458252,
+  "status": "OK"
+ },
+ "matcher_superpoint": {
+  "torch_fp32_800x1280": {
+   "p50_ms": 1172.2910099997534,
+   "p95_ms": 1228.2183883988182
+  },
+  "dense_cnn_torch": {
+   "p50_ms": 1254.4450649984356,
+   "p95_ms": 1325.6453511989093
+  },
+  "dense_cnn_onnx": {
+   "p50_ms": 724.9119770021935,
+   "p95_ms": 880.2165132001392
+  },
+  "note": "only dense CNN exported; NMS/top-k/descriptor sampling stay in python",
+  "status": "PARTIAL"
+ },
+ "matcher_lightglue": {
+  "status": "FAILED",
+  "error": "IndexError: list index out of range",
+  "trace_tail": "denied-eval/solutions/s1_gnss_denied_nav/env/lib/python3.12/site-packages/torch/onnx/_internal/torchscript_exporter/symbolic_helper.py\", line 477, in wrapper\n    return fn(g, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/Nexmesh/gpsdenied-eval/solutions/s1_gnss_denied_nav/env/lib/python3.12/site-packages/torch/onnx/_internal/torchscript_exporter/symbolic_helper.py\", line 387, in wrapper\n    return fn(g, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/Nexmesh/gpsdenied-eval/solutions/s1_gnss_denied_nav/env/lib/python3.12/site-packages/torch/onnx/_internal/torchscript_exporter/symbolic_opset9.py\", line 986, in transpose\n    axes[dim0], axes[dim1] = axes[dim1], axes[dim0]\n                             ~~~~^^^^^^\nIndexError: list index out of range\n"
+ },
+ "peak_rss_mb": 2404.35546875
+}
