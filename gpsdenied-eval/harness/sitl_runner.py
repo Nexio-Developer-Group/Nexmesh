@@ -18,6 +18,8 @@ SCEN = {  # id -> options
     "SIM-6": dict(cut=0, feed=True), "SIM-7": dict(cut=60, feed=True, rtl=True),
 }
 EXTRA_PARM = """ARMING_CHECK 0
+LOG_BITMASK 4094
+LOG_DISARMED 0
 GPS_TYPE2 14
 GPS_AUTO_SWITCH 0
 GPS_PRIMARY 0
@@ -84,7 +86,7 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
                     st["rel"] = msg.relative_alt / 1000.0
                 elif ty == "SIMSTATE": st["tru"] = (msg.lat / 1e7, msg.lng / 1e7)
                 elif ty == "HEARTBEAT" and msg.get_srcSystem() == m.target_system: st["hb"] = (msg.base_mode, msg.custom_mode)
-                elif ty == "STATUSTEXT": texts.append((st["t"], msg.text))
+                elif ty == "STATUSTEXT": texts.append((st["t"], msg.text)); print("[sitl]", round(st["t"], 1), msg.text, flush=True)
                 elif ty == "EKF_STATUS_REPORT": st["flags"] = msg.flags
                 msg = m.recv_match(blocking=False)
 
@@ -106,8 +108,12 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
             if got: gps_param = got; break
         else:
             raise RuntimeError("no GPS disable param")
-        m.mav.set_mode_send(m.target_system, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, m.mode_mapping()["GUIDED"])
         wait(lambda: any("is using GPS" in x[1] for x in texts), 1800, "EKF using GPS")
+        for _ in range(100):  # GUIDED is refused until the EKF has a position, so request it now and confirm
+            m.mav.set_mode_send(m.target_system, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, m.mode_mapping()["GUIDED"])
+            for _ in range(10): pump(0.05)
+            if st["hb"] and st["hb"][1] == 4: break
+        else: raise RuntimeError("GUIDED mode not accepted")
         tk_last = -99.0; arm_last = -99.0
 
         def takeoff_done():  # arm and take off together: the autopilot auto-disarms 10 s (sim) after arming
@@ -118,7 +124,8 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
             elif armed and st.get("rel", 0) < 3 and st["t"] - tk_last > 1.0:
                 m.mav.command_long_send(m.target_system, m.target_component, 22, 0, 0, 0, 0, 0, 0, 0, agl); tk_last = st["t"]
             return st.get("rel", 0) > agl - 3
-        wait(takeoff_done, 2400, "takeoff")
+        wait(takeoff_done, 900, "takeoff")
+        print("at altitude", st.get("rel"), flush=True)
         mask = 0b0000111111111000
 
         def goto(p):
@@ -163,7 +170,9 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
                     if e and e[4] and (o["feed"]) and cut_done:
                         te = mt
                         if any(a <= te <= b for a, b in o.get("drop", [])): continue
-                        lat, lon = e[1], e[2]; tag = "ok"
+                        # Mode B: transplant the solution's error vector for this recorded frame onto the vehicle's
+                        # true position (the recorded frame position differs from the SITL vehicle by its cross-track offset)
+                        lat, lon = tru[0] + (e[1] - tlat[k]), tru[1] + (e[2] - tlon[k]); tag = "ok"
                         if o.get("outliers") and rng.random() < o["outliers"]:
                             br = rng.uniform(0, 2 * math.pi); dm = rng.uniform(100, 300)
                             lat, lon = offset(lat, lon, dm * math.sin(br), dm * math.cos(br)); tag = "outlier"

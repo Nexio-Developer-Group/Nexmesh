@@ -8,3 +8,4 @@ startup_s=22.1 build_info={'n_tiles': 1225, 'db_dim': 1536, 'db_bytes': 7526400,
 [41/153] t=40.0 acc=True mode=global gate=ok inl=131 err_raw=2.5 ms=26721 
 [51/153] t=50.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=577.6 ms=15263 
 [61/153] t=60.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=226.4 ms=26169 
+[71/153] t=70.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=272.6 ms=29505 
