@@ -52,9 +52,13 @@ def run(scn, est_csv, truth_csv, mission_json, seed, out, ardupilot="/tmp/ardupi
     rng = np.random.default_rng(seed)
     mis = json.load(open(mission_json)); wps = {k: tuple(v) for k, v in mis["waypoints"].items()}
     agl = mis["agl_m"]; speed = mis["cruise_mps"]
-    est = load_est(est_csv)
+    est_rows = load_est(est_csv)
     tr = list(csv.DictReader(open(truth_csv)))
     tt = np.array([float(r["t"]) for r in tr]); tlat = np.array([float(r["lat"]) for r in tr]); tlon = np.array([float(r["lon"]) for r in tr])
+    est = [None] * len(tt)  # estimate (if any) for each recorded frame, matched by time (estimates may be 1 Hz)
+    for e_ in est_rows:
+        k_ = int(np.argmin(np.abs(tt - e_[0])))
+        if abs(tt[k_] - e_[0]) < 0.11: est[k_] = e_
     wd = os.path.join(out, "sitl_wd"); os.makedirs(wd, exist_ok=True)
     open(os.path.join(wd, "extra.parm"), "w").write(EXTRA_PARM)
     parm = os.path.join(ardupilot, "Tools/autotest/default_params/copter.parm")
