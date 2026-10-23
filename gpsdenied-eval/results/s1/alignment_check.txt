@@ -1,0 +1,4 @@
+Alignment/plausibility check (S1-T2full accepted fixes, 221): median error vs truth shifted by dt seconds
+dt=-0.4:4.56  -0.2:2.72  -0.1:1.94  0:1.56  +0.1:1.79  +0.2:2.33  +0.4:4.02  (m) -> minimum at dt=0, mean N bias 0.01 m, E bias -0.66 m.
+=> no time misalignment; ~1.5 m error is plausible (same-map render, PnP height 196.7 m vs baro 197 m; independent of truth, as fixes come from image matching, not copied hints).
+Also: gate-off run (T5) accepts only frames with >=25 inliers; all errors <8 m, none near 0 -> not a leak.

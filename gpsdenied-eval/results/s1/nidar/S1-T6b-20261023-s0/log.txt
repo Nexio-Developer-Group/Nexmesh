@@ -1,0 +1,12 @@
+run S1-T6b-20261023-s0 cmd=solutions/s1_gnss_denied_nav/driver.py --date 20261023 --id S1-T6b --stride 10 --config {"query_kp":1024,"use_heading":false}
+config={'patch_m': 140.0, 'tracking': False, 'gate': True, 'use_baro': True, 'use_heading': False, 'nominal_height': 200.0, 'yaw_unit': 'deg', 'rerank_k': 10, 'model': 'facebook/dinov2-base', 'weights': None, 'stride_m': 50.0, 'query_kp': 1024, 'search_m': 450.0, 'cache_dir': '/home/user/Nexmesh/gpsdenied-eval/solutions/s1_gnss_denied_nav/cache', 'min_inliers': 25}
+startup_s=31.3 build_info={'n_tiles': 1225, 'db_dim': 1536, 'db_bytes': 7526400, 'descriptor_build_s': 685.2529060840607, 'mapfeat_build_s': 202.48730778694153, 'n_map_keypoints': 47958, 'mapf_gsd': 0.5, 'mapf_image_px': [4970, 4970], 'mapf_bytes': 123595356}
+[1/77] t=0.0 acc=True mode=global gate=ok inl=134 err_raw=0.6 ms=11114 
+[11/77] t=20.0 acc=False mode=global gate=few_inliers_raw inl=5 err_raw=978.2 ms=9873 
+[21/77] t=40.0 acc=True mode=global gate=ok inl=126 err_raw=4.2 ms=9784 
+[31/77] t=60.0 acc=False mode=global gate=few_inliers_raw inl=3 err_raw=99.9 ms=9030 
+[41/77] t=80.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=14.4 ms=12041 
+[51/77] t=100.0 acc=False mode=global gate=few_inliers_raw inl=4 err_raw=919.1 ms=9446 
+[61/77] t=120.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=437.4 ms=10815 
+[71/77] t=140.0 acc=False mode=global gate=few_inliers_raw inl=0 err_raw=753.4 ms=9173 
+METRICS {"frames": 77, "accepted": 16, "fix_rate": 20.77922077922078, "median": 1.691901921999528, "p95": 4.464691759227847, "rmse": 2.232963441636022, "max": 5.273876762189959, "precision_100": 100.0, "recall_10": 20.77922077922078, "recall_50": 20.77922077922078, "recall_100": 20.77922077922078, "time_to_first_fix": 0.0, "accepted_within_10": 100.0, "accepted_within_50": 100.0, "false_fixes_gt50": 0, "false_fixes_gt100": 0, "frames_processed": 77, "stride": 10, "latency_ms_p50": 10187.392698000622, "latency_ms_p95": 13876.169485401624, "run_id": "S1-T6b-20261023-s0", "data": "synthetic NIDAR-like"}
