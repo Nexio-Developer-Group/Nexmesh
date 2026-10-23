@@ -7,3 +7,4 @@ __pycache__/
 *.pyc
 .venv/
 data/nidar/map_esri_z19.png
+data/nidar/video.mp4
