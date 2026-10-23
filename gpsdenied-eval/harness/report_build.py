@@ -317,7 +317,9 @@ md.append("### 3.2 Full-rate runs (frames at the rate each solution actually ran
 md.append("### 3.3 Weather: blur and haze windows against clear flight\n\n" + weather_table() + "\n")
 md.append("### 3.4 Terrain breakdown (class under the true position from the substitute semantic map, not ground-truth land cover)\n\n" + terrain_table() + "\n\n" + fig("terrain_breakdown.png", "Terrain breakdown: recall@50 m per class (1 Hz common frames; substitute semantic map)"))
 md.append("### 3.5 Speed and resources (CPU only, serial runs on an otherwise idle machine; NO Jetson)\n\n" + latency_table() + "\n\n" + fig("all_latency_hist.png", "Per-step latency histograms (offline replay; shared-CPU load unless the table says otherwise)"))
+md.append(fig("all_resources.png", "Peak memory, constrained step time and throughput of every solution that ran (CPU only, no Jetson)") + "\n")
 md.append("### 3.6 Accuracy figures\n\n" + fig("all_error_cdf.png", "Error distribution of all solutions (dataset: synthetic NIDAR-like; primary runs; normalised by all frames of each run)") + fig("all_recall_curve.png", "Recall against error threshold, all solutions"))
+md.append("### 3.6b Ablations\n\nEach group compares a baseline with the switched-off or swapped component; frame counts differ per group because the CPU cost forced 1 Hz subsets for some tests.\n\n" + fig("all_ablations.png", "Ablation chart: recall@50 m for each test variant (synthetic NIDAR-like; labels give frame counts)"))
 md.append("### 3.7 Documentation, licence and setup effort side by side\n\n" + docs_table() + "\n")
 md.append("### 3.8 Weighted ranking and sensitivity\n\nScores are min-max scaled to 0-10 across the solutions that ran each test; a solution that could not run a test gets 0 for it and is shown as *not run*. Weights are the owner's (30/20/20/15/15).\n\n"
           "- **Accuracy** = mean of median error (accepted fixes), p95 error and recall@50 m, on the common 153 frames.\n"
