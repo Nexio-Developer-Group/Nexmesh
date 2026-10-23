@@ -1,0 +1,36 @@
+{
+ "kf_output_all_frames": {
+  "frames": 153,
+  "accepted": 153,
+  "fix_rate": 100.0,
+  "median": 235.44025717192056,
+  "p95": 692.7792873347208,
+  "rmse": 353.4430923950188,
+  "max": 767.7130309759991,
+  "precision_100": 40.52287581699346,
+  "recall_10": 35.294117647058826,
+  "recall_50": 37.908496732026144,
+  "recall_100": 40.52287581699346,
+  "time_to_first_fix": 0.0
+ },
+ "gated_out_fixes": 6,
+ "raw_verified_fixes": {
+  "frames": 153,
+  "accepted": 52,
+  "fix_rate": 33.98692810457516,
+  "median": 0.07063408572576921,
+  "p95": 452.0191058193892,
+  "rmse": 200.57618055950277,
+  "max": 989.6185283702846,
+  "precision_100": 86.53846153846155,
+  "recall_10": 29.41176470588235,
+  "recall_50": 29.41176470588235,
+  "recall_100": 29.41176470588235,
+  "time_to_first_fix": 0.0
+ },
+ "mean_step_m": {
+  "raw_verified": 124.24604685711685,
+  "kf": 13.045356008974808
+ },
+ "note": "OUR EXTENSION, not the author's method; KF outputs a position for every frame after the first fix (predicted when no fix), so recall is not comparable to the raw verified-fix recall"
+}

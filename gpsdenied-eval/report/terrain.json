@@ -1,0 +1,138 @@
+{
+ "frames_per_class_1hz": {
+  "building": 53,
+  "vegetation": 24,
+  "water": 26,
+  "mixed": 50
+ },
+ "s1": {
+  "building": {
+   "frames": 53,
+   "fix_rate": 20.754716981132077,
+   "recall_50": 20.754716981132077,
+   "median": 1.4042073512982034
+  },
+  "vegetation": {
+   "frames": 24,
+   "fix_rate": 12.5,
+   "recall_50": 12.5,
+   "median": 1.6702825683213993
+  },
+  "water": {
+   "frames": 26,
+   "fix_rate": 11.538461538461538,
+   "recall_50": 11.538461538461538,
+   "median": 6.821576744470482
+  },
+  "mixed": {
+   "frames": 50,
+   "fix_rate": 34.0,
+   "recall_50": 34.0,
+   "median": 1.2304986972151872
+  }
+ },
+ "s2": {
+  "building": {
+   "frames": 53,
+   "fix_rate": 100.0,
+   "recall_50": 24.528301886792452,
+   "median": 435.63550745914154
+  },
+  "vegetation": {
+   "frames": 24,
+   "fix_rate": 100.0,
+   "recall_50": 0.0,
+   "median": 810.6147475287885
+  },
+  "water": {
+   "frames": 26,
+   "fix_rate": 100.0,
+   "recall_50": 0.0,
+   "median": 1153.3883271477166
+  },
+  "mixed": {
+   "frames": 50,
+   "fix_rate": 100.0,
+   "recall_50": 26.0,
+   "median": 654.4331042457553
+  }
+ },
+ "s3": {
+  "building": {
+   "frames": 53,
+   "fix_rate": 26.41509433962264,
+   "recall_50": 18.867924528301888,
+   "median": 0.11097633055026707
+  },
+  "vegetation": {
+   "frames": 24,
+   "fix_rate": 16.666666666666664,
+   "recall_50": 12.5,
+   "median": 0.06632802591600494
+  },
+  "water": {
+   "frames": 26,
+   "fix_rate": 50.0,
+   "recall_50": 50.0,
+   "median": 0.06998530890452791
+  },
+  "mixed": {
+   "frames": 50,
+   "fix_rate": 42.0,
+   "recall_50": 38.0,
+   "median": 0.07203966513196679
+  }
+ },
+ "s5": {
+  "building": {
+   "frames": 53,
+   "fix_rate": 86.79245283018868,
+   "recall_50": 86.79245283018868,
+   "median": 2.8195537973451015
+  },
+  "vegetation": {
+   "frames": 24,
+   "fix_rate": 100.0,
+   "recall_50": 100.0,
+   "median": 3.1621986025585342
+  },
+  "water": {
+   "frames": 26,
+   "fix_rate": 100.0,
+   "recall_50": 100.0,
+   "median": 3.489352306194607
+  },
+  "mixed": {
+   "frames": 50,
+   "fix_rate": 94.0,
+   "recall_50": 94.0,
+   "median": 1.5896977601773756
+  }
+ },
+ "s6": {
+  "building": {
+   "frames": 53,
+   "fix_rate": 94.33962264150944,
+   "recall_50": 94.33962264150944,
+   "median": 0.36158675179446087
+  },
+  "vegetation": {
+   "frames": 24,
+   "fix_rate": 91.66666666666666,
+   "recall_50": 91.66666666666666,
+   "median": 0.44315112741530593
+  },
+  "water": {
+   "frames": 26,
+   "fix_rate": 84.61538461538461,
+   "recall_50": 84.61538461538461,
+   "median": 0.4503511474096692
+  },
+  "mixed": {
+   "frames": 50,
+   "fix_rate": 94.0,
+   "recall_50": 94.0,
+   "median": 0.43534711253593145
+  }
+ }
+}

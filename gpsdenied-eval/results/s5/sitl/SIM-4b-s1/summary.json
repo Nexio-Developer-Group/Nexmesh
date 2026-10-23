@@ -1,0 +1,92 @@
+{
+ "scenario": "SIM-4b",
+ "seed": 1,
+ "speedup": 8,
+ "gps_cut_t": 60,
+ "fixes_sent": 92,
+ "arrivals": {
+  "A": 0.0,
+  "B": 51.29999999999998,
+  "C": 103.79999999999998
+ },
+ "max_ekf_err_m": 13.15,
+ "mean_ekf_err_m": 4.684816132858837,
+ "final_ekf_err_m": 13.15,
+ "failsafe_or_land_t": 160.60000000000002,
+ "statustext": [
+  [
+   2.281,
+   "GPS 2: specified as MAV"
+  ],
+  [
+   4.269,
+   "EKF3 IMU0 initialised"
+  ],
+  [
+   4.269,
+   "EKF3 IMU1 initialised"
+  ],
+  [
+   4.269,
+   "AHRS: EKF3 active"
+  ],
+  [
+   5.619,
+   "EKF3 IMU0 tilt alignment complete"
+  ],
+  [
+   5.619,
+   "EKF3 IMU1 tilt alignment complete"
+  ],
+  [
+   5.719,
+   "EKF3 IMU0 MAG0 initial yaw alignment complete"
+  ],
+  [
+   5.719,
+   "EKF3 IMU1 MAG0 initial yaw alignment complete"
+  ],
+  [
+   9.619,
+   "GPS 1: detected as u-blox at 230400 baud"
+  ],
+  [
+   19.819,
+   "EKF3 IMU0 origin set"
+  ],
+  [
+   20.019,
+   "EKF3 IMU1 origin set"
+  ],
+  [
+   41.219,
+   "EKF3 IMU0 is using GPS"
+  ],
+  [
+   41.419,
+   "EKF3 IMU1 is using GPS"
+  ],
+  [
+   47.319,
+   "EKF3 IMU0 MAG0 in-flight yaw alignment complete"
+  ],
+  [
+   47.319,
+   "EKF3 IMU1 MAG0 in-flight yaw alignment complete"
+  ],
+  [
+   285.869,
+   "EKF variance"
+  ],
+  [
+   285.869,
+   "EKF Failsafe: changed to LAND Mode"
+  ]
+ ],
+ "mission_completed": false,
+ "max_path_deviation_m": 15.2069617728614,
+ "dist_home_end_m": 260.948476882008,
+ "gps_param": "SIM_GPS_DISABLE",
+ "mode": "B (video in the loop; precomputed estimates)",
+ "rtl": false
+}
