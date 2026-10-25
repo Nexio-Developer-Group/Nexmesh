@@ -59,6 +59,14 @@ def test_fusion_modes():
     h.update(_fix("s6", 18.5, 73.8, ok=False)); assert h.update(_fix("s5", 18.5, 73.8)).source == "s5"
 
 
+def test_fusion_carries_older_fix_forward():
+    cfg = C.default_config(); f = fusion.Fuser(cfg, ["s6", "s5"])
+    a = _fix("s6", 18.5, 73.8, t=1.0); a.info.update(vn=10.0, ve=0.0)
+    b = _fix("s5", *geo.offset_latlon(18.5, 73.8, 20.0, 0.0), t=3.0)      # 2 s later, the vehicle moved 20 m north
+    f.update(a); z = f.update(b)
+    assert z.quality == "agree" and z.disagree_m < 1.0 and z.t == 3.0      # without carrying the old fix forward they would be 20 m apart
+
+
 def test_correction_sign(tmp_path):
     from nexnav.telemetry import GpsSample
     g = GpsSample(0, 18.5, 73.8, 3); la, lo = geo.offset_latlon(18.5, 73.8, 30.0, -40.0)   # estimate 30 m north, 40 m west of the GPS

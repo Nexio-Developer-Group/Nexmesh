@@ -178,13 +178,14 @@ class TileIndex:
         H, W = gray.shape
         self.origins = [(x, y) for y in range(0, max(H - self.T, 0) + 1, self.S) for x in range(0, max(W - self.T, 0) + 1, self.S)]
         self.centers = np.array([(x + self.T / 2, y + self.T / 2) for x, y in self.origins], np.float32)
-        path = os.path.join(cache_dir, f"s6_{ret.name}_{key}_T{self.T}_S{self.S}_r{s['ret_scale']}.npy")
+        self.rs = s["ret_tile_px"] / self.T          # every tile (and the matching query crop) is shown to the network at about ret_tile_px, whatever its ground size
+        path = os.path.join(cache_dir, f"s6_{ret.name}_{key}_T{self.T}_S{self.S}_n{s['ret_tile_px']}.npy")
         self.build_s = 0.0
         if os.path.exists(path): D = np.load(path)
         else:
             t0 = time.time(); ds = []
             for i, (x, y) in enumerate(self.origins):
-                t = cv2.resize(gray[y:y + self.T, x:x + self.T], None, fx=s["ret_scale"], fy=s["ret_scale"], interpolation=cv2.INTER_AREA)
+                t = cv2.resize(gray[y:y + self.T, x:x + self.T], None, fx=self.rs, fy=self.rs, interpolation=cv2.INTER_AREA)
                 ds.append(ret.embed([t])[0])
                 if i % 100 == 0: log.info("S6 index %dm: %d/%d tiles (%.0fs)", int(tile_m), i, len(self.origins), time.time() - t0)
             D = np.stack(ds); self.build_s = time.time() - t0; np.save(path, D)
@@ -323,7 +324,7 @@ class S6Engine(Engine):
         q_m = c["q_crop_frac"] * (self.geom.i.height / self.geom.i.fy) * baro   # central crop side (m): fraction of the footprint's short side
         index = min(self.indices, key=lambda ix: abs(math.log(ix.tile_m / max(q_m * 1.33, 1.0))))
         qpx = int(min(size, max(64, round(q_m / self.mpp)))); m = size // 2
-        crop = cv2.resize(img[m - qpx // 2:m + qpx // 2, m - qpx // 2:m + qpx // 2], None, fx=c["ret_scale"], fy=c["ret_scale"], interpolation=cv2.INTER_AREA)
+        crop = cv2.resize(img[m - qpx // 2:m + qpx // 2, m - qpx // 2:m + qpx // 2], None, fx=index.rs, fy=index.rs, interpolation=cv2.INTER_AREA)
         q = self.ret.embed([crop])[0]; idx, sc = index.search(q, c["topk"])
         best = None; ncand = 0
         for i in idx:

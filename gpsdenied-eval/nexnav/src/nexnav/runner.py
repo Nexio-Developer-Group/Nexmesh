@@ -70,10 +70,11 @@ class Runner:
                     fix = e.process(frame, hints)
                 except Exception as ex:
                     log.exception("engine %s failed on frame %d: %s", name, frame.index, ex); continue
+                fix.info["vn"], fix.info["ve"] = hints.vn, hints.ve        # lets the fuser carry this fix to a later time
                 gps = gps_for(frame.t)
                 self.rec.estimate(fix, gps)
                 fz = fuser.update(fix)
-                if len(self.engines) > 1: self.rec.fused(fz, gps)
+                if len(self.engines) > 1: self.rec.fused(fz, gps_for(fz.t))
                 else: pass
                 if sender is not None:
                     try: sender.send(fz, hints)
