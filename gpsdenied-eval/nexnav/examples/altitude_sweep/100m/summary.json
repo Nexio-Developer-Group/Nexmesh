@@ -1,0 +1,48 @@
+{
+ "run_dir": "/tmp/nexruns/alt2/20261025-062108_alt100_dense",
+ "duration_s": 427.1,
+ "frames_seen": 30,
+ "frames_skipped": {},
+ "offered": {
+  "s6": 30
+ },
+ "note": "errors are measured against the real GPS reference, valid only while that reference is trustworthy",
+ "engines": {
+  "s6": {
+   "processed": 30,
+   "accepted": 20,
+   "fix_rate_pct": 66.7,
+   "compared": 20,
+   "err_median_m": 1.05,
+   "err_p95_m": 2.77,
+   "err_rmse_m": 1.49,
+   "err_max_m": 2.88,
+   "within_10m_pct": 100.0,
+   "within_50m_pct": 100.0,
+   "within_100m_pct": 100.0,
+   "mean_correction_north_m": 0.3,
+   "mean_correction_east_m": -0.2,
+   "latency_p50_ms": 2808.4,
+   "latency_p95_ms": 3556.0,
+   "dropped_busy": 0
+  }
+ },
+ "engine_init": {
+  "s6": {
+   "index_s": 346.68489933013916,
+   "index_build_s": 346.1364412307739,
+   "index_mb": 142.467072,
+   "tiles": {
+    "75m": 2401,
+    "110m": 1089,
+    "165m": 441,
+    "250m": 196,
+    "380m": 64,
+    "580m": 25
+   },
+   "work_gsd_m": 0.283,
+   "device": "cpu"
+  }
+ },
+ "gps_input_sent": 0
+}

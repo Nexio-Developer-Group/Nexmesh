@@ -1,0 +1,44 @@
+{
+ "run_dir": "/tmp/nexruns/20261025-052701_replay_s6",
+ "duration_s": 387.3,
+ "frames_seen": 153,
+ "frames_skipped": {},
+ "offered": {
+  "s6": 153
+ },
+ "note": "errors are measured against the real GPS reference, valid only while that reference is trustworthy",
+ "engines": {
+  "s6": {
+   "processed": 153,
+   "accepted": 153,
+   "fix_rate_pct": 100.0,
+   "compared": 153,
+   "err_median_m": 0.42,
+   "err_p95_m": 1.06,
+   "err_rmse_m": 0.57,
+   "err_max_m": 1.55,
+   "within_10m_pct": 100.0,
+   "within_50m_pct": 100.0,
+   "within_100m_pct": 100.0,
+   "mean_correction_north_m": -0.08,
+   "mean_correction_east_m": -0.02,
+   "latency_p50_ms": 764.5,
+   "latency_p95_ms": 1015.7,
+   "dropped_busy": 0
+  }
+ },
+ "engine_init": {
+  "s6": {
+   "index_s": 227.27012729644775,
+   "index_build_s": 227.18079090118408,
+   "index_mb": 25.208832,
+   "tiles": {
+    "145m": 625,
+    "290m": 121
+   },
+   "work_gsd_m": 0.283,
+   "device": "cpu"
+  }
+ },
+ "gps_input_sent": 0
+}

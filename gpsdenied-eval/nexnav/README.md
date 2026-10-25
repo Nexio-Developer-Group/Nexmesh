@@ -9,7 +9,7 @@ GPS-denied absolute positioning for a drone with a downward camera and a referen
 
 Run one, or **both together for redundancy** (`run.engines: [s6, s5]`); the two fixes are compared, averaged when they agree and flagged when they conflict.
 
-> Evidence status: everything was measured on a **synthetic NIDAR-like flight at 200 m, on a CPU**. Nothing was measured on a Jetson, and 100-500 m was checked only on short synthetic clips (see `docs/ALTITUDE.md`). Test in SITL before letting it feed an autopilot.
+> Evidence status: everything was measured on a **synthetic NIDAR-like flight, on a CPU**; 100-500 m only for S6 on short clips (`docs/ALTITUDE.md`). Nothing was measured on a Jetson or with a real camera. What was run and what it showed: `docs/VALIDATION.md`. S5 needs the map limited to the flight area (about 1 km across at 20,000 particles); see there. Test in SITL before letting it feed an autopilot.
 
 ## Install (Jetson)
 
@@ -66,4 +66,4 @@ The error against the GPS is only meaningful while the GPS is trustworthy (it is
 
 ## Tests
 
-`pytest nexnav/tests` (config, geometry, fusion, correction sign, an end-to-end replay with a dummy engine). The real engines were run on the recorded flight (`docs/VALIDATION.md`).
+`pytest nexnav/tests` (config, geometry, fusion, correction sign, an end-to-end replay with a dummy engine). The real engines were run on the recorded flight and against ArduCopter SITL (`docs/VALIDATION.md`, outputs in `examples/`).

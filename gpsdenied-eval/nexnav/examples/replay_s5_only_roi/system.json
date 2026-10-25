@@ -1,0 +1,12 @@
+{
+ "host": "vm",
+ "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+ "python": "3.12.3",
+ "started_utc": "2026-10-25T05:53:16.485026+00:00",
+ "torch": "2.14.1+cpu",
+ "cuda": false,
+ "gpu": null,
+ "opencv": "4.10.0",
+ "nexnav": "0.1.0",
+ "jetson": null
+}

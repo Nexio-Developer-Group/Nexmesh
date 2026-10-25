@@ -1,0 +1,93 @@
+{
+ "run_dir": "/tmp/nexruns/20261025-060235_replay_both_roi",
+ "duration_s": 1078.7,
+ "frames_seen": 153,
+ "frames_skipped": {},
+ "offered": {
+  "s6": 153,
+  "s5": 153
+ },
+ "note": "errors are measured against the real GPS reference, valid only while that reference is trustworthy",
+ "engines": {
+  "s6": {
+   "processed": 153,
+   "accepted": 153,
+   "fix_rate_pct": 100.0,
+   "compared": 153,
+   "err_median_m": 0.41,
+   "err_p95_m": 3.2,
+   "err_rmse_m": 1.8,
+   "err_max_m": 9.91,
+   "within_10m_pct": 100.0,
+   "within_50m_pct": 100.0,
+   "within_100m_pct": 100.0,
+   "mean_correction_north_m": -0.11,
+   "mean_correction_east_m": -0.21,
+   "latency_p50_ms": 2431.4,
+   "latency_p95_ms": 6884.4,
+   "dropped_busy": 0
+  },
+  "s5": {
+   "processed": 153,
+   "accepted": 148,
+   "fix_rate_pct": 96.7,
+   "compared": 148,
+   "err_median_m": 2.41,
+   "err_p95_m": 9.78,
+   "err_rmse_m": 4.4,
+   "err_max_m": 16.59,
+   "within_10m_pct": 95.3,
+   "within_50m_pct": 100.0,
+   "within_100m_pct": 100.0,
+   "mean_correction_north_m": 1.87,
+   "mean_correction_east_m": 0.21,
+   "latency_p50_ms": 4239.6,
+   "latency_p95_ms": 11491.7,
+   "dropped_busy": 0
+  }
+ },
+ "fused": {
+  "processed": 306,
+  "accepted": 306,
+  "fix_rate_pct": 100.0,
+  "compared": 306,
+  "err_median_m": 1.04,
+  "err_p95_m": 4.81,
+  "err_rmse_m": 2.22,
+  "err_max_m": 9.91,
+  "within_10m_pct": 100.0,
+  "within_50m_pct": 100.0,
+  "within_100m_pct": 100.0,
+  "mean_correction_north_m": 0.56,
+  "mean_correction_east_m": -0.07,
+  "quality_counts": {
+   "single": 13,
+   "agree": 293
+  }
+ },
+ "engine_init": {
+  "s6": {
+   "index_s": 271.0317726135254,
+   "index_build_s": 270.950021982193,
+   "index_mb": 25.208832,
+   "tiles": {
+    "145m": 625,
+    "290m": 121
+   },
+   "work_gsd_m": 0.283,
+   "device": "cpu"
+  },
+  "s5": {
+   "label_shape": [
+    1008,
+    1150
+   ],
+   "label_res_m": 1.0,
+   "particles": 20000,
+   "cam_view": 0.5096920345189665,
+   "pf_init_s": 7.33375358581543,
+   "device": "cpu"
+  }
+ },
+ "gps_input_sent": 0
+}

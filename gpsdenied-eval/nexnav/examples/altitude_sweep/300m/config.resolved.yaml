@@ -1,0 +1,144 @@
+run:
+  name: alt300_dense
+  output_dir: /tmp/nexruns/alt2
+  engines:
+  - s6
+  max_seconds: 0
+  realtime: false
+  log_level: INFO
+  seed: 0
+  progress_every_s: 10
+camera:
+  source: folder:/home/user/Nexmesh/gpsdenied-eval/data/alt/300m/frames
+  width: 1280
+  height: 800
+  fps: 30.0
+  fx: null
+  fy: null
+  cx: null
+  cy: null
+  hfov_deg: 60.0
+  distortion: null
+  mount: nadir_stabilised
+  mount_roll_deg: 0.0
+  mount_pitch_deg: 0.0
+  mount_yaw_deg: 0.0
+  flip: none
+  replay:
+    timing: recorded
+    fps: 5.0
+    start_s: 0.0
+    stride: 1
+  timestamp_offset_s: 0.0
+map:
+  path: /home/user/Nexmesh/gpsdenied-eval/data/nidar/map_esri_z19.png
+  georef: null
+  cache_dir: /root/.nexnav/cache
+  work_gsd_m: 0.283
+  roi: null
+telemetry:
+  source: csv
+  mavlink:
+    connection: udpin:0.0.0.0:14550
+    source_system: 245
+    source_component: 191
+    stream_rate_hz: 10
+    heartbeat_timeout_s: 15.0
+  csv:
+    path: /home/user/Nexmesh/gpsdenied-eval/data/alt/300m/truth.csv
+  fixed:
+    alt_agl_m: 200.0
+    yaw_deg: 0.0
+    lat: null
+    lon: null
+  altitude:
+    source: relative_alt
+    fixed_m: 200.0
+    offset_m: 0.0
+    min_m: 30
+    max_m: 800
+  gps_reference: gps_raw
+  gps_min_fix_type: 3
+  gps_max_age_s: 1.0
+  max_age_s: 2.0
+engines:
+  device: auto
+  threads: 0
+  third_party_dir: /home/user/Nexmesh/gpsdenied-eval/solutions/s6_jetson_composite/repo
+  hf_home: null
+  torch_home: null
+  s6:
+    retriever: megaloc
+    matcher: xfeat_lg
+    fp16: false
+    tile_scales_m:
+    - 75
+    - 110
+    - 165
+    - 250
+    - 380
+    - 580
+    stride_frac: 0.5
+    q_crop_frac: 0.76
+    ret_tile_px: 256
+    topk: 5
+    early_inl: 70
+    nu_size: auto
+    max_canvas_px: 2304
+    ref_size_m: 362.0
+    kpts: 2048
+    min_inl: 20
+    ransac_px: 4.0
+    gate: true
+    gate_h_frac: 0.1
+    gate_h_min_m: 12.0
+    gate_tilt_deg: 10.0
+    gate_yaw_deg: 15.0
+    max_res_px: 3.0
+    tracking: false
+    track_miss_reset: 3
+    track_vmax_mps: 30.0
+    track_margin_m: 40.0
+    track_min_inl: 15
+    ref_cache: 400
+  s5:
+    repo_path: /home/user/Nexmesh/gpsdenied-eval/solutions/s5_swa_pf/repo
+    n_particles: 20000
+    n_min: 1000
+    label_res_m: 1.0
+    label_gsd_m: 0.18
+    label_map: null
+    altitude_from_telemetry: true
+    altitude_sigma_m: 8.0
+    hmin_m: 50.0
+    hmax_m: 550.0
+    init_mode: 0
+    sig_xy_m: 8.0
+    sig_yaw_deg: 0.2
+    eps_m: 15.0
+    min_samples: 20
+    conv_ratio: 0.1
+    accept_frac: 0.5
+    cam_view: auto
+    odometry: telemetry
+    odometry_sigma_mps: 0.0
+fusion:
+  mode: agree_or_best
+  primary: s6
+  agree_radius_m: 30.0
+  weights:
+    s6: 1.0
+    s5: 1.0
+  max_fix_age_s: 3.0
+output:
+  save_frames_every: 0
+  save_frame_scale: 0.5
+  telemetry_log_hz: 10.0
+  mavlink_gps_input:
+    enabled: false
+    connection: null
+    gps_id: 1
+    max_rate_hz: 5.0
+    horiz_accuracy_m: 15.0
+    only_when_gps_lost: true
+    project_forward: true

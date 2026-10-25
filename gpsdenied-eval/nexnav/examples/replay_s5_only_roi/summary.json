@@ -1,0 +1,44 @@
+{
+ "run_dir": "/tmp/nexruns/20261025-055316_replay_s5_roi",
+ "duration_s": 545.9,
+ "frames_seen": 153,
+ "frames_skipped": {},
+ "offered": {
+  "s5": 153
+ },
+ "note": "errors are measured against the real GPS reference, valid only while that reference is trustworthy",
+ "engines": {
+  "s5": {
+   "processed": 153,
+   "accepted": 148,
+   "fix_rate_pct": 96.7,
+   "compared": 148,
+   "err_median_m": 2.41,
+   "err_p95_m": 9.78,
+   "err_rmse_m": 4.4,
+   "err_max_m": 16.59,
+   "within_10m_pct": 95.3,
+   "within_50m_pct": 100.0,
+   "within_100m_pct": 100.0,
+   "mean_correction_north_m": 1.87,
+   "mean_correction_east_m": 0.21,
+   "latency_p50_ms": 2778.5,
+   "latency_p95_ms": 5609.0,
+   "dropped_busy": 0
+  }
+ },
+ "engine_init": {
+  "s5": {
+   "label_shape": [
+    1008,
+    1150
+   ],
+   "label_res_m": 1.0,
+   "particles": 20000,
+   "cam_view": 0.5096920345189665,
+   "pf_init_s": 7.054725646972656,
+   "device": "cpu"
+  }
+ },
+ "gps_input_sent": 0
+}

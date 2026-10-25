@@ -1,0 +1,44 @@
+{
+ "run_dir": "/tmp/live/runs/20261025-064216_sitl_live",
+ "duration_s": 99.6,
+ "frames_seen": 95,
+ "frames_skipped": {},
+ "offered": {
+  "s6": 95
+ },
+ "note": "errors are measured against the real GPS reference, valid only while that reference is trustworthy",
+ "engines": {
+  "s6": {
+   "processed": 85,
+   "accepted": 84,
+   "fix_rate_pct": 98.8,
+   "compared": 24,
+   "err_median_m": 0.48,
+   "err_p95_m": 6.92,
+   "err_rmse_m": 3.93,
+   "err_max_m": 8.82,
+   "within_10m_pct": 100.0,
+   "within_50m_pct": 100.0,
+   "within_100m_pct": 100.0,
+   "mean_correction_north_m": -0.97,
+   "mean_correction_east_m": -0.1,
+   "latency_p50_ms": 723.4,
+   "latency_p95_ms": 1371.6,
+   "dropped_busy": 10
+  }
+ },
+ "engine_init": {
+  "s6": {
+   "index_s": 0.11717581748962402,
+   "index_build_s": 0.0,
+   "index_mb": 25.208832,
+   "tiles": {
+    "145m": 625,
+    "290m": 121
+   },
+   "work_gsd_m": 0.283,
+   "device": "cpu"
+  }
+ },
+ "gps_input_sent": 60
+}
