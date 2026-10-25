@@ -203,6 +203,29 @@ def load_config(path=None, overrides=None):
     for k, v in (overrides or {}).items(): _set(cfg, k, v)
     errs = validate(cfg)
     if errs: raise ValueError("invalid configuration:\n  " + "\n  ".join(errs))
+    return normalize_paths(cfg)
+
+
+_PATH_KEYS = ["map.path", "map.georef", "map.cache_dir", "telemetry.csv.path", "run.output_dir", "engines.third_party_dir", "engines.s5.repo_path",
+              "engines.s5.label_map", "engines.hf_home", "engines.torch_home", "output.mavlink_gps_input.connection"]
+
+
+def normalize_paths(cfg):
+    """Make every file path absolute (the SWA-PF code changes the working directory while it runs, so relative paths would break other threads)."""
+    def get(k):
+        cur = cfg
+        for p in k.split("."): cur = cur[p]
+        return cur
+    def put(k, v):
+        parts = k.split("."); cur = cfg
+        for p in parts[:-1]: cur = cur[p]
+        cur[parts[-1]] = v
+    for k in _PATH_KEYS:
+        v = get(k)
+        if v and not (k.endswith("connection")): put(k, os.path.abspath(os.path.expanduser(str(v))))
+    src = cfg["camera"]["source"]
+    for pre in ("folder:", "file:"):
+        if src.startswith(pre): cfg["camera"]["source"] = pre + os.path.abspath(os.path.expanduser(src[len(pre):]))
     return cfg
 
 

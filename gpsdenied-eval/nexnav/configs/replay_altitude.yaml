@@ -1,0 +1,11 @@
+# Altitude check: short clear-weather clips of the same path at fixed heights (data/alt/<H>m), made by tools/make_altitude_clips.py.
+# Run:  nexnav run -c nexnav/configs/replay_altitude.yaml --camera folder:data/alt/300m/frames --telemetry-csv data/alt/300m/truth.csv --name alt300
+run: {name: replay_altitude, engines: [s6], output_dir: runs, realtime: false, progress_every_s: 10}
+camera: {source: "folder:data/alt/300m/frames", hfov_deg: 60.0, mount: nadir_stabilised}
+map: {path: data/nidar/map_esri_z19.png}
+telemetry: {source: csv, csv: {path: data/alt/300m/truth.csv}, altitude: {min_m: 30, max_m: 800}}
+engines:
+  device: auto
+  third_party_dir: solutions/s6_jetson_composite/repo
+  s6: {tile_scales_m: [75.0, 145.0, 290.0, 580.0], tracking: false}
+  s5: {repo_path: solutions/s5_swa_pf/repo}

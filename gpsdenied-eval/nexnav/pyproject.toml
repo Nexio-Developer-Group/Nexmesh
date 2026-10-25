@@ -15,7 +15,7 @@ opencv = ["opencv-python-headless"]      # NOT needed on a Jetson: use the syste
 mavlink = ["pymavlink"]
 geotiff = ["rasterio", "pyproj"]
 s6 = ["timm", "kornia", "einops", "tqdm"]
-s5 = ["scikit-learn", "timm", "einops", "pandas", "matplotlib", "pillow"]
+s5 = ["numpy<2", "scikit-learn", "timm", "einops", "pandas", "matplotlib", "pillow"]
 test = ["pytest"]
 all = ["pymavlink", "rasterio", "pyproj", "timm", "kornia", "einops", "tqdm", "scikit-learn", "pandas", "matplotlib", "pillow"]
 

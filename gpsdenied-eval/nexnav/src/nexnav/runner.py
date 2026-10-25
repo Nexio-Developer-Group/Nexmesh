@@ -2,7 +2,7 @@
 Live: engines always take the newest frame and skip frames while busy. Replay with run.realtime=false: every frame goes to every engine."""
 import logging, os, queue, signal, sys, threading, time
 from .camera import open_camera
-from .config import expand
+from .config import expand, normalize_paths
 from .engines import EngineContext, make_engine, resolve_device
 from .fusion import Fuser
 from .geo import GeoMap
@@ -12,7 +12,7 @@ from .telemetry import make_telemetry
 
 class Runner:
     def __init__(self, cfg):
-        self.cfg = cfg; self.stop = threading.Event(); self.engines = cfg["run"]["engines"]
+        self.cfg = normalize_paths(cfg); self.stop = threading.Event(); self.engines = cfg["run"]["engines"]
         self.rec = Recorder(cfg, self.engines); self.log = self._logger()
         self.rec.write_config(cfg)
 
