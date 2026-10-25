@@ -61,7 +61,7 @@ def cmd_check(a):
     try:
         from .telemetry import make_telemetry
         import time
-        t = make_telemetry(cfg); t.start(); time.sleep(2.0); h = t.at(time.monotonic()); rep("telemetry", h.ok, f"alt={h.alt_agl:.1f} m yaw={__import__('math').degrees(h.yaw):.0f} deg {h.reason}"); t.stop()
+        t = make_telemetry(cfg); t.start(); time.sleep(2.0); h = t.at(float(t.t[0]) if hasattr(t, 't') else time.monotonic()); rep("telemetry", h.ok, f"alt={h.alt_agl:.1f} m yaw={__import__('math').degrees(h.yaw):.0f} deg {h.reason}"); t.stop()
     except Exception as e: rep("telemetry", False, repr(e))
     print("READY" if ok else "NOT READY"); sys.exit(0 if ok else 1)
 
