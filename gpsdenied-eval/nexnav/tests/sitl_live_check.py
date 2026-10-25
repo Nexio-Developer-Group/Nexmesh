@@ -10,7 +10,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--ardupilot", default="/tmp/ardupilot"); ap.add_argument("--frame", required=True); ap.add_argument("--map", required=True)
 ap.add_argument("--out", default="/tmp/live"); ap.add_argument("--seconds", type=int, default=60); ap.add_argument("--cut-at", type=int, default=25)
 ap.add_argument("--nexnav", default=shutil.which("nexnav") or "nexnav"); ap.add_argument("--home", default="18.51770505,73.85385786")
-ap.add_argument("--extra", nargs="*", default=[])
+ap.add_argument("--set", action="append", default=[], help="KEY=VALUE passed to nexnav run --set")
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True); wd = os.path.join(a.out, "sitl"); os.makedirs(wd, exist_ok=True)
 fr = os.path.join(a.out, "frames"); os.makedirs(fr, exist_ok=True)
@@ -47,13 +47,13 @@ try:
         if g is not None and g.relative_alt / 1000.0 > 195: break
     print("hovering at", m.messages["GLOBAL_POSITION_INT"].relative_alt / 1000.0, "m", flush=True)
     cfg = {"run": {"name": "sitl_live", "engines": ["s6"], "output_dir": os.path.join(a.out, "runs"), "realtime": True, "max_seconds": a.seconds, "progress_every_s": 5},
-           "camera": {"source": f"folder:{fr}", "hfov_deg": 60.0, "mount": "nadir_stabilised"}, "map": {"path": os.path.abspath(a.map), "cache_dir": os.path.join(a.out, "cache")},
+           "camera": {"source": f"folder:{fr}", "hfov_deg": 60.0, "mount": "nadir_stabilised"}, "map": {"path": os.path.abspath(a.map), "cache_dir": os.path.expanduser("~/.nexnav/cache")},
            "telemetry": {"source": "mavlink", "mavlink": {"connection": "tcp:127.0.0.1:5762"}, "altitude": {"source": "relative_alt", "min_m": 30, "max_m": 800}},
            "engines": {"device": "cpu", "third_party_dir": os.path.abspath(os.path.join(os.path.dirname(a.map), "..", "..", "solutions", "s6_jetson_composite", "repo"))},
            "output": {"mavlink_gps_input": {"enabled": True, "gps_id": 1, "only_when_gps_lost": True}}}
     import yaml
     p = os.path.join(a.out, "live.yaml"); yaml.safe_dump(cfg, open(p, "w"))
-    nex = subprocess.Popen([a.nexnav, "run", "-c", p] + a.extra, stdout=open(os.path.join(a.out, "nexnav.log"), "w"), stderr=subprocess.STDOUT)
+    nex = subprocess.Popen([a.nexnav, "run", "-c", p] + [x for kv in a.set for x in ("--set", kv)], stdout=open(os.path.join(a.out, "nexnav.log"), "w"), stderr=subprocess.STDOUT)
     t_start = time.time(); cut = False; ekf = []
     while nex.poll() is None:
         pump(0.2)
