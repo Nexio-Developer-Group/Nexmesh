@@ -29,7 +29,7 @@ try:
         try: m = mavutil.mavlink_connection("tcp:127.0.0.1:5760"); break
         except Exception: time.sleep(1)
     m.wait_heartbeat(timeout=30); print("SITL up", flush=True)
-    for mid in (33, 24): m.mav.command_long_send(m.target_system, m.target_component, 511, 0, mid, 200000, 0, 0, 0, 0, 0)
+    for mid in (33, 24, 124): m.mav.command_long_send(m.target_system, m.target_component, 511, 0, mid, 200000, 0, 0, 0, 0, 0)
     texts = []
     def pump(tmax=0.2):
         msg = m.recv_match(blocking=True, timeout=tmax)
@@ -64,7 +64,7 @@ try:
         if g is not None: ekf.append((time.time() - t_start, g.lat / 1e7, g.lon / 1e7, g.relative_alt / 1000.0))
         g2 = m.messages.get("GPS2_RAW")
     gps2 = m.messages.get("GPS2_RAW")
-    json.dump({"ekf_trace": ekf[::10], "statustext": texts[-15:], "gps2_raw_seen": gps2 is not None and gps2.fix_type, "gps_cut_at_s": a.cut_at}, open(os.path.join(a.out, "sitl_side.json"), "w"), indent=1)
+    json.dump({"ekf_trace": ekf[::10], "statustext": texts[-15:], "gps2_raw": None if gps2 is None else dict(fix_type=gps2.fix_type, lat=gps2.lat / 1e7, lon=gps2.lon / 1e7), "gps1_raw_fix": m.messages["GPS_RAW_INT"].fix_type if "GPS_RAW_INT" in m.messages else None, "gps_cut_at_s": a.cut_at}, open(os.path.join(a.out, "sitl_side.json"), "w"), indent=1)
     print("nexnav exit", nex.returncode)
 finally:
     if nex and nex.poll() is None: nex.terminate()

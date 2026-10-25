@@ -54,7 +54,7 @@ class Runner:
         def gps_for(t):
             g = tel.gps_at(t)
             if g is None: return None
-            return (g, abs(time.monotonic() - g.t) if cfg["camera"]["source"].split(":")[0] not in ("folder", "file") else abs(t - g.t))
+            return (g, tel.gps_age(g, t))
 
         done = threading.Event()
 

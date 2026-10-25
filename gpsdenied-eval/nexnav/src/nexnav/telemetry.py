@@ -35,6 +35,7 @@ class TelemetryBase:
     def at(self, t): raise NotImplementedError
     def gps_at(self, t): return None
     def gps_ok(self, t, min_fix=3, max_age=1.0): return False
+    def gps_age(self, sample, t): return 0.0     # seconds between a GPS sample and frame time t
     def log_rows(self): return []
 
 
@@ -80,6 +81,7 @@ class CsvTelemetry(TelemetryBase):
         return GpsSample(t, self._i(self.lat, t), self._i(self.lon, t), 3)
 
     def gps_ok(self, t, min_fix=3, max_age=1.0): return self.t[0] <= t <= self.t[-1]
+    def gps_age(self, sample, t): return abs(t - sample.t)
 
 
 class MavlinkTelemetry(TelemetryBase):
@@ -162,6 +164,8 @@ class MavlinkTelemetry(TelemetryBase):
     def gps_ok(self, t, min_fix=3, max_age=1.0):
         with self._lock: g = self.gps_raw
         return g is not None and g.fix_type >= min_fix and (time.monotonic() - g.t) <= max_age
+
+    def gps_age(self, sample, t): return max(0.0, time.monotonic() - sample.t)
 
     def log_rows(self): return self.rows
 
