@@ -1,0 +1,16 @@
+# Offline replay of the recorded synthetic NIDAR-like flight (what the evaluation used). Paths are relative to the gpsdenied-eval folder.
+run: {name: replay_nidar, engines: [s6, s5], output_dir: runs, realtime: false, progress_every_s: 10}
+camera:
+  source: "folder:data/nidar/frames"
+  hfov_deg: 60.0
+  mount: nadir_stabilised
+  replay: {timing: recorded, stride: 5}      # stride 5 = 1 Hz of the 5 Hz frames
+map: {path: data/nidar/map_esri_z19.png, cache_dir: ~/.nexnav/cache}
+telemetry:
+  source: csv
+  csv: {path: data/nidar/truth.csv}          # t, lat, lon, alt, yaw : used as hints AND as the GPS reference
+engines:
+  device: auto
+  third_party_dir: solutions/s6_jetson_composite/repo
+  s5: {repo_path: solutions/s5_swa_pf/repo, n_particles: 20000, odometry_sigma_mps: 0.5}
+fusion: {mode: agree_or_best, primary: s6}

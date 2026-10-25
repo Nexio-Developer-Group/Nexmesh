@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexnav"
+version = "0.1.0"
+description = "GPS-denied absolute positioning from a downward camera and a reference map (engines S6 and S5) for Jetson-class computers"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["numpy", "pyyaml"]
+
+[project.optional-dependencies]
+opencv = ["opencv-python-headless"]      # NOT needed on a Jetson: use the system OpenCV (python3-opencv) so CSI/GStreamer works
+mavlink = ["pymavlink"]
+geotiff = ["rasterio", "pyproj"]
+s6 = ["timm", "kornia", "einops", "tqdm"]
+s5 = ["scikit-learn", "timm", "einops", "pandas", "matplotlib", "pillow"]
+test = ["pytest"]
+all = ["pymavlink", "rasterio", "pyproj", "timm", "kornia", "einops", "tqdm", "scikit-learn", "pandas", "matplotlib", "pillow"]
+
+[project.scripts]
+nexnav = "nexnav.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

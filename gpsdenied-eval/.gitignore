@@ -19,3 +19,5 @@ results/*/sitl/*/sitl_wd/
 results/s3/figures/failures/
 results/*/figures/failures/
 report/REPORT_with_imagery.html
+nexnav/runs/
+nexnav/src/*.egg-info/
